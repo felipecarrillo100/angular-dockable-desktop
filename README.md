@@ -5,7 +5,7 @@ groups, floating resizable windows, a taskbar with live previews, zero-unmount s
 preservation, sidebars and toolbars, side panels and modals, toasts, context menus, per-panel
 overlays, internationalisation and RTL.
 
-**[Users manual](docs/manual/)** &nbsp;|&nbsp; **[Design decisions](docs/decisions/)** &nbsp;|&nbsp;
+**[Live demo](https://felipecarrillo100.github.io/angular-dockable-desktop/)** &nbsp;|&nbsp; **[Users manual](docs/manual/)** &nbsp;|&nbsp; **[Design decisions](docs/decisions/)** &nbsp;|&nbsp;
 **[Parity with the React and Vue versions](docs/PARITY.md)** &nbsp;|&nbsp; **[Changelog](CHANGELOG.md)**
 
 Written as a native Angular library — standalone components, signals, `input()` / `model()` /
@@ -134,6 +134,7 @@ anywhere, for menus, the unsaved-changes question, drawers and notifications
 
 | | |
 |---|---|
+| [Live demo](https://felipecarrillo100.github.io/angular-dockable-desktop/) | Every capability in one application, published from `projects/demo` by GitHub Pages on each push to `main` |
 | [`docs/manual/`](docs/manual/) | The users manual — 13 chapters, starting with [Getting started](docs/manual/01-getting-started.md) |
 | [`docs/manual/12-migrating.md`](docs/manual/12-migrating.md) | Coming from react-dockable-desktop or vue-dockable-desktop |
 | [`docs/decisions/`](docs/decisions/) | Architecture decision records |
