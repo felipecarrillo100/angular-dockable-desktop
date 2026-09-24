@@ -1,0 +1,29 @@
+{
+  "version": 2,
+  "gridRoot": {
+    "type": "branch",
+    "orientation": "horizontal",
+    "sizes": [
+      0.6,
+      0.4
+    ],
+    "children": [
+      {
+        "type": "leaf",
+        "id": "console",
+        "panels": [],
+        "activePanelId": null,
+        "keepOnEmpty": true
+      },
+      {
+        "type": "leaf",
+        "id": "side",
+        "panels": [],
+        "activePanelId": null
+      }
+    ]
+  },
+  "floating": [],
+  "minimized": [],
+  "panels": {}
+}

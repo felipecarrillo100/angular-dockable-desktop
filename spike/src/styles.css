@@ -1,0 +1,6 @@
+body { margin: 0; font: 13px system-ui; background: #0f111a; color: #eee; }
+.row { display: flex; gap: 8px; padding: 8px; }
+.host { flex: 1; min-height: 190px; border: 1px solid #38bdf8; border-radius: 4px; padding: 4px; }
+.host h4 { margin: 0 0 4px; font-size: 11px; color: #38bdf8; font-weight: 600; }
+.floating { position: fixed; right: 12px; bottom: 12px; width: 300px; min-height: 190px;
+            background: #141722; border: 1px solid #f59e0b; border-radius: 4px; padding: 4px; }

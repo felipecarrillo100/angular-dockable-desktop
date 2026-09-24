@@ -1,0 +1,74 @@
+{
+  "version": 2,
+  "activePanelId": "c",
+  "gridRoot": {
+    "type": "branch",
+    "orientation": "horizontal",
+    "sizes": [
+      0.6,
+      0.4
+    ],
+    "children": [
+      {
+        "type": "branch",
+        "orientation": "vertical",
+        "sizes": [
+          0.7,
+          0.3
+        ],
+        "children": [
+          {
+            "type": "leaf",
+            "id": "main",
+            "panels": [
+              "a"
+            ],
+            "activePanelId": "a"
+          },
+          {
+            "type": "leaf",
+            "id": "console",
+            "panels": [
+              "c"
+            ],
+            "activePanelId": "c",
+            "keepOnEmpty": true
+          }
+        ]
+      },
+      {
+        "type": "leaf",
+        "id": "side",
+        "panels": [
+          "b"
+        ],
+        "activePanelId": "b"
+      }
+    ]
+  },
+  "floating": [],
+  "minimized": [],
+  "panels": {
+    "a": {
+      "id": "a",
+      "title": "a",
+      "component": "map",
+      "state": "docked",
+      "serializable": true
+    },
+    "b": {
+      "id": "b",
+      "title": "Editor",
+      "component": "editor",
+      "state": "docked",
+      "serializable": true
+    },
+    "c": {
+      "id": "c",
+      "title": "c",
+      "component": "map",
+      "state": "docked",
+      "serializable": true
+    }
+  }
+}

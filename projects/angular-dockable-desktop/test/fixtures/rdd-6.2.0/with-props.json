@@ -1,0 +1,31 @@
+{
+  "version": 2,
+  "activePanelId": "d1",
+  "gridRoot": {
+    "type": "leaf",
+    "id": "group-default",
+    "panels": [
+      "d1"
+    ],
+    "activePanelId": "d1"
+  },
+  "floating": [],
+  "minimized": [],
+  "panels": {
+    "d1": {
+      "id": "d1",
+      "title": "a.md",
+      "component": "editor",
+      "state": "docked",
+      "props": {
+        "path": "/a.md",
+        "scrollTop": 120,
+        "tags": [
+          "x"
+        ]
+      },
+      "serializable": true,
+      "dedupeKey": "/a.md"
+    }
+  }
+}

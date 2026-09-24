@@ -1,0 +1,4125 @@
+/*
+ * angular-dockable-desktop — the library's only stylesheet.
+ *
+ * Ported from vue-dockable-desktop 1.1.1 (itself ported from react-dockable-desktop 6.2.0 and
+ * completed): every class, custom property and @keyframes name is `ndd-` prefixed, with no
+ * exceptions (ADR 0003), and nothing outside the library's own DOM is styled (ADR 0007).
+ * Import it once, globally — angular.json → "styles": ["angular-dockable-desktop/styles.css"]. rdd's own migration had been left
+ * unfinished — ~35 unprefixed tokens (`--sidebar-*`, `--tab-*`, `--toolbar-*`), four bare
+ * classes, two dead rules and 30 demo-only `.sb-*` rules were still shipping in its published
+ * `styles.css`. vdd resolved all of that; here it is enforced by scripts/gates/css-prefix.mjs.
+ *
+ * Tokens live on `:root` deliberately, not scoped to the workspace element: the context menu,
+ * toasts, toolbar flyouts and the overlay search dropdown all render into `document.body`, and
+ * `<ndd-sidebar>` is normally an *ancestor* of `<ndd-desktop>`. CSS variables only cascade
+ * downward, so scoping them would leave those parts unthemed.
+ *
+ * See docs/decisions/0003-prefix-ndd.md and docs/manual/ (theming).
+ */
+
+:root {
+  --ndd-styles-loaded: 1; /* sentinel — checked at mount to detect missing CSS import */
+  --ndd-z-base: 1000; /* base for floating windows + all chrome overlays; override via provideDockableDesktop({ zIndexBase }) */
+  --ndd-bg-primary: #090b11;
+  --ndd-bg-workspace: #0f111a;
+  --ndd-bg-panel: #141722;
+  --ndd-bg-tab-bar: #0d0f16;
+  --ndd-text-primary: #f1f5f9;
+  --ndd-text-secondary: #94a3b8;
+  --ndd-border-color: rgba(255, 255, 255, 0.08);
+  --ndd-accent-color: #38bdf8; /* Modern Cyan/Sky-blue accent */
+  --ndd-accent-glow: rgba(56, 189, 248, 0.15);
+  --ndd-header-button-gap: 4px; /* Configurable gap spacing between titlebar action buttons */
+  /* Window skins variables */
+  --ndd-window-bg: rgba(20, 22, 28, var(--ndd-window-opacity, 0.85));
+  --ndd-window-border: rgba(255, 255, 255, 0.08);
+  --ndd-window-border-focused: rgba(255, 255, 255, 0.28);
+  --ndd-window-header-bg: rgba(0, 0, 0, 0.25);
+  --ndd-window-text: #f8f9fa;
+  --ndd-window-shadow: 0 16px 40px rgba(0, 0, 0, 0.4);
+  --ndd-window-shadow-focused: 0 24px 50px rgba(0, 0, 0, 0.55);
+  /* Modal theme variables */
+  --ndd-modal-curtain-bg: rgba(9, 11, 17, 0.65);
+  --ndd-modal-bg: rgba(20, 23, 34, 0.95);
+  --ndd-modal-border: rgba(255, 255, 255, 0.08);
+  --ndd-modal-header-bg: rgba(0, 0, 0, 0.15);
+  --ndd-modal-header-border: rgba(255, 255, 255, 0.06);
+  --ndd-modal-close-hover-color: #ffffff;
+  --ndd-side-panel-bg: rgba(20, 23, 34, 0.88);
+  --ndd-side-panel-border: rgba(255, 255, 255, 0.08);
+  --ndd-side-panel-header-bg: rgba(0, 0, 0, 0.15);
+  --ndd-side-panel-header-border: rgba(255, 255, 255, 0.06);
+  --ndd-side-panel-close-hover-color: #ffffff;
+  /* Grid/Docked panel theme variables */
+  --ndd-border-panel: rgba(255, 255, 255, 0.08);
+  --ndd-bg-tab-inactive: #0c0d12;
+  --ndd-text-tab-inactive: #858b99;
+  --ndd-text-tab-active: #ffffff;
+  /* Tab and control button hover colors */
+  --ndd-bg-tab-hover: #171a22;
+  --ndd-text-tab-hover: #e2e8f0;
+  --ndd-close-btn-hover-bg: rgba(255, 255, 255, 0.12);
+  --ndd-close-btn-hover-color: #ffffff;
+  --ndd-close-btn-color: #858b99;
+  --ndd-close-btn-active-color: #e2e8f0;
+  /* Tab focus states */
+  --ndd-tab-indicator-focused: var(--ndd-accent-color, #38bdf8);
+  --ndd-tab-indicator-unfocused: rgba(255, 255, 255, 0.3);
+  --ndd-tab-bg-active-focused: var(--ndd-bg-panel);
+  --ndd-tab-bg-active-unfocused: rgba(20, 23, 34, 0.55);
+  --ndd-tab-text-active-focused: var(--ndd-text-tab-active, #ffffff);
+  --ndd-tab-text-active-unfocused: rgba(255, 255, 255, 0.65);
+  --ndd-resizer-bg: rgba(255, 255, 255, 0.08);
+  --ndd-custom-btn-bg: rgba(255, 255, 255, 0.03);
+  --ndd-custom-btn-border: rgba(255, 255, 255, 0.05);
+  --ndd-custom-btn-hover-bg: rgba(255, 255, 255, 0.12);
+  --ndd-custom-btn-hover-color: #ffffff;
+  /* Taskbar theme variables */
+  --ndd-taskbar-bg: rgba(0, 0, 0, 0.75);
+  --ndd-taskbar-border: rgba(255, 255, 255, 0.1);
+  --ndd-taskbar-nav-color: rgba(255, 255, 255, 0.5);
+  --ndd-taskbar-item-bg: rgba(15, 23, 42, 0.6);
+  --ndd-taskbar-item-hover-bg: rgba(15, 23, 42, 0.8);
+  --ndd-taskbar-item-border: rgba(255, 255, 255, 0.08);
+  --ndd-taskbar-item-text: var(--ndd-accent-color, #38bdf8);
+  /* Scrollbar theme variables */
+  --ndd-scrollbar-thumb: rgba(255, 255, 255, 0.1);
+  --ndd-scrollbar-thumb-hover: rgba(255, 255, 255, 0.2);
+  --ndd-scrollbar-track: rgba(255, 255, 255, 0.01);
+  /* Mockup Panel inner theme variables */
+  --ndd-panel-card-bg: rgba(0, 0, 0, 0.2);
+  --ndd-panel-card-border: rgba(255, 255, 255, 0.1);
+  --ndd-panel-text: var(--ndd-text-primary);
+  --ndd-panel-title-color: var(--ndd-accent-color, #38bdf8);
+  /* ── Panel Overlay — Toolbar ── */
+  --ndd-panel-toolbar-padding: 8px;
+  --ndd-panel-toolbar-gap: 4px;
+  --ndd-panel-toolbar-btn-size: 32px;
+  --ndd-panel-toolbar-btn-radius: 6px;
+  --ndd-panel-toolbar-fg: rgba(255, 255, 255, 0.65);
+  --ndd-panel-toolbar-fg-hover: rgba(255, 255, 255, 0.95);
+  --ndd-panel-toolbar-btn-hover-bg: var(--ndd-toolbar-btn-hover-bg, rgba(255, 255, 255, 0.08));
+  --ndd-panel-toolbar-btn-active-bg: var(--ndd-toolbar-btn-radio-active-bg, rgba(56, 189, 248, 0.14));
+  --ndd-panel-toolbar-btn-active-color: var(--ndd-tab-icon-active, #38bdf8);
+  --ndd-panel-toolbar-separator-color: var(--ndd-toolbar-separator-color, rgba(255, 255, 255, 0.09));
+  /* ── Panel Overlay — Floating Window ── */
+  --ndd-panel-float-bg: rgba(22, 24, 34, 0.92);
+  --ndd-panel-float-border: rgba(255, 255, 255, 0.1);
+  --ndd-panel-float-radius: 8px;
+  --ndd-panel-float-shadow: 0 4px 16px rgba(0, 0, 0, 0.35);
+  --ndd-panel-float-shadow-active: 0 8px 28px rgba(0, 0, 0, 0.55);
+  --ndd-panel-float-header-bg: var(--ndd-window-header-bg, rgba(0, 0, 0, 0.25));
+  --ndd-panel-float-header-bg-active: var(--ndd-window-header-bg, rgba(0, 0, 0, 0.25));
+  --ndd-panel-float-title-color: var(--ndd-window-text, #f8f9fa);
+  --ndd-panel-float-title-color-active: var(--ndd-window-text, #f8f9fa);
+  /* ── Sidebar, tab-icon and toolbar-button tokens ──
+     These are the library's *dark* values, and they live here rather than in a
+     `[data-color-scheme="dark"]` block because dark is the base look: an application signals it
+     by **removing** `data-color-scheme`, so a dark-scoped block matches nothing in the normal
+     case. Until 1.1.0 they were scoped that way, which left them undefined exactly when they
+     were needed — and fifteen of them are read with no `var()` fallback, so the declaration was
+     dropped rather than defaulted. The sidebar, its drawer and the workspace toolbar rendered
+     with no background and inherited text in dark mode; the selected rail icon had no colour at
+     all. `[data-color-scheme="light"]` overrides these, which is all a scheme block should ever
+     do, and a gate rule now rejects a token whose only home is such a block. */
+  --ndd-sidebar-bg: #1e2024;
+  --ndd-sidebar-tabs-bg: #141619;
+  --ndd-sidebar-border: rgba(255, 255, 255, 0.08);
+  --ndd-sidebar-card-bg: rgba(255, 255, 255, 0.03);
+  --ndd-sidebar-card-border: rgba(255, 255, 255, 0.08);
+  --ndd-sidebar-card-active-bg: rgba(56, 189, 248, 0.06);
+  --ndd-sidebar-card-active-border: rgba(56, 189, 248, 0.3);
+  --ndd-sidebar-text-title: #f8f9fa;
+  --ndd-sidebar-text-muted: #8a90a0;
+  --ndd-sidebar-badge-bg: #2d3139;
+  --ndd-sidebar-badge-text: #b0b5c0;
+  --ndd-sidebar-btn-front-border: #38bdf8;
+  --ndd-sidebar-btn-front-text: #38bdf8;
+  --ndd-sidebar-btn-front-bg: transparent;
+  --ndd-sidebar-btn-front-hover-bg: rgba(56, 189, 248, 0.1);
+  --ndd-tab-icon-active: #38bdf8;
+  --ndd-tab-icon-inactive: #9ea4b0;
+  --ndd-tab-btn-active-bg: #1e2024; /* Seamless merge look */
+  --ndd-sidebar-btn-hover-bg: rgba(255, 255, 255, 0.05);
+  --ndd-sidebar-card-hover-border: rgba(56, 189, 248, 0.25);
+  --ndd-sidebar-card-hover-bg: rgba(255, 255, 255, 0.04);
+  --ndd-sidebar-card-active-shadow: rgba(56, 189, 248, 0.08);
+  --ndd-sidebar-drawer-header-bg: rgba(0, 0, 0, 0.12);
+  --ndd-toolbar-btn-hover-bg: rgba(255, 255, 255, 0.06);
+  --ndd-toolbar-btn-radio-active-bg: rgba(56, 189, 248, 0.14);
+  --ndd-toolbar-btn-toggle-active-bg: rgba(56, 189, 248, 0.08);
+  --ndd-toolbar-separator-color: rgba(255, 255, 255, 0.09);
+  /* Sidebar active-tab design tokens */
+  --ndd-tab-btn-active-shadow: none;
+  /* Toolbar active-button design tokens */
+  --ndd-toolbar-btn-active-shadow: none;
+  /* Scheme-independent measurements and off-by-default effects. The values are the ones the
+     `var()` reads already fell back to, so nothing renders differently; declaring them is what
+     makes `:root` a complete inventory for a skin author. */
+  --ndd-tab-accent-bar-width: 3px;
+  --ndd-tab-btn-active-glow: none;
+  --ndd-tab-btn-active-radius: 0px;
+  --ndd-tab-btn-active-width: 100%;
+  --ndd-toolbar-accent-bar-width: 3px;
+  --ndd-toolbar-btn-active-glow: none;
+}
+
+/* Every element the library renders carries an ndd- prefixed class (see
+   CLAUDE.md's prefix convention) — this targets exactly those elements
+   directly, never their descendants, so a consumer's own content nested
+   inside (tab renderContent, panel/modal body content) is never touched.
+   Without this, several rules combining padding with a fixed/percentage
+   min-height/max-height/height (e.g. .ndd-side-panel-header,
+   .ndd-toolbar-strip) render at a size that depends on whatever box-sizing
+   the host page happens to set globally — MUI's CssBaseline and Bootstrap's
+   reboot both reset it via a bare `*` selector, but a plain page with no
+   such reset leaves the browser default (content-box) in effect, so the
+   exact same CSS renders at a visibly different size purely depending on
+   which app it's dropped into. Deliberately no !important: this selector's
+   specificity (0,1,0) already beats an accidental bare `*` reset (both
+   examples above are (0,0,0)) unconditionally, regardless of stylesheet
+   load order, while still losing — via source order at the resulting tie —
+   to a consumer's own deliberate, equally-specific override of a specific
+   ndd- class, which normally loads after this stylesheet. */
+[class*="ndd-"] {
+  box-sizing: border-box;
+}
+
+/*
+ * The library does not style the host page.
+ *
+ * react-dockable-desktop sets `height: 100%; overflow: hidden` on `html, body, #root`,
+ * because a percentage-height chain needs a real height all the way up. That works, but it
+ * reaches outside the library's own DOM and silently changes the page of any app that
+ * embeds a workspace in part of a view. ndd (like vdd) asks the application to give the workspace a
+ * height instead, warns in development when it has none, and offers this opt-in helper.
+ *
+ * See docs/PARITY.md section 4, divergence D8.
+ */
+.ndd-fill-viewport,
+/* On the workspace element itself too — the obvious place to put it, and the one the zero-height
+   warning points at. Without the compound selector the later `.ndd-workspace { height: 100% }`
+   wins and the utility does nothing (N11, found by the M13 consumer smoke). */
+.ndd-workspace.ndd-fill-viewport {
+  height: 100vh;
+  overflow: hidden;
+}
+
+/* ── Coexistence base (M13) ─────────────────────────────────────────────────────────────────
+   The chrome must look the same whatever the host page loads — Bootstrap's body typography and
+   element rules, Tailwind's preflight (`* { padding: 0; border: 0 solid }`), a Material theme.
+   Two things made it depend on the page, and the M13 coexistence gate measured both:
+
+   1. chrome rendered *outside* the workspace root — the sidebar strip and header, the toolbar,
+      everything portalled to <body> — set no typography of its own and inherited the page's;
+   2. the library's buttons relied on the browser's default button padding and font, which a
+      reset removes.
+
+   So every chrome root states its own base, and every library button starts from an explicit
+   reset. These are single-class rules placed early: they beat any element selector a framework
+   uses, and the library's own later rules still decide the actual look. Consumer content inside
+   a root (a panel, a drawer tab, a modal body) inherits this base exactly as panels always
+   inherited the workspace's. */
+.ndd-workspace,
+.ndd-sidebar-tabs-strip,
+.ndd-sidebar-drawer-header,
+.ndd-toolbar-strip,
+.ndd-toolbar-group-flyout,
+.ndd-context-menu,
+.ndd-modal-overlay,
+.ndd-side-panel,
+.ndd-toast-container,
+.ndd-taskbar-item-tooltip,
+.ndd-panel-toolbar-search__dropdown {
+  font-family: var(--ndd-font-family, 'Outfit', 'Inter', system-ui, -apple-system, sans-serif);
+  line-height: normal;
+  text-transform: none;
+  letter-spacing: normal;
+  color: var(--ndd-text-primary);
+}
+.ndd-sidebar-tab-btn,
+.ndd-toolbar-btn,
+.ndd-toolbar-group-flyout-item,
+.ndd-custom-tab-btn,
+.ndd-modal-close-button,
+.ndd-side-panel-close-button,
+.ndd-sidebar-drawer-close-button,
+.ndd-toast__close,
+.ndd-panel-toolbar-btn,
+.ndd-panel-toolbar-search__item,
+.ndd-taskbar-nav-btn,
+.ndd-header-close-empty-group,
+.ndd-context-menu__item,
+.ndd-btn {
+  font: inherit;
+  line-height: inherit;
+  letter-spacing: inherit;
+  text-transform: none;
+  padding: 0;
+  margin: 0;
+}
+.ndd-modal-title,
+.ndd-side-panel-title {
+  line-height: 1.3;
+}
+/* An icon inside a library button sits on no text baseline: inline SVG does, and resets move it
+   (Tailwind's preflight makes svg display: block, Bootstrap sets vertical-align: middle). */
+.ndd-sidebar-tab-btn > svg,
+.ndd-toolbar-btn > svg,
+.ndd-custom-tab-btn > svg,
+.ndd-modal-close-button > svg,
+.ndd-side-panel-close-button > svg,
+.ndd-sidebar-drawer-close-button > svg,
+.ndd-toast__close > svg,
+.ndd-panel-toolbar-btn > svg,
+.ndd-taskbar-nav-btn > svg,
+.ndd-header-close-empty-group > svg,
+.ndd-close-tab-x > svg {
+  display: block;
+}
+
+/* Cosmetic properties are scoped to the library's own root element only — never
+   the consumer's page, html/body, or their own mount div. */
+.ndd-workspace {
+  background-color: var(--ndd-bg-primary);
+  color: var(--ndd-text-primary);
+  font-family: var(--ndd-font-family, 'Outfit', 'Inter', system-ui, -apple-system, sans-serif);
+  -webkit-font-smoothing: antialiased;
+}
+
+/* Workspace Panel Container */
+.ndd-workspace-panel {
+  background-color: var(--ndd-bg-panel);
+  border: 1px solid var(--ndd-border-panel);
+  box-shadow: inset 0 0 20px rgba(0, 0, 0, 0.15);
+  width: 100%;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+}
+
+/* Tab Headers Bar */
+.ndd-workspace-tab-bar {
+  background-color: var(--ndd-bg-tab-bar);
+  border-bottom: 1px solid var(--ndd-border-panel);
+  padding: 0 4px;
+  display: flex;
+  flex-direction: row;
+  justify-content: space-between;
+  align-items: center;
+}
+
+/* Tab Headers Container */
+/* rdd rendered scroll buttons in a tab bar that overflowed (`.rdd-tab-scroll-btn`).
+   vdd's tab bar is a scroll container with no buttons — recorded as divergence D15 — so
+   those rules matched nothing and were removed in M13. The taskbar's own overflow buttons
+   are `.ndd-taskbar-nav-btn`, which are emitted and styled. */
+
+.ndd-tab-headers-container {
+  display: flex;
+  align-items: flex-end;
+  height: 100%;
+  padding-top: 4px;
+  padding-left: 6px;
+  position: relative;
+  z-index: 26; /* above resizer ::before (22) and resizer hover (25) — tabs always win */
+  margin-bottom: -1px;
+  flex-grow: 1;
+  overflow-x: auto;
+}
+
+/* Tab bar scroll arrow buttons — appear when tabs overflow */
+
+
+
+/* Premium Tab styling (VS Code Style) */
+.ndd-workspace-tab {
+  position: relative;
+  background-color: var(--ndd-bg-tab-inactive) !important; /* VS Code dark background for inactive tabs */
+  color: var(--ndd-text-tab-inactive) !important; /* Clear readable gray */
+  border: none !important;
+  border-right: 1px solid var(--ndd-border-panel) !important; /* crisp separator */
+  padding: 0 6px 0 14px !important;
+  font-size: 0.75rem;
+  display: flex;
+  align-items: center;
+  border-radius: 0 !important; /* Square edges */
+  margin-right: 0 !important; /* No gaps between tabs */
+  font-weight: 500;
+  cursor: pointer;
+  user-select: none;
+  height: 35px; /* VS Code standard height */
+  box-sizing: border-box;
+  flex-shrink: 1;
+  min-width: 80px; /* compress before scrolling kicks in */
+  transition: background-color 0.1s ease, color 0.1s ease;
+}
+
+.ndd-workspace-tab > .ndd-text-truncate {
+  margin-right: 12px;
+}
+
+/* Remove original after element separator */
+.ndd-workspace-tab:not(.ndd-active):not(:last-child)::after {
+  display: none !important;
+}
+
+.ndd-workspace-tab:hover {
+  background-color: var(--ndd-bg-tab-hover) !important;
+  color: var(--ndd-text-tab-hover) !important;
+}
+
+/* Active tab (focused) */
+.ndd-workspace-tab.ndd-active.ndd-workspace-tab-active-focused {
+  background-color: var(--ndd-tab-bg-active-focused) !important;
+  color: var(--ndd-tab-text-active-focused) !important;
+  font-weight: 500;
+  border-right: 1px solid var(--ndd-border-panel) !important;
+  z-index: 2;
+}
+
+.ndd-workspace-tab.ndd-active.ndd-workspace-tab-active-focused::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 2px;
+  background-color: var(--ndd-tab-indicator-focused) !important;
+  border-radius: 0 !important;
+  box-shadow: 0 1px 4px var(--ndd-accent-glow);
+}
+
+/* Active tab (unfocused/inactive group) */
+.ndd-workspace-tab.ndd-active.ndd-workspace-tab-active-unfocused {
+  background-color: var(--ndd-tab-bg-active-unfocused) !important;
+  color: var(--ndd-tab-text-active-unfocused) !important;
+  font-weight: 500;
+  border-right: 1px solid var(--ndd-border-panel) !important;
+  z-index: 2;
+}
+
+.ndd-workspace-tab.ndd-active.ndd-workspace-tab-active-unfocused::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 2px;
+  background-color: var(--ndd-tab-indicator-unfocused) !important;
+  border-radius: 0 !important;
+}
+
+.ndd-workspace-tab-inactive {
+  color: var(--ndd-close-btn-color) !important;
+}
+
+.ndd-workspace-tab-inactive:hover {
+  color: var(--ndd-text-tab-hover) !important;
+}
+
+/* Tab close button (VS Code style visibility) */
+.ndd-close-tab-x {
+  opacity: 0; /* hidden by default on inactive tabs, allows hover/active overrides */
+  transition: opacity 0.12s ease, background-color 0.12s ease, color 0.12s ease;
+  margin-left: 8px;
+  border-radius: 3px;
+  color: var(--ndd-close-btn-color) !important;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* Always show close icon on active tab */
+.ndd-workspace-tab.ndd-active .ndd-close-tab-x {
+  opacity: 0.75 !important;
+  color: var(--ndd-close-btn-active-color) !important;
+}
+
+/* Show close icon on hover of any tab */
+.ndd-workspace-tab:hover .ndd-close-tab-x {
+  opacity: 0.75 !important;
+  color: var(--ndd-close-btn-active-color) !important;
+}
+
+/* Hover style on the close icon itself (VS Code dark rounded background) */
+.ndd-close-tab-x:hover {
+  opacity: 1 !important;
+  background-color: var(--ndd-close-btn-hover-bg) !important;
+  color: var(--ndd-close-btn-hover-color) !important;
+}
+
+/* Drag resizer split bars */
+.ndd-resizer-bar {
+  background-color: var(--ndd-border-panel, rgba(255, 255, 255, 0.08)) !important;
+  transition: background-color 0.15s ease, transform 0.15s ease !important;
+  position: relative;
+  z-index: 21;
+}
+
+/* Invisible 8px hit-box overlay to make grabbing easy */
+.ndd-resizer-bar::before {
+  content: '';
+  position: absolute;
+  z-index: 22;
+}
+
+/* Grab hit-box for columns (cursor: col-resize) */
+.ndd-resizer-bar[style*="cursor: col-resize"]::before {
+  top: 0;
+  bottom: 0;
+  left: -3px;
+  width: 8px;
+  height: 100%;
+}
+
+/* Grab hit-box for rows (cursor: row-resize) — extends upward only (into safe content area),
+   never downward into the tab bar of the panel below */
+.ndd-resizer-bar[style*="cursor: row-resize"]::before {
+  left: 0;
+  right: 0;
+  top: -8px;
+  height: 9px;
+  width: 100%;
+}
+
+/* Highlight state (on hover or active drag) */
+.ndd-resizer-bar:hover,
+.ndd-resizer-bar.ndd-active {
+  background-color: color-mix(in srgb, var(--ndd-accent-color) 35%, transparent) !important;
+  box-shadow: none !important;
+  z-index: 25 !important;
+}
+
+.ndd-resizer-bar[style*="cursor: col-resize"]:hover,
+.ndd-resizer-bar[style*="cursor: col-resize"].ndd-active {
+  transform: scaleX(2);
+}
+
+.ndd-resizer-bar[style*="cursor: row-resize"]:hover,
+.ndd-resizer-bar[style*="cursor: row-resize"].ndd-active {
+  transform: scaleY(2);
+}
+
+/* Global body cursor overrides during active resize drag to prevent cursor flickering */
+body.ndd-resizing-active {
+  -webkit-user-select: none !important;
+  user-select: none !important;
+}
+body.ndd-resizing-row-active,
+body.ndd-resizing-row-active * {
+  cursor: row-resize !important;
+}
+body.ndd-resizing-col-active,
+body.ndd-resizing-col-active * {
+  cursor: col-resize !important;
+}
+
+/* Control buttons inside tabs/windows */
+.ndd-custom-tab-btn {
+  background: var(--ndd-custom-btn-bg);
+  border: 1px solid var(--ndd-custom-btn-border);
+  color: var(--ndd-text-secondary);
+  font-size: 9px;
+  width: 18px;
+  height: 18px;
+  border-radius: 4px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.15s cubic-bezier(0.4, 0, 0.2, 1);
+  padding: 0;
+  line-height: 1;
+}
+
+.ndd-custom-tab-btn:hover {
+  background-color: var(--ndd-custom-btn-hover-bg);
+  color: var(--ndd-custom-btn-hover-color);
+  border-color: var(--ndd-custom-btn-border);
+  transform: scale(1.05);
+}
+
+/* Taskbar Sibling Footer Styling */
+/* ── autohide mode: absolute overlay, collapses to peek strip ── */
+/*
+ * The taskbar sits above the workspace content.
+ *
+ * rdd set `zIndex: 100` inline on its footer; ported here because it is load-bearing, not
+ * decorative. Without it the autohide overlay is covered by whatever the grid puts at the
+ * bottom edge — a split divider's invisible 8px hit-box was enough to swallow every
+ * `pointerenter`, so the peek strip could not be hovered at all. Found by the M7 browser
+ * gate; the same class of omission as the structural flex styles in M4.
+ *
+ * Below floating windows on purpose: those stack from `--ndd-z-base` (1000), matching rdd.
+ */
+.ndd-taskbar-footer-container {
+  position: relative;
+  z-index: 100;
+}
+
+.ndd-taskbar-footer-container.ndd-taskbar-mode-autohide {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  transform: translateY(calc(100% - 8px));
+  transition: transform 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.ndd-taskbar-footer-container.ndd-taskbar-mode-autohide.ndd-taskbar-expanded {
+  transform: translateY(0);
+}
+
+.ndd-taskbar-peek-handle {
+  position: absolute;
+  top: 3px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 32px;
+  height: 3px;
+  border-radius: 999px;
+  background: var(--ndd-accent-color, #38bdf8);
+  opacity: 0.5;
+  pointer-events: none;
+  transition: opacity 0.2s;
+}
+
+.ndd-taskbar-footer-container.ndd-taskbar-mode-autohide.ndd-taskbar-expanded .ndd-taskbar-peek-handle {
+  opacity: 0;
+}
+
+@media (pointer: coarse) {
+  .ndd-taskbar-footer-container.ndd-taskbar-mode-autohide {
+    transform: translateY(calc(100% - 12px));
+  }
+}
+
+.ndd-taskbar-footer-container {
+  background-color: var(--ndd-taskbar-bg) !important;
+  border-top: 1px solid var(--ndd-border-panel) !important;
+  backdrop-filter: blur(12px) saturate(180%);
+  -webkit-backdrop-filter: blur(12px) saturate(180%);
+  flex-shrink: 0;
+  width: 100%;
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  justify-content: center;
+  padding: 0 1rem;
+}
+
+.ndd-taskbar-nav-btn {
+  color: var(--ndd-taskbar-nav-color) !important;
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  font-family: monospace;
+  padding: 0;
+  text-decoration: none;
+  font-size: 0.875rem;
+  line-height: 1;
+}
+
+.ndd-taskbar-nav-btn:hover {
+  color: var(--ndd-accent-color) !important;
+}
+
+/* macOS/Win11 Glassmorphic Taskbar */
+.ndd-taskbar-glassmorphic-item {
+  background: var(--ndd-taskbar-item-bg) !important;
+  backdrop-filter: blur(12px) saturate(180%);
+  -webkit-backdrop-filter: blur(12px) saturate(180%);
+  border: 1px solid var(--ndd-taskbar-item-border) !important;
+  color: var(--ndd-taskbar-item-text) !important;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1) !important;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 4px;
+  cursor: pointer;
+}
+
+.ndd-taskbar-glassmorphic-item:hover {
+  background: var(--ndd-taskbar-item-hover-bg) !important;
+  border-color: var(--ndd-accent-color, #38bdf8) !important;
+  box-shadow: 0 6px 16px rgba(56, 189, 248, 0.15);
+}
+
+/* Minimalist Taskbar Icon-Only & Premium Tooltip Rules */
+.ndd-taskbar-item-icon {
+  font-size: 22px !important;
+  line-height: 1 !important;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.ndd-taskbar-item-icon svg,
+.ndd-taskbar-item-icon img {
+  width: 22px !important;
+  height: 22px !important;
+  max-width: 22px !important;
+  max-height: 22px !important;
+  object-fit: contain;
+  display: block;
+}
+
+/* The slide-in starts 6px low — inside the 8px gap above the icon — never 10% of the preview's
+   own height (~18px, as in rdd/vdd), which covered the icon for the first frames: a click or
+   right-click just after hovering landed on the preview instead. Found by the M8 browser gate. */
+@keyframes ndd-tooltip-fade-in {
+  from {
+    opacity: 0;
+    transform: translateX(-50%) translateY(calc(-100% + 6px));
+  }
+  to {
+    opacity: 1;
+    transform: translateX(-50%) translateY(-100%);
+  }
+}
+
+/*
+ * The hover preview stacks above everything in the workspace.
+ *
+ * rdd set `zIndex: 999999` inline on this element, so the ported stylesheet had no z-index at
+ * all and the preview came out at `auto`: a split divider painted over it, and the pointer
+ * could never reach the preview to click it. Expressed against `--ndd-z-base` like the rest
+ * of the library's chrome, so `zIndexBase` moves it with everything else.
+ *
+ * This is the third value rdd carried inline rather than in CSS (after the structural flex
+ * styles and the taskbar's own z-index) — all three were load-bearing, and all three were
+ * found by a browser gate rather than by reading.
+ */
+.ndd-taskbar-item-tooltip {
+  z-index: calc(var(--ndd-z-base, 1000) + 8000);
+  background: var(--ndd-bg-panel, #1e1e1e) !important;
+  color: var(--ndd-text-primary, #ffffff) !important;
+  padding: 8px !important;
+  border-radius: 6px;
+  font-size: 11px !important;
+  font-family: var(--ndd-font-family, 'Outfit', 'Inter', system-ui, sans-serif);
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.35);
+  border: 1px solid var(--ndd-taskbar-item-border, rgba(255, 255, 255, 0.1)) !important;
+  animation: ndd-tooltip-fade-in 0.15s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+/* Invisible bridge so mouse transitions smoothly to tooltip */
+.ndd-taskbar-item-tooltip::before {
+  content: '';
+  position: absolute;
+  top: 100%;
+  left: 0;
+  width: 100%;
+  height: 12px;
+  background: transparent;
+}
+
+.ndd-taskbar-item-tooltip::after {
+  content: '';
+  position: absolute;
+  top: 100%;
+  left: 50%;
+  transform: translateX(-50%);
+  border-width: 5px;
+  border-style: solid;
+  border-color: var(--ndd-bg-panel, #1e1e1e) transparent transparent transparent;
+}
+
+/* Live preview thumbnail styles.
+   rdd additionally shipped `.ndd-taskbar-item-preview-host .luciad canvas` rules, hard-coding
+   a specific third-party mapping library's class name into a framework-agnostic stylesheet.
+   Dropped — an application can style its own content inside the preview host itself.
+   See docs/PARITY.md, divergence D10. */
+/*
+ * The thumbnail frame is clickable; its *contents* are not.
+ *
+ * rdd sets `pointer-events: none` on the frame itself, so a click anywhere over the
+ * thumbnail — which is most of the preview — passes through the tooltip entirely and does
+ * nothing. Only its little header row responds. Here the frame accepts the click (and the
+ * tooltip's handler restores the panel) while everything inside stays inert, so the live
+ * panel in the preview can never be interacted with by accident.
+ * See docs/PARITY.md divergence D11.
+ */
+.ndd-taskbar-item-preview-frame {
+  border-radius: 4px;
+  overflow: hidden;
+  background: #000000;
+  border: 1px solid var(--ndd-taskbar-item-border, rgba(255, 255, 255, 0.15));
+  position: relative;
+  margin-top: 4px;
+  user-select: none !important;
+}
+
+.ndd-taskbar-item-preview-host,
+.ndd-taskbar-item-preview-letter {
+  pointer-events: none !important;
+}
+
+.ndd-taskbar-item-preview-host {
+  transform-origin: top left;
+  position: absolute;
+  top: 0;
+  left: 0;
+}
+.ndd-taskbar-item-preview-host * {
+  pointer-events: none !important;
+  user-select: none !important;
+}
+
+
+
+.ndd-tooltip-close-x {
+  width: 18px;
+  height: 18px;
+  border-radius: 3px;
+  background: transparent !important;
+  border: none !important;
+  color: var(--ndd-close-btn-color, var(--ndd-text-secondary, #888888)) !important;
+  cursor: pointer;
+  transition: opacity 0.12s ease, background-color 0.12s ease, color 0.12s ease;
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  opacity: 0.75;
+}
+
+.ndd-tooltip-close-x:hover {
+  background: var(--ndd-close-btn-hover-bg) !important;
+  color: var(--ndd-close-btn-hover-color) !important;
+  opacity: 1 !important;
+}
+.ndd-scrollbar-hidden::-webkit-scrollbar {
+  display: none;
+}
+
+/* Cross-browser scrollbar styling (Firefox standard) — scoped to the library's
+   own workspace subtree, never the consumer's page. .ndd-sidebar-drawer-body is
+   included explicitly alongside it: <Sidebar> mounts as a sibling of
+   <WindowManager>, not a descendant of .ndd-workspace, so it needs its own
+   entry here to pick up the same treatment — keep both in sync if this block
+   ever changes. */
+.ndd-workspace *,
+.ndd-sidebar-drawer-body {
+  scrollbar-width: thin;
+  scrollbar-color: var(--ndd-scrollbar-thumb) var(--ndd-scrollbar-track);
+}
+
+/* WebKit (Chrome, Safari, Edge) scrollbar styling */
+.ndd-workspace ::-webkit-scrollbar,
+.ndd-sidebar-drawer-body::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+.ndd-workspace ::-webkit-scrollbar-track,
+.ndd-sidebar-drawer-body::-webkit-scrollbar-track {
+  background: var(--ndd-scrollbar-track);
+}
+.ndd-workspace ::-webkit-scrollbar-thumb,
+.ndd-sidebar-drawer-body::-webkit-scrollbar-thumb {
+  background: var(--ndd-scrollbar-thumb);
+  border-radius: 4px;
+}
+.ndd-workspace ::-webkit-scrollbar-thumb:hover,
+.ndd-sidebar-drawer-body::-webkit-scrollbar-thumb:hover {
+  background: var(--ndd-scrollbar-thumb-hover);
+}
+
+.ndd-floating-window {
+  display: flex;
+  flex-direction: column;
+  border-radius: 8px;
+  border: 1px solid var(--ndd-window-border);
+  box-shadow: var(--ndd-window-shadow), inset 0 1px 0 rgba(255, 255, 255, 0.05);
+  backdrop-filter: blur(16px) saturate(180%);
+  -webkit-backdrop-filter: blur(16px) saturate(180%);
+  background-color: var(--ndd-window-bg);
+  overflow: hidden;
+  transition: box-shadow 0.2s, border-color 0.2s;
+}
+
+.ndd-floating-window.ndd-window-focused {
+  box-shadow: var(--ndd-window-shadow-focused), inset 0 1px 0 rgba(255, 255, 255, 0.08);
+  border-color: var(--ndd-window-border-focused);
+}
+
+/* Dim only titlebar when window is unfocused to keep panel content opaque */
+.ndd-floating-window:not(.ndd-window-focused) .ndd-floating-window-titlebar {
+  opacity: 0.65;
+  transition: opacity 0.2s ease;
+}
+
+/* The class the component actually renders is `ndd-maximized`. rdd's equivalent rule said
+   `.maximized`, so it never matched and a maximized window kept its rounded corners, border
+   and drop shadow while filling the whole workspace. See docs/PARITY.md, divergence D9. */
+.ndd-floating-window.ndd-maximized {
+  border-radius: 0;
+  border: none;
+  box-shadow: none;
+}
+
+
+.ndd-floating-window-titlebar {
+  padding: 8px 14px;
+  background-color: var(--ndd-window-header-bg);
+  border-bottom: 1px solid var(--ndd-window-border);
+  min-height: 38px;
+  display: flex;
+  flex-direction: row;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.ndd-floating-window-title {
+  font-family: var(--ndd-font-family, 'Outfit', sans-serif);
+  font-size: 0.78rem;
+  font-weight: 600;
+  color: var(--ndd-window-text);
+  letter-spacing: 0.02em;
+  display: flex;
+  align-items: center;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  margin-inline-end: 0.5rem;
+}
+
+
+/* ==========================================================================
+   CONTEXT MENU (.ndd-context-menu)
+   ========================================================================== */
+
+/* rdd wrapped its built-in menu icons in `.rdd-menu-icon` for the icon column's sizing.
+   vdd renders them inside `.ndd-context-menu__icon`, which is shared with the toolbar
+   flyout's rows, so the separate wrapper rule matched nothing. Removed in M13. */
+
+.ndd-context-menu {
+  position: fixed;
+  z-index: calc(var(--ndd-z-base, 1000) + 8500);
+  background: var(--ndd-sidebar-bg, #1e2024);
+  border: 1px solid var(--ndd-sidebar-border, rgba(255, 255, 255, 0.08));
+  border-radius: 6px;
+  padding: 4px 0;
+  min-width: 220px;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4), 0 2px 8px rgba(0, 0, 0, 0.2);
+  font-family: var(--ndd-font-family, -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif);
+  font-size: 13px;
+  animation: ndd-context-menu-in 0.1s cubic-bezier(0.16, 1, 0.3, 1);
+  outline: none;
+}
+
+@keyframes ndd-context-menu-in {
+  from { opacity: 0; transform: scale(0.97); }
+  to   { opacity: 1; transform: scale(1); }
+}
+
+.ndd-context-menu--submenu {
+  z-index: calc(var(--ndd-z-base, 1000) + 8501);
+}
+
+.ndd-context-menu__separator {
+  height: 1px;
+  background: var(--ndd-sidebar-border, rgba(255, 255, 255, 0.08));
+  margin: 4px 8px;
+  border: none;
+}
+
+.ndd-context-menu__item {
+  display: flex;
+  align-items: center;
+  width: calc(100% - 8px);
+  margin: 0 4px;
+  padding: 5px 8px;
+  gap: 8px;
+  background: none;
+  border: none;
+  border-radius: 4px;
+  color: var(--ndd-sidebar-text-title, #cccccc);
+  cursor: pointer;
+  text-align: start;
+  white-space: nowrap;
+  letter-spacing: 0.01em;
+  box-sizing: border-box;
+  font-size: inherit;
+  font-family: inherit;
+}
+
+.ndd-context-menu__item:hover:not(:disabled):not(.ndd-context-menu__item--disabled) {
+  background-color: var(--ndd-toolbar-btn-hover-bg, rgba(255, 255, 255, 0.07));
+  color: var(--ndd-sidebar-text-title, #f8f9fa);
+}
+
+.ndd-context-menu__item:disabled,
+.ndd-context-menu__item--disabled {
+  opacity: 0.38;
+  cursor: default;
+  pointer-events: none;
+}
+
+.ndd-context-menu__item--has-submenu.ndd-context-menu__item--submenu-open {
+  background-color: var(--ndd-toolbar-btn-radio-active-bg, rgba(9, 71, 113, 0.35));
+}
+
+.ndd-context-menu__icon {
+  width: 16px;
+  min-width: 16px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  color: inherit;
+  opacity: 0.85;
+}
+
+.ndd-context-menu__label {
+  flex: 1;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.ndd-context-menu__chevron {
+  flex-shrink: 0;
+  margin-left: auto;
+  padding-left: 12px;
+  font-size: 14px;
+  line-height: 1;
+  opacity: 0.6;
+}
+
+[dir="rtl"] .ndd-context-menu__chevron {
+  margin-left: 0;
+  margin-right: auto;
+  padding-left: 0;
+  padding-right: 12px;
+  transform: scaleX(-1);
+}
+
+[dir="rtl"] .ndd-context-menu__checkbox {
+  margin-left: 0;
+  margin-right: auto;
+  padding-left: 0;
+  padding-right: 12px;
+}
+
+.ndd-context-menu__checkbox {
+  width: 14px;
+  min-width: 14px;
+  height: 14px;
+  flex-shrink: 0;
+  margin-left: auto;
+  padding-left: 12px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--ndd-tab-icon-active, #38bdf8);
+  box-sizing: content-box;
+  opacity: 0.6;
+}
+
+.ndd-context-menu__checkbox--checked {
+  opacity: 1;
+}
+
+/* Drag split target drop zone overlays */
+.ndd-dock-drop-zone-overlay {
+  position: absolute;
+  inset: 0;
+  /* Must outrank .ndd-workspace-edge-trigger (+8999) and .ndd-corner-zone (+9000) —
+     a leaf's cross commonly falls within the outer edge band or a corner region,
+     and the more specific per-leaf target should win the hover/drop hit-test there. */
+  z-index: calc(var(--ndd-z-base, 1000) + 9001);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background-color: rgba(0, 0, 0, 0.15);
+  pointer-events: none;
+  border-radius: 4px;
+}
+
+/* Translucent overlay preview highlighting the grid section about to split */
+.ndd-dock-preview-highlight {
+  position: absolute;
+  background-color: rgba(56, 189, 248, 0.2) !important; /* neon cyan overlay */
+  border: 1.5px dashed var(--ndd-accent-color) !important;
+  transition: all 0.1s ease-out;
+  pointer-events: none;
+  z-index: 90;
+}
+
+/* Central cross layout container */
+.ndd-dock-target-cross {
+  position: relative;
+  width: 140px;
+  height: 140px;
+  pointer-events: auto;
+}
+
+/* Visual split target buttons (top, bottom, left, right, center) */
+.ndd-dock-target-box {
+  position: absolute;
+  background-color: rgba(15, 23, 42, 0.92);
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  border-radius: 4px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: copy;
+  transition: all 0.12s ease-in-out;
+  pointer-events: auto;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.5);
+  color: var(--ndd-text-secondary);
+}
+
+/* State-driven (activeDropZone), not :hover-driven — :hover never reliably
+   updates during an active drag in Safari, and doesn't exist on touch at all. */
+.ndd-dock-target-box--active {
+  background-color: var(--ndd-accent-color) !important;
+  border-color: #ffffff !important;
+  color: #090b11 !important;
+  transform: scale(1.12);
+  box-shadow: 0 0 12px var(--ndd-accent-color);
+}
+
+/* Specific split target layouts */
+.ndd-dock-target-left {
+  left: 0;
+  top: 45px;
+  width: 40px;
+  height: 50px;
+}
+.ndd-dock-target-right {
+  right: 0;
+  top: 45px;
+  width: 40px;
+  height: 50px;
+}
+.ndd-dock-target-top {
+  left: 45px;
+  top: 0;
+  width: 50px;
+  height: 40px;
+}
+.ndd-dock-target-bottom {
+  left: 45px;
+  bottom: 0;
+  width: 50px;
+  height: 40px;
+}
+.ndd-dock-target-center {
+  left: 45px;
+  top: 45px;
+  width: 50px;
+  height: 50px;
+  background-color: rgba(30, 41, 59, 0.95);
+  color: var(--ndd-accent-color);
+}
+
+/* Drag hover indicators: glowing insertion line */
+.ndd-workspace-tab.ndd-drag-hover-left {
+  box-shadow: -3px 0 0 0 var(--ndd-accent-color, #38bdf8),
+              -10px 0 10px -2px var(--ndd-accent-glow, rgba(56,189,248,0.35));
+}
+.ndd-workspace-tab.ndd-drag-hover-right {
+  box-shadow: 3px 0 0 0 var(--ndd-accent-color, #38bdf8),
+              10px 0 10px -2px var(--ndd-accent-glow, rgba(56,189,248,0.35));
+}
+
+/* Close button for empty LeafGroups inside header */
+.ndd-header-close-empty-group {
+  opacity: 0 !important;
+  transition: opacity 0.12s ease, background-color 0.12s ease, color 0.12s ease !important;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-inline-end: 0.5rem;
+}
+
+.ndd-workspace-panel:hover .ndd-header-close-empty-group {
+  opacity: 0.75 !important;
+}
+
+.ndd-header-close-empty-group:hover {
+  opacity: 1 !important;
+  background-color: rgba(255, 255, 255, 0.12) !important;
+  color: #ffffff !important;
+}
+
+/* Grabbing cursor style during active dragging */
+.ndd-dragging-active,
+.ndd-dragging-active * {
+  cursor: grabbing !important;
+}
+body.ndd-dragging-active {
+  -webkit-user-select: none !important;
+  user-select: none !important;
+}
+
+
+[data-color-scheme="light"] {
+  --ndd-bg-primary: #f8f9fa;
+  --ndd-bg-workspace: #f1f5f9;
+  --ndd-bg-panel: #ffffff;
+  --ndd-bg-tab-bar: #e9ecef;
+  --ndd-text-primary: #212529;
+  --ndd-text-secondary: #6c757d;
+  --ndd-border-color: rgba(0, 0, 0, 0.08);
+
+  --ndd-sidebar-bg: #f8f9fa;
+  --ndd-sidebar-tabs-bg: #e9ecef;
+  --ndd-sidebar-border: rgba(0, 0, 0, 0.08);
+  --ndd-sidebar-card-bg: #ffffff;
+  --ndd-sidebar-card-border: rgba(0, 0, 0, 0.08);
+  --ndd-sidebar-card-active-bg: rgba(0, 102, 204, 0.05);
+  --ndd-sidebar-card-active-border: rgba(0, 102, 204, 0.3);
+  --ndd-sidebar-text-title: #212529;
+  --ndd-sidebar-text-muted: #6c757d;
+  --ndd-sidebar-badge-bg: #e9ecef;
+  --ndd-sidebar-badge-text: #495057;
+  --ndd-sidebar-btn-front-border: #0066cc;
+  --ndd-sidebar-btn-front-text: #0066cc;
+  --ndd-sidebar-btn-front-bg: transparent;
+  --ndd-sidebar-btn-front-hover-bg: rgba(0, 102, 204, 0.08);
+  --ndd-tab-icon-active: #0066cc;
+  --ndd-tab-icon-inactive: #555c66;
+  --ndd-tab-btn-active-bg: #f8f9fa; /* Seamless merge look */
+  --ndd-sidebar-btn-hover-bg: rgba(0, 0, 0, 0.05);
+  --ndd-sidebar-card-hover-border: rgba(0, 102, 204, 0.3);
+  --ndd-sidebar-card-hover-bg: rgba(0, 0, 0, 0.03);
+  --ndd-sidebar-card-active-shadow: rgba(0, 102, 204, 0.08);
+  --ndd-sidebar-drawer-header-bg: rgba(0, 0, 0, 0.04);
+  --ndd-toolbar-btn-hover-bg: rgba(0, 0, 0, 0.05);
+  --ndd-toolbar-btn-radio-active-bg: rgba(0, 102, 204, 0.1);
+  --ndd-toolbar-btn-toggle-active-bg: rgba(0, 102, 204, 0.06);
+  --ndd-toolbar-separator-color: rgba(0, 0, 0, 0.1);
+  /* Light skin window overrides */
+  --ndd-window-bg: rgba(243, 244, 246, var(--ndd-window-opacity, 0.9));
+  --ndd-window-border: rgba(0, 0, 0, 0.08);
+  --ndd-window-border-focused: rgba(0, 0, 0, 0.28);
+  --ndd-window-header-bg: rgba(0, 0, 0, 0.04);
+  --ndd-window-text: #212529;
+  --ndd-window-shadow: 0 10px 30px rgba(0, 0, 0, 0.06);
+  --ndd-window-shadow-focused: 0 16px 36px rgba(0, 0, 0, 0.12);
+  /* Light skin modal overrides */
+  --ndd-modal-curtain-bg: rgba(0, 0, 0, 0.5);
+  --ndd-modal-bg: rgba(255, 255, 255, 0.97);
+  --ndd-modal-border: rgba(0, 0, 0, 0.1);
+  --ndd-modal-header-bg: rgba(0, 0, 0, 0.04);
+  --ndd-modal-header-border: rgba(0, 0, 0, 0.08);
+  --ndd-modal-close-hover-color: #212529;
+  /* Light skin side panel overrides */
+  --ndd-side-panel-bg: rgba(255, 255, 255, 0.97);
+  --ndd-side-panel-border: rgba(0, 0, 0, 0.1);
+  --ndd-side-panel-header-bg: rgba(0, 0, 0, 0.04);
+  --ndd-side-panel-header-border: rgba(0, 0, 0, 0.08);
+  --ndd-side-panel-close-hover-color: #212529;
+  /* Light skin grid/docked panel overrides */
+  --ndd-border-panel: rgba(0, 0, 0, 0.08);
+  --ndd-bg-tab-inactive: #e9ecef;
+  --ndd-text-tab-inactive: #495057;
+  --ndd-text-tab-active: #212529;
+  /* Light skin tab and control button hover colors */
+  --ndd-bg-tab-hover: #dee2e6;
+  --ndd-text-tab-hover: #212529;
+  --ndd-close-btn-hover-bg: rgba(0, 0, 0, 0.08);
+  --ndd-close-btn-hover-color: #212529;
+  --ndd-close-btn-color: #6c757d;
+  --ndd-close-btn-active-color: #212529;
+  --ndd-tab-indicator-focused: #0066cc;
+  --ndd-tab-indicator-unfocused: rgba(0, 0, 0, 0.25);
+  --ndd-tab-bg-active-focused: var(--ndd-bg-panel);
+  --ndd-tab-bg-active-unfocused: rgba(220, 224, 230, 0.65);
+  --ndd-tab-text-active-focused: #212529;
+  --ndd-tab-text-active-unfocused: #6c757d;
+  --ndd-resizer-bg: rgba(0, 0, 0, 0.08);
+  --ndd-custom-btn-bg: rgba(0, 0, 0, 0.03);
+  --ndd-custom-btn-border: rgba(0, 0, 0, 0.08);
+  --ndd-custom-btn-hover-bg: rgba(0, 0, 0, 0.08);
+  --ndd-custom-btn-hover-color: #212529;
+  /* Light skin taskbar theme variables */
+  --ndd-taskbar-bg: rgba(248, 249, 250, 0.85);
+  --ndd-taskbar-border: rgba(0, 0, 0, 0.08);
+  --ndd-taskbar-nav-color: rgba(0, 0, 0, 0.5);
+  --ndd-taskbar-item-bg: rgba(255, 255, 255, 0.65);
+  --ndd-taskbar-item-hover-bg: rgba(255, 255, 255, 0.85);
+  --ndd-taskbar-item-border: rgba(0, 0, 0, 0.08);
+  --ndd-taskbar-item-text: #0066cc;
+  /* Light skin scrollbar theme variables */
+  --ndd-scrollbar-thumb: rgba(0, 0, 0, 0.15);
+  --ndd-scrollbar-thumb-hover: rgba(0, 0, 0, 0.25);
+  --ndd-scrollbar-track: rgba(0, 0, 0, 0.02);
+  /* Light skin mockup panel inner theme variables */
+  --ndd-panel-card-bg: rgba(0, 0, 0, 0.03);
+  --ndd-panel-card-border: rgba(0, 0, 0, 0.08);
+  --ndd-panel-text: #212529;
+  --ndd-panel-title-color: #0066cc;
+  /* ── Panel Overlay — Toolbar (light) ── */
+  --ndd-panel-toolbar-fg: rgba(0, 0, 0, 0.55);
+  --ndd-panel-toolbar-fg-hover: rgba(0, 0, 0, 0.85);
+  --ndd-panel-toolbar-btn-hover-bg: rgba(0, 0, 0, 0.08);
+  --ndd-panel-toolbar-separator-color: rgba(0, 0, 0, 0.1);
+  /* ── Panel Overlay — Floating Window (light) ── */
+  --ndd-panel-float-bg: rgba(255, 255, 255, 0.96);
+  --ndd-panel-float-border: rgba(0, 0, 0, 0.1);
+  --ndd-panel-float-shadow: 0 4px 16px rgba(0, 0, 0, 0.12);
+  --ndd-panel-float-shadow-active: 0 8px 28px rgba(0, 0, 0, 0.2);
+}
+
+/* ==========================================================================
+   MULTI-THEME PRESETS (SKINS) DEFINITIONS
+   ========================================================================== */
+
+/* --------------------------------------------------------------------------
+   SKIN 1: VS Code (Default Variables matching :root)
+   -------------------------------------------------------------------------- */
+[data-ndd-skin="vscode"] {
+  /* Inherits everything from :root */
+}
+
+/* --------------------------------------------------------------------------
+   SKIN 2: macOS / Glassmorphic Preset
+   -------------------------------------------------------------------------- */
+[data-ndd-skin="macos"] {
+  --ndd-bg-workspace: #1a1a24;
+  --ndd-bg-panel: rgba(30, 30, 40, 0.45);
+  --ndd-bg-tab-bar: rgba(18, 18, 24, 0.3);
+  --ndd-window-bg: rgba(25, 25, 35, var(--ndd-window-opacity, 0.7));
+  --ndd-window-border: rgba(255, 255, 255, 0.1);
+  --ndd-window-header-bg: rgba(0, 0, 0, 0.15);
+  --ndd-accent-color: #38bdf8;
+  --ndd-accent-glow: rgba(56, 189, 248, 0.25);
+  --ndd-border-panel: rgba(255, 255, 255, 0.08);
+  --ndd-bg-tab-inactive: transparent;
+  --ndd-text-tab-inactive: #94a3b8;
+  --ndd-text-tab-active: #ffffff;
+  --ndd-window-shadow: 0 16px 40px rgba(0, 0, 0, 0.4);
+  --ndd-window-shadow-focused: 0 24px 50px rgba(56, 189, 248, 0.15);
+  --ndd-panel-card-bg: rgba(255, 255, 255, 0.03);
+  --ndd-panel-card-border: rgba(255, 255, 255, 0.08);
+}
+
+[data-ndd-skin="macos"][data-color-scheme="light"] {
+  --ndd-bg-primary: #f3f4f6;
+  --ndd-bg-workspace: #e5e7eb;
+  --ndd-bg-panel: rgba(255, 255, 255, 0.7);
+  --ndd-bg-tab-bar: rgba(229, 231, 235, 0.5);
+  --ndd-window-bg: rgba(255, 255, 255, var(--ndd-window-opacity, 0.85));
+  --ndd-window-border: rgba(0, 0, 0, 0.12);
+  --ndd-window-header-bg: rgba(243, 244, 246, 0.5);
+  --ndd-accent-color: #0066cc;
+  --ndd-accent-glow: rgba(0, 102, 204, 0.15);
+  --ndd-border-panel: rgba(0, 0, 0, 0.1);
+  --ndd-bg-tab-inactive: transparent;
+  --ndd-text-tab-inactive: #4b5563;
+  --ndd-text-tab-active: #111827;
+  --ndd-window-text: #111827;
+  --ndd-window-shadow: 0 10px 30px rgba(0, 0, 0, 0.08);
+  --ndd-window-shadow-focused: 0 16px 36px rgba(0, 102, 204, 0.18);
+  --ndd-panel-card-bg: rgba(0, 0, 0, 0.04);
+  --ndd-panel-card-border: rgba(0, 0, 0, 0.08);
+  --ndd-panel-text: #111827;
+  --ndd-panel-title-color: #0066cc;
+  --ndd-close-btn-color: #4b5563;
+  --ndd-close-btn-active-color: #111827;
+}
+
+/* macOS structural adjustments */
+[data-ndd-skin="macos"] .ndd-floating-window {
+  border-radius: 12px;
+  backdrop-filter: blur(20px) saturate(180%);
+  -webkit-backdrop-filter: blur(20px) saturate(180%);
+  border-color: var(--ndd-window-border);
+}
+[data-ndd-skin="macos"] .ndd-floating-window-titlebar {
+  border-top-left-radius: 12px;
+  border-top-right-radius: 12px;
+}
+[data-ndd-skin="macos"] .ndd-workspace-panel {
+  border-radius: 8px;
+  backdrop-filter: blur(12px) saturate(180%);
+  -webkit-backdrop-filter: blur(12px) saturate(180%);
+}
+[data-ndd-skin="macos"] .ndd-workspace-tab {
+  border-radius: 6px !important;
+  margin: 4px 4px 4px 4px !important;
+  height: 28px !important;
+  border: 1px solid var(--ndd-border-panel) !important;
+}
+[data-ndd-skin="macos"] .ndd-workspace-tab.ndd-active {
+  background-color: var(--ndd-bg-workspace) !important;
+}
+[data-ndd-skin="macos"] .ndd-workspace-tab.ndd-active::before {
+  display: none !important; /* Hide VS Code top line */
+}
+
+/* macOS Circle dots controls styling */
+[data-ndd-skin="macos"] .ndd-custom-tab-btn {
+  border-radius: 50% !important;
+  width: 12px !important;
+  height: 12px !important;
+  background: var(--ndd-custom-btn-bg) !important;
+  border: none !important;
+  color: transparent !important;
+  font-size: 0 !important;
+  overflow: hidden;
+  margin: 0 2px;
+}
+[data-ndd-skin="macos"] .ndd-floating-window-titlebar {
+  flex-direction: row-reverse !important;
+  position: relative !important;
+}
+[data-ndd-skin="macos"] .ndd-floating-window-titlebar .ndd-floating-window-title {
+  pointer-events: none !important;
+  margin: 0 !important;
+  margin-inline-start: 0.5rem !important;
+  flex: 1 !important;
+  min-width: 0 !important;
+  justify-content: flex-end !important;
+}
+[data-ndd-skin="macos"] .ndd-floating-window-titlebar .ndd-floating-window-title > * {
+  pointer-events: auto;
+}
+[data-ndd-skin="macos"] .ndd-floating-window-titlebar .ndd-titlebar-actions {
+  flex-direction: row-reverse !important;
+}
+[data-ndd-skin="macos"] .ndd-custom-tab-btn svg {
+  display: none !important;
+}
+[data-ndd-skin="macos"] .ndd-btn-close-tab {
+  background-color: #ff5f56 !important; /* Red (Close) */
+}
+[data-ndd-skin="macos"] .ndd-btn-minimize-tab {
+  background-color: #ffbd2e !important; /* Yellow (Minimize) */
+}
+[data-ndd-skin="macos"] .ndd-btn-maximize-tab {
+  background-color: #27c93f !important; /* Green (Maximize) */
+}
+
+/* Panel Icon Styling and Alignment */
+.ndd-workspace-tab-icon,
+.ndd-window-title-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  vertical-align: middle;
+  line-height: 1;
+  margin-inline-end: 4px !important; /* Forces the gap between the icon and the text title */
+}
+
+.ndd-workspace-tab-icon svg,
+.ndd-workspace-tab-icon img,
+.ndd-window-title-icon svg,
+.ndd-window-title-icon img {
+  width: 14px !important;
+  height: 14px !important;
+  max-width: 14px !important;
+  max-height: 14px !important;
+  object-fit: contain;
+  display: block;
+}
+
+[data-ndd-skin="macos"] .ndd-custom-tab-btn:hover {
+  filter: brightness(0.85);
+  transform: none !important;
+}
+
+/* --------------------------------------------------------------------------
+   SKIN 3: Chrome / Browser-Style Preset
+   -------------------------------------------------------------------------- */
+[data-ndd-skin="chrome"] {
+  --ndd-bg-workspace: #202124;
+  --ndd-bg-panel: #292a2d;
+  --ndd-bg-tab-bar: #202124;
+  --ndd-window-bg: rgba(41, 42, 45, var(--ndd-window-opacity, 1.0));
+  --ndd-window-border: #3c4043;
+  --ndd-window-header-bg: #202124;
+  --ndd-accent-color: #8ab4f8;
+  --ndd-accent-glow: rgba(138, 180, 248, 0.15);
+  --ndd-border-panel: #3c4043;
+  --ndd-bg-tab-inactive: #202124;
+  --ndd-text-tab-inactive: #9aa0a6;
+  --ndd-text-tab-active: #ffffff;
+  --ndd-panel-card-bg: #202124;
+  --ndd-panel-card-border: #3c4043;
+  --ndd-window-text: #ffffff;
+  --ndd-panel-text: #e8eaed;
+  --ndd-tab-icon-active: #8ab4f8;
+  --ndd-toolbar-btn-radio-active-bg: rgba(138, 180, 248, 0.14);
+  --ndd-toolbar-btn-toggle-active-bg: rgba(138, 180, 248, 0.08);
+}
+
+[data-ndd-skin="chrome"][data-color-scheme="light"] {
+  --ndd-bg-workspace: #dee1e6;
+  --ndd-bg-panel: #ffffff;
+  --ndd-bg-tab-bar: #dee1e6;
+  --ndd-window-bg: rgba(255, 255, 255, var(--ndd-window-opacity, 1.0));
+  --ndd-window-border: #cbd5e1;
+  --ndd-window-header-bg: #dee1e6;
+  --ndd-accent-color: #1a73e8;
+  --ndd-accent-glow: rgba(26, 115, 232, 0.15);
+  --ndd-border-panel: #dadce0;
+  --ndd-bg-tab-inactive: #dee1e6;
+  --ndd-text-tab-inactive: #474747;
+  --ndd-text-tab-active: #1f1f1f;
+  --ndd-panel-card-bg: #f1f3f4;
+  --ndd-panel-card-border: #dadce0;
+  --ndd-window-text: #1f1f1f;
+  --ndd-panel-text: #1f1f1f;
+  --ndd-panel-title-color: #1a73e8;
+  --ndd-close-btn-color: #474747;
+  --ndd-close-btn-active-color: #1f1f1f;
+  --ndd-tab-icon-active: #1a73e8;
+  --ndd-toolbar-btn-radio-active-bg: rgba(26, 115, 232, 0.12);
+  --ndd-toolbar-btn-toggle-active-bg: rgba(26, 115, 232, 0.07);
+}
+
+/* Chrome tab angled geometry shapes */
+[data-ndd-skin="chrome"] .ndd-workspace-tab {
+  clip-path: polygon(10px 0%, calc(100% - 10px) 0%, 100% 100%, 0% 100%);
+  padding: 0 18px !important;
+  margin-right: -4px !important;
+  border-right: none !important;
+}
+[data-ndd-skin="chrome"] .ndd-workspace-tab.ndd-active {
+  z-index: 5;
+}
+[data-ndd-skin="chrome"] .ndd-workspace-tab.ndd-active::before {
+  display: none !important;
+}
+
+/* --------------------------------------------------------------------------
+   SKIN 4: Fluent Slate Preset
+   -------------------------------------------------------------------------- */
+[data-ndd-skin="slate"] {
+  --ndd-bg-workspace: #0f172a;
+  --ndd-bg-panel: #1e293b;
+  --ndd-bg-tab-bar: #0f172a;
+  --ndd-window-bg: rgba(30, 41, 59, var(--ndd-window-opacity, 1.0));
+  --ndd-window-border: #334155;
+  --ndd-window-header-bg: #1e293b;
+  --ndd-accent-color: #38bdf8;
+  --ndd-accent-glow: rgba(56, 189, 248, 0.15);
+  --ndd-border-panel: #334155;
+  --ndd-bg-tab-inactive: #1e293b;
+  --ndd-text-tab-inactive: #64748b;
+  --ndd-text-tab-active: #f8fafc;
+  --ndd-panel-card-bg: #0f172a;
+  --ndd-panel-card-border: #334155;
+  --ndd-window-text: #f8fafc;
+  --ndd-panel-text: #f8fafc;
+}
+
+[data-ndd-skin="slate"][data-color-scheme="light"] {
+  --ndd-bg-workspace: #f1f5f9;
+  --ndd-bg-panel: #ffffff;
+  --ndd-bg-tab-bar: #f1f5f9;
+  --ndd-window-bg: rgba(255, 255, 255, var(--ndd-window-opacity, 1.0));
+  --ndd-window-border: #cbd5e1;
+  --ndd-window-header-bg: #f8fafc;
+  --ndd-accent-color: #0078d4;
+  --ndd-accent-glow: rgba(0, 120, 212, 0.15);
+  --ndd-border-panel: #e2e8f0;
+  --ndd-bg-tab-inactive: #f8fafc;
+  --ndd-text-tab-inactive: #475569;
+  --ndd-text-tab-active: #0f172a;
+  --ndd-panel-card-bg: #f8fafc;
+  --ndd-panel-card-border: #cbd5e1;
+  --ndd-window-text: #0f172a;
+  --ndd-panel-text: #0f172a;
+  --ndd-panel-title-color: #0078d4;
+  --ndd-close-btn-color: #475569;
+  --ndd-close-btn-active-color: #0f172a;
+  --ndd-tab-icon-active: #0078d4;
+  --ndd-toolbar-btn-radio-active-bg: rgba(0, 120, 212, 0.10);
+  --ndd-toolbar-btn-toggle-active-bg: rgba(0, 120, 212, 0.06);
+}
+
+[data-ndd-skin="slate"] .ndd-workspace-tab.ndd-active::before {
+  top: auto !important;
+  bottom: 0 !important;
+  height: 3px !important;
+}
+
+/* --------------------------------------------------------------------------
+   SKIN 5: Nordic Frost Preset (Nord Theme)
+   -------------------------------------------------------------------------- */
+[data-ndd-skin="nord"] {
+  --ndd-bg-workspace: #2e3440;
+  --ndd-bg-panel: #3b4252;
+  --ndd-bg-tab-bar: #2e3440;
+  --ndd-window-bg: rgba(59, 66, 82, var(--ndd-window-opacity, 1.0));
+  --ndd-window-border: #434c5e;
+  --ndd-window-header-bg: #2e3440;
+  --ndd-accent-color: #88c0d0;
+  --ndd-accent-glow: rgba(136, 192, 208, 0.2);
+  --ndd-border-panel: #434c5e;
+  --ndd-bg-tab-inactive: #2e3440;
+  --ndd-text-tab-inactive: #d8dee9;
+  --ndd-text-tab-active: #eceff4;
+  --ndd-panel-card-bg: #2e3440;
+  --ndd-panel-card-border: #4c566a;
+  --ndd-close-btn-color: #d8dee9;
+  --ndd-close-btn-active-color: #88c0d0;
+  --ndd-scrollbar-thumb: rgba(136, 192, 208, 0.25);
+  --ndd-scrollbar-thumb-hover: rgba(136, 192, 208, 0.4);
+  --ndd-window-text: #eceff4;
+  --ndd-panel-text: #eceff4;
+  --ndd-tab-icon-active: #88c0d0;
+  --ndd-toolbar-btn-radio-active-bg: rgba(136, 192, 208, 0.14);
+  --ndd-toolbar-btn-toggle-active-bg: rgba(136, 192, 208, 0.08);
+}
+
+[data-ndd-skin="nord"][data-color-scheme="light"] {
+  --ndd-bg-workspace: #e5e9f0;
+  --ndd-bg-panel: #eceff4;
+  --ndd-bg-tab-bar: #e5e9f0;
+  --ndd-window-bg: rgba(236, 239, 244, var(--ndd-window-opacity, 1.0));
+  --ndd-window-border: #d8dee9;
+  --ndd-window-header-bg: #e5e9f0;
+  --ndd-accent-color: #5e81ac;
+  --ndd-accent-glow: rgba(94, 129, 172, 0.15);
+  --ndd-border-panel: #d8dee9;
+  --ndd-bg-tab-inactive: #e5e9f0;
+  --ndd-text-tab-inactive: #4c566a;
+  --ndd-text-tab-active: #2e3440;
+  --ndd-panel-card-bg: #e5e9f0;
+  --ndd-panel-card-border: #d8dee9;
+  --ndd-close-btn-color: #4c566a;
+  --ndd-close-btn-active-color: #5e81ac;
+  --ndd-scrollbar-thumb: rgba(94, 129, 172, 0.2);
+  --ndd-scrollbar-thumb-hover: rgba(94, 129, 172, 0.35);
+  --ndd-window-text: #2e3440;
+  --ndd-panel-text: #2e3440;
+  --ndd-panel-title-color: #5e81ac;
+  --ndd-tab-icon-active: #5e81ac;
+  --ndd-toolbar-btn-radio-active-bg: rgba(94, 129, 172, 0.12);
+  --ndd-toolbar-btn-toggle-active-bg: rgba(94, 129, 172, 0.07);
+}
+
+/* --------------------------------------------------------------------------
+   SKIN 6: Midnight Obsidian Preset (Vercel Style)
+   -------------------------------------------------------------------------- */
+[data-ndd-skin="obsidian"] {
+  --ndd-bg-workspace: #000000;
+  --ndd-bg-panel: #0a0a0a;
+  --ndd-bg-tab-bar: #000000;
+  --ndd-window-bg: rgba(10, 10, 10, var(--ndd-window-opacity, 1.0));
+  --ndd-window-border: #1a1a1a;
+  --ndd-window-border-focused: #333333;
+  --ndd-window-header-bg: #000000;
+  --ndd-accent-color: #ffffff;
+  --ndd-accent-glow: rgba(255, 255, 255, 0.08);
+  --ndd-border-panel: #1a1a1a;
+  --ndd-bg-tab-inactive: #000000;
+  --ndd-text-tab-inactive: #737373;
+  --ndd-text-tab-active: #ffffff;
+  --ndd-panel-card-bg: #030303;
+  --ndd-panel-card-border: #1a1a1a;
+  --ndd-close-btn-color: #737373;
+  --ndd-close-btn-active-color: #ffffff;
+  --ndd-scrollbar-thumb: rgba(255, 255, 255, 0.15);
+  --ndd-scrollbar-thumb-hover: rgba(255, 255, 255, 0.35);
+  --ndd-window-text: #ffffff;
+  --ndd-panel-text: #ffffff;
+  --ndd-tab-icon-active: #ffffff;
+  --ndd-toolbar-btn-radio-active-bg: rgba(255, 255, 255, 0.10);
+  --ndd-toolbar-btn-toggle-active-bg: rgba(255, 255, 255, 0.06);
+}
+
+[data-ndd-skin="obsidian"][data-color-scheme="light"] {
+  --ndd-bg-workspace: #ffffff;
+  --ndd-bg-panel: #fafafa;
+  --ndd-bg-tab-bar: #ffffff;
+  --ndd-window-bg: rgba(250, 250, 250, var(--ndd-window-opacity, 1.0));
+  --ndd-window-border: #e5e5e5;
+  --ndd-window-border-focused: #a3a3a3;
+  --ndd-window-header-bg: #ffffff;
+  --ndd-accent-color: #000000;
+  --ndd-accent-glow: rgba(0, 0, 0, 0.05);
+  --ndd-border-panel: #eaeaea;
+  --ndd-bg-tab-inactive: #ffffff;
+  --ndd-text-tab-inactive: #737373;
+  --ndd-text-tab-active: #000000;
+  --ndd-panel-card-bg: #ffffff;
+  --ndd-panel-card-border: #e5e5e5;
+  --ndd-close-btn-color: #737373;
+  --ndd-close-btn-active-color: #000000;
+  --ndd-scrollbar-thumb: rgba(0, 0, 0, 0.1);
+  --ndd-scrollbar-thumb-hover: rgba(0, 0, 0, 0.25);
+  --ndd-window-text: #000000;
+  --ndd-panel-text: #000000;
+  --ndd-panel-title-color: #000000;
+  --ndd-tab-icon-active: #000000;
+  --ndd-toolbar-btn-radio-active-bg: rgba(0, 0, 0, 0.10);
+  --ndd-toolbar-btn-toggle-active-bg: rgba(0, 0, 0, 0.06);
+}
+
+/* Obsidian custom borderless panel elevations */
+[data-ndd-skin="obsidian"] .ndd-floating-window {
+  box-shadow: 0 16px 40px rgba(0, 0, 0, 0.6), 0 0 1px rgba(255, 255, 255, 0.2) !important;
+  border-radius: 6px;
+}
+[data-ndd-skin="obsidian"] .ndd-floating-window.ndd-window-focused {
+  box-shadow: 0 24px 50px rgba(255, 255, 255, 0.06), 0 0 1px rgba(255, 255, 255, 0.4) !important;
+}
+[data-ndd-skin="obsidian"][data-color-scheme="light"] .ndd-floating-window {
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.08), 0 0 1px rgba(0, 0, 0, 0.1) !important;
+}
+[data-ndd-skin="obsidian"][data-color-scheme="light"] .ndd-floating-window.ndd-window-focused {
+  box-shadow: 0 16px 40px rgba(0, 0, 0, 0.14), 0 0 1px rgba(0, 0, 0, 0.2) !important;
+}
+
+/* --------------------------------------------------------------------------
+   SKIN 7: Tokyo Night Preset
+   -------------------------------------------------------------------------- */
+[data-ndd-skin="tokyo"] {
+  --ndd-bg-workspace: #1a1b26;
+  --ndd-bg-panel: #24283c;
+  --ndd-bg-tab-bar: #1f2335;
+  --ndd-window-bg: rgba(36, 40, 60, var(--ndd-window-opacity, 1.0));
+  --ndd-window-border: #383e5a;
+  --ndd-window-border-focused: #7aa2f7;
+  --ndd-window-header-bg: #1f2335;
+  --ndd-accent-color: #bb9af7;
+  --ndd-accent-glow: rgba(187, 154, 247, 0.25);
+  --ndd-border-panel: #383e5a;
+  --ndd-bg-tab-inactive: #1f2335;
+  --ndd-text-tab-inactive: #787c99;
+  --ndd-text-tab-active: #c0caf5;
+  --ndd-panel-card-bg: #1a1b26;
+  --ndd-panel-card-border: #383e5a;
+  --ndd-close-btn-color: #787c99;
+  --ndd-close-btn-active-color: #7aa2f7;
+  --ndd-scrollbar-thumb: rgba(122, 162, 247, 0.25);
+  --ndd-scrollbar-thumb-hover: rgba(187, 154, 247, 0.4);
+  --ndd-window-text: #c0caf5;
+  --ndd-panel-text: #c0caf5;
+  --ndd-tab-icon-active: #7aa2f7;
+  --ndd-toolbar-btn-radio-active-bg: rgba(122, 162, 247, 0.14);
+  --ndd-toolbar-btn-toggle-active-bg: rgba(122, 162, 247, 0.08);
+}
+
+[data-ndd-skin="tokyo"][data-color-scheme="light"] {
+  --ndd-bg-workspace: #e1e2e7;
+  --ndd-bg-panel: #f2f4f8;
+  --ndd-bg-tab-bar: #d5d6db;
+  --ndd-window-bg: rgba(242, 244, 248, var(--ndd-window-opacity, 1.0));
+  --ndd-window-border: #b4b5b9;
+  --ndd-window-border-focused: #385af6;
+  --ndd-window-header-bg: #d5d6db;
+  --ndd-accent-color: #9854f1;
+  --ndd-accent-glow: rgba(152, 84, 241, 0.15);
+  --ndd-border-panel: #b4b5b9;
+  --ndd-bg-tab-inactive: #d5d6db;
+  --ndd-text-tab-inactive: #565a6e;
+  --ndd-text-tab-active: #383e56;
+  --ndd-panel-card-bg: #e1e2e7;
+  --ndd-panel-card-border: #b4b5b9;
+  --ndd-close-btn-color: #565a6e;
+  --ndd-close-btn-active-color: #385af6;
+  --ndd-scrollbar-thumb: rgba(56, 90, 246, 0.2);
+  --ndd-scrollbar-thumb-hover: rgba(152, 84, 241, 0.35);
+  --ndd-window-text: #383e56;
+  --ndd-panel-text: #383e56;
+  --ndd-panel-title-color: #9854f1;
+  --ndd-tab-icon-active: #385af6;
+  --ndd-toolbar-btn-radio-active-bg: rgba(56, 90, 246, 0.12);
+  --ndd-toolbar-btn-toggle-active-bg: rgba(56, 90, 246, 0.07);
+}
+
+/* ==========================================================================
+   PER-SKIN ACTIVE TAB & TOOLBAR DESIGN LANGUAGE
+   ========================================================================== */
+
+/* --------------------------------------------------------------------------
+   vscode — Accent Bar (2 px bar, fully transparent fill — faithful to VS Code)
+   -------------------------------------------------------------------------- */
+[data-ndd-skin="vscode"] {
+  --ndd-tab-btn-active-bg: transparent;
+  --ndd-tab-accent-bar-width: 2px;
+  --ndd-toolbar-btn-radio-active-bg: transparent;
+  --ndd-toolbar-accent-bar-width: 2px;
+}
+[data-ndd-skin="vscode"] .ndd-sidebar-tab-btn.ndd-active {
+  border-top: 1px solid transparent !important;
+  border-bottom: 1px solid transparent !important;
+}
+
+/* --------------------------------------------------------------------------
+   chrome — Tab Shape (sidebar bridge, toolbar accent-tinted)
+   -------------------------------------------------------------------------- */
+[data-ndd-skin="chrome"] {
+  --ndd-tab-btn-active-bg: var(--ndd-sidebar-bg);
+  --ndd-tab-accent-bar-width: 0px;
+  --ndd-toolbar-accent-bar-width: 2px;
+}
+[data-ndd-skin="chrome"] .ndd-sidebar-tabs-strip.ndd-left .ndd-sidebar-tab-btn.ndd-active {
+  border-radius: 0 10px 10px 0 !important;
+  border-left: none !important;
+}
+[data-ndd-skin="chrome"] .ndd-sidebar-tabs-strip.ndd-right .ndd-sidebar-tab-btn.ndd-active {
+  border-radius: 10px 0 0 10px !important;
+  border-right: none !important;
+  border-top: 1px solid var(--ndd-sidebar-border) !important;
+  border-bottom: 1px solid var(--ndd-sidebar-border) !important;
+}
+
+/* --------------------------------------------------------------------------
+   slate — Fluent Pill (floating capsule, accent-tinted)
+   -------------------------------------------------------------------------- */
+[data-ndd-skin="slate"] {
+  --ndd-tab-btn-active-bg: rgba(96, 165, 250, 0.14);
+  --ndd-tab-btn-active-width: 36px;
+  --ndd-tab-btn-active-radius: 8px;
+  --ndd-tab-accent-bar-width: 0px;
+  --ndd-toolbar-btn-radio-active-bg: rgba(96, 165, 250, 0.14);
+  --ndd-toolbar-accent-bar-width: 0px;
+}
+[data-ndd-skin="slate"] .ndd-sidebar-tab-btn.ndd-active {
+  border-top: 1px solid transparent !important;
+  border-bottom: 1px solid transparent !important;
+  margin: 0 !important;
+}
+[data-ndd-skin="slate"] .ndd-toolbar-strip .ndd-toolbar-btn-radio.ndd-active,
+[data-ndd-skin="slate"] .ndd-toolbar-strip .ndd-toolbar-btn-group.ndd-active {
+  border-radius: 8px !important;
+}
+[data-ndd-skin="slate"][data-color-scheme="light"] {
+  --ndd-tab-btn-active-bg: rgba(0, 120, 212, 0.12);
+  --ndd-toolbar-btn-radio-active-bg: rgba(0, 120, 212, 0.12);
+}
+
+/* --------------------------------------------------------------------------
+   nord — Nordic Line (zero fill, zero bar, 16×2 px accent line via ::after)
+   -------------------------------------------------------------------------- */
+[data-ndd-skin="nord"] {
+  --ndd-tab-btn-active-bg: transparent;
+  --ndd-tab-btn-active-width: 44px;
+  --ndd-tab-btn-active-radius: 6px;
+  --ndd-tab-accent-bar-width: 0px;
+  --ndd-toolbar-btn-radio-active-bg: transparent;
+  --ndd-toolbar-accent-bar-width: 0px;
+}
+[data-ndd-skin="nord"] .ndd-sidebar-tab-btn.ndd-active {
+  border-top: 1px solid transparent !important;
+  border-bottom: 1px solid transparent !important;
+  border-left: none !important;
+  border-right: none !important;
+}
+[data-ndd-skin="nord"] .ndd-sidebar-tab-btn.ndd-active::after {
+  content: '';
+  position: absolute;
+  bottom: 5px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 16px;
+  height: 2px;
+  border-radius: 1px;
+  background-color: var(--ndd-tab-icon-active);
+}
+[data-ndd-skin="nord"] .ndd-toolbar-strip .ndd-toolbar-btn-radio.ndd-active,
+[data-ndd-skin="nord"] .ndd-toolbar-strip .ndd-toolbar-btn-group.ndd-active {
+  border-left: none !important;
+  border-right: none !important;
+  border-top: none !important;
+  border-bottom: none !important;
+}
+[data-ndd-skin="nord"] .ndd-toolbar-strip.ndd-left  .ndd-toolbar-btn-radio.ndd-active::after,
+[data-ndd-skin="nord"] .ndd-toolbar-strip.ndd-left  .ndd-toolbar-btn-group.ndd-active::after,
+[data-ndd-skin="nord"] .ndd-toolbar-strip.ndd-right .ndd-toolbar-btn-radio.ndd-active::after,
+[data-ndd-skin="nord"] .ndd-toolbar-strip.ndd-right .ndd-toolbar-btn-group.ndd-active::after,
+[data-ndd-skin="nord"] .ndd-toolbar-strip.ndd-top   .ndd-toolbar-btn-radio.ndd-active::after,
+[data-ndd-skin="nord"] .ndd-toolbar-strip.ndd-top   .ndd-toolbar-btn-group.ndd-active::after {
+  content: '';
+  position: absolute;
+  bottom: 4px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 14px;
+  height: 2px;
+  border-radius: 1px;
+  background-color: var(--ndd-tab-icon-active);
+}
+[data-ndd-skin="nord"] .ndd-toolbar-strip.ndd-bottom .ndd-toolbar-btn-radio.ndd-active::after,
+[data-ndd-skin="nord"] .ndd-toolbar-strip.ndd-bottom .ndd-toolbar-btn-group.ndd-active::after {
+  content: '';
+  position: absolute;
+  top: 4px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 14px;
+  height: 2px;
+  border-radius: 1px;
+  background-color: var(--ndd-tab-icon-active);
+}
+
+/* --------------------------------------------------------------------------
+   obsidian — Deep Glow (near-black fill, 2 px bar, inner glow, icon shadow)
+   -------------------------------------------------------------------------- */
+[data-ndd-skin="obsidian"] {
+  --ndd-tab-btn-active-bg: rgba(255, 255, 255, 0.03);
+  --ndd-tab-btn-active-shadow: inset 0 0 12px rgba(255, 255, 255, 0.06);
+  --ndd-tab-btn-active-glow: drop-shadow(0 0 5px rgba(255, 255, 255, 0.5));
+  --ndd-tab-accent-bar-width: 2px;
+  --ndd-toolbar-btn-radio-active-bg: rgba(255, 255, 255, 0.03);
+  --ndd-toolbar-btn-active-shadow: inset 0 0 12px rgba(255, 255, 255, 0.06);
+  --ndd-toolbar-btn-active-glow: drop-shadow(0 0 5px rgba(255, 255, 255, 0.5));
+  --ndd-toolbar-accent-bar-width: 2px;
+}
+[data-ndd-skin="obsidian"] .ndd-sidebar-tabs-strip.ndd-left .ndd-sidebar-tab-btn.ndd-active {
+  box-shadow: var(--ndd-tab-btn-active-shadow), inset 3px 0 8px rgba(255, 255, 255, 0.08) !important;
+}
+[data-ndd-skin="obsidian"] .ndd-sidebar-tabs-strip.ndd-right .ndd-sidebar-tab-btn.ndd-active {
+  box-shadow: var(--ndd-tab-btn-active-shadow), inset -3px 0 8px rgba(255, 255, 255, 0.08) !important;
+}
+[data-ndd-skin="obsidian"] .ndd-toolbar-strip.ndd-left .ndd-toolbar-btn-radio.ndd-active,
+[data-ndd-skin="obsidian"] .ndd-toolbar-strip.ndd-left .ndd-toolbar-btn-group.ndd-active {
+  box-shadow: var(--ndd-toolbar-btn-active-shadow), inset 3px 0 8px rgba(255, 255, 255, 0.08) !important;
+}
+[data-ndd-skin="obsidian"] .ndd-toolbar-strip.ndd-right .ndd-toolbar-btn-radio.ndd-active,
+[data-ndd-skin="obsidian"] .ndd-toolbar-strip.ndd-right .ndd-toolbar-btn-group.ndd-active {
+  box-shadow: var(--ndd-toolbar-btn-active-shadow), inset -3px 0 8px rgba(255, 255, 255, 0.08) !important;
+}
+[data-ndd-skin="obsidian"] .ndd-toolbar-strip.ndd-top .ndd-toolbar-btn-radio.ndd-active,
+[data-ndd-skin="obsidian"] .ndd-toolbar-strip.ndd-top .ndd-toolbar-btn-group.ndd-active {
+  box-shadow: var(--ndd-toolbar-btn-active-shadow), inset 0 -3px 8px rgba(255, 255, 255, 0.08) !important;
+}
+[data-ndd-skin="obsidian"] .ndd-toolbar-strip.ndd-bottom .ndd-toolbar-btn-radio.ndd-active,
+[data-ndd-skin="obsidian"] .ndd-toolbar-strip.ndd-bottom .ndd-toolbar-btn-group.ndd-active {
+  box-shadow: var(--ndd-toolbar-btn-active-shadow), inset 0 3px 8px rgba(255, 255, 255, 0.08) !important;
+}
+[data-ndd-skin="obsidian"][data-color-scheme="light"] {
+  --ndd-tab-btn-active-shadow: inset 0 0 12px rgba(0, 0, 0, 0.06);
+  --ndd-tab-btn-active-glow: drop-shadow(0 0 4px rgba(0, 0, 0, 0.4));
+  --ndd-toolbar-btn-active-shadow: inset 0 0 12px rgba(0, 0, 0, 0.06);
+  --ndd-toolbar-btn-active-glow: drop-shadow(0 0 4px rgba(0, 0, 0, 0.4));
+}
+
+/* --------------------------------------------------------------------------
+   tokyo — Neon Pulse (accent-blue tint, vivid neon glow)
+   -------------------------------------------------------------------------- */
+[data-ndd-skin="tokyo"] {
+  --ndd-tab-btn-active-bg: rgba(122, 162, 247, 0.10);
+  --ndd-tab-btn-active-shadow: inset 0 0 16px rgba(122, 162, 247, 0.12);
+  --ndd-tab-btn-active-glow: drop-shadow(0 0 6px rgba(122, 162, 247, 0.65));
+  --ndd-tab-accent-bar-width: 2px;
+  --ndd-toolbar-btn-radio-active-bg: rgba(122, 162, 247, 0.10);
+  --ndd-toolbar-btn-active-shadow: inset 0 0 16px rgba(122, 162, 247, 0.12);
+  --ndd-toolbar-btn-active-glow: drop-shadow(0 0 6px rgba(122, 162, 247, 0.65));
+  --ndd-toolbar-accent-bar-width: 2px;
+}
+[data-ndd-skin="tokyo"] .ndd-sidebar-tabs-strip.ndd-left .ndd-sidebar-tab-btn.ndd-active {
+  box-shadow: var(--ndd-tab-btn-active-shadow), inset 3px 0 12px rgba(122, 162, 247, 0.18) !important;
+}
+[data-ndd-skin="tokyo"] .ndd-sidebar-tabs-strip.ndd-right .ndd-sidebar-tab-btn.ndd-active {
+  box-shadow: var(--ndd-tab-btn-active-shadow), inset -3px 0 12px rgba(122, 162, 247, 0.18) !important;
+}
+[data-ndd-skin="tokyo"] .ndd-toolbar-strip.ndd-left .ndd-toolbar-btn-radio.ndd-active,
+[data-ndd-skin="tokyo"] .ndd-toolbar-strip.ndd-left .ndd-toolbar-btn-group.ndd-active {
+  box-shadow: var(--ndd-toolbar-btn-active-shadow), inset 3px 0 12px rgba(122, 162, 247, 0.18) !important;
+}
+[data-ndd-skin="tokyo"] .ndd-toolbar-strip.ndd-right .ndd-toolbar-btn-radio.ndd-active,
+[data-ndd-skin="tokyo"] .ndd-toolbar-strip.ndd-right .ndd-toolbar-btn-group.ndd-active {
+  box-shadow: var(--ndd-toolbar-btn-active-shadow), inset -3px 0 12px rgba(122, 162, 247, 0.18) !important;
+}
+[data-ndd-skin="tokyo"] .ndd-toolbar-strip.ndd-top .ndd-toolbar-btn-radio.ndd-active,
+[data-ndd-skin="tokyo"] .ndd-toolbar-strip.ndd-top .ndd-toolbar-btn-group.ndd-active {
+  box-shadow: var(--ndd-toolbar-btn-active-shadow), inset 0 -3px 12px rgba(122, 162, 247, 0.18) !important;
+}
+[data-ndd-skin="tokyo"] .ndd-toolbar-strip.ndd-bottom .ndd-toolbar-btn-radio.ndd-active,
+[data-ndd-skin="tokyo"] .ndd-toolbar-strip.ndd-bottom .ndd-toolbar-btn-group.ndd-active {
+  box-shadow: var(--ndd-toolbar-btn-active-shadow), inset 0 3px 12px rgba(122, 162, 247, 0.18) !important;
+}
+
+/* --------------------------------------------------------------------------
+   macos — Glass Chip (full-round floating chip, accent fill + white ring)
+   Inspired by macOS app icon strip conventions: Xcode, Logic Pro, System Settings.
+   A contained chip that floats inside the strip — not an edge-connecting bridge.
+   -------------------------------------------------------------------------- */
+[data-ndd-skin="macos"] {
+  --ndd-tab-btn-active-bg: rgba(56, 189, 248, 0.2);
+  --ndd-tab-btn-active-width: 36px;
+  --ndd-tab-btn-active-radius: 10px;
+  --ndd-tab-btn-active-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.28);
+  --ndd-tab-accent-bar-width: 0px;
+  --ndd-toolbar-btn-radio-active-bg: rgba(56, 189, 248, 0.2);
+  --ndd-toolbar-btn-active-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.28);
+  --ndd-toolbar-accent-bar-width: 0px;
+}
+[data-ndd-skin="macos"] .ndd-sidebar-tab-btn.ndd-active {
+  border-top: 1px solid transparent !important;
+  border-bottom: 1px solid transparent !important;
+  margin: 0 !important;
+}
+[data-ndd-skin="macos"] .ndd-toolbar-strip .ndd-toolbar-btn-radio.ndd-active,
+[data-ndd-skin="macos"] .ndd-toolbar-strip .ndd-toolbar-btn-group.ndd-active {
+  border-radius: 10px !important;
+}
+[data-ndd-skin="macos"][data-color-scheme="light"] {
+  --ndd-tab-btn-active-bg: rgba(0, 102, 204, 0.16);
+  --ndd-tab-btn-active-shadow: inset 0 0 0 1px rgba(0, 102, 204, 0.3);
+  --ndd-toolbar-btn-radio-active-bg: rgba(0, 102, 204, 0.16);
+  --ndd-toolbar-btn-active-shadow: inset 0 0 0 1px rgba(0, 102, 204, 0.3);
+}
+
+/* ─── Sidebar structure ──────────────────────────────────────────────────────
+   rdd carried every rule below as an inline `style={{…}}` object on the JSX,
+   which is why its stylesheet had no sidebar layout at all: the sizes and the
+   flex behaviour lived in the component file. Anything inline is unreachable to
+   a consumer without `!important`, and invisible to a stylesheet review — the
+   class of omission catalogued as docs/PARITY.md divergence D12. Only the
+   values that genuinely vary per render stay inline: the strip's own
+   width (it animates between 56px and 0), the drawer's flex-basis/min/max, and
+   each pane's display. */
+
+/* The row that holds strip, drawer, resizer and the workspace itself. */
+.ndd-sidebar-layout {
+  display: flex;
+  flex-direction: row;
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+}
+
+/* Collapse wrapper around the strip. The animated width is set inline; this
+   clips the 56px strip inside it while that width is on its way to 0. */
+.ndd-sidebar-strip-outer {
+  height: 100%;
+  overflow: hidden;
+  flex-shrink: 0;
+  transition: width 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* The consumer's own content — the workspace, normally.
+
+   flex-basis: 0 rather than the `auto` a bare `flex-grow: 1` would leave in
+   place: with `auto`, a flex item's hypothetical size is its content's
+   max-content width, and `min-width: 0` lowers only the shrink floor, not that
+   starting size. So a wide panel inside would inflate this wrapper and steal
+   width from the drawer beside it, moving the drawer according to what happens
+   to be rendered in the workspace. At 0 the width is purely flex-grow's share
+   of the free space. */
+.ndd-sidebar-main {
+  flex-grow: 1;
+  flex-shrink: 1;
+  flex-basis: 0;
+  min-width: 0;
+  overflow: hidden;
+}
+
+/* The drawer animates its flex-basis, not its width: in a flex row, `width` has
+   no effect once flex-basis is set. */
+.ndd-sidebar-content-drawer {
+  flex-grow: 0;
+  flex-shrink: 1;
+  overflow: hidden;
+  transition:
+    flex-basis 0.2s cubic-bezier(0.4, 0, 0.2, 1),
+    min-width 0.2s cubic-bezier(0.4, 0, 0.2, 1),
+    max-width 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* One pane per mounted tab; all but the open one are display: none, set inline.
+   Column so a tab's header sits above its scrolling body. */
+.ndd-sidebar-drawer-pane {
+  flex-direction: column;
+  height: 100%;
+  width: 100%;
+}
+
+/* --- Modern Sidebar and Tabs UI Theme Customizations --- */
+.ndd-sidebar-content-drawer {
+  background-color: var(--ndd-sidebar-bg) !important;
+  color: var(--ndd-sidebar-text-title) !important;
+  height: 100%;
+}
+
+/* Position-specific drawer border and shadow alignment */
+.ndd-sidebar-content-drawer.ndd-left {
+  border-right: 1px solid var(--ndd-sidebar-border) !important;
+  border-left: none !important;
+  box-shadow: 4px 0 16px rgba(0, 0, 0, 0.12);
+}
+.ndd-sidebar-content-drawer.ndd-right {
+  border-left: 1px solid var(--ndd-sidebar-border) !important;
+  border-right: none !important;
+  box-shadow: -4px 0 16px rgba(0, 0, 0, 0.12);
+}
+
+.ndd-sidebar-tabs-strip {
+  background-color: var(--ndd-sidebar-tabs-bg) !important;
+  /* Fills `.ndd-sidebar-strip-outer`, which is `height: 100%` but `display: block` — so it does
+     not stretch this child the way a flex row would. rdd has no such wrapper: its strip is a
+     direct flex child of the sidebar row and inherits the row's `align-items: stretch`. vdd added
+     the wrapper to own the width-collapse transition, and the strip quietly lost its height with
+     it, so the background covered only the buttons — 216px of a 915px column, the rest showing
+     the host page through. */
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding-top: 38px; /* Perfectly aligned to match the 38px height of the drawer header bar — only
+                         relevant when a tab is the first item; see the modifier rule below. */
+  padding-bottom: 12px;
+  flex-shrink: 0;
+  z-index: 5;
+}
+
+/* When a headerAction is present, it owns its own top/bottom spacing (see
+   .ndd-sidebar-header-area below) — the strip's own alignment padding no longer applies. */
+.ndd-sidebar-tabs-strip.ndd-sidebar-tabs-strip--has-header-action {
+  padding-top: 0;
+}
+
+/* When a footerAction is present, it owns its own bottom spacing (see .ndd-sidebar-footer-area
+   below) — the strip's own bottom padding no longer applies. */
+.ndd-sidebar-tabs-strip.ndd-sidebar-tabs-strip--has-footer-action {
+  padding-bottom: 0;
+}
+
+/* Wraps `headerAction` — independent of .ndd-sidebar-tabs-list's own gap, so a consumer can
+   tune spacing/effective height around their button(s) (default, custom-rendered, or a mix with
+   real tabs) without touching inter-tab spacing. Layout-only values, so no light/dark variant is
+   needed. Column + gap so multiple entries stack — visually identical to before for the single-
+   entry case. */
+.ndd-sidebar-header-area {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  /* Floor matching .ndd-sidebar-tab-btn's own intrinsic 44px — without it, a lone active tab
+     (width: var(--ndd-tab-btn-active-width, 100%)) has no stable sibling to size this shrink-to-fit
+     container against, so its 100% resolves against nothing and collapses to its icon's size. */
+  min-width: 44px;
+  padding-top: var(--ndd-sidebar-header-area-padding-top, 8px);
+  padding-bottom: var(--ndd-sidebar-header-area-padding-bottom, 8px);
+}
+
+/* Mirror of .ndd-sidebar-header-area for `footerAction` — pinned to the bottom of the strip via
+   .ndd-sidebar-tabs-list's flex: 1 below. */
+.ndd-sidebar-footer-area {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  min-width: 44px;
+  padding-top: var(--ndd-sidebar-footer-area-padding-top, 8px);
+  padding-bottom: var(--ndd-sidebar-footer-area-padding-bottom, 8px);
+}
+
+/* Wraps the tabs only — owns the gap that used to live on .ndd-sidebar-tabs-strip itself.
+   flex: 1 absorbs remaining space so a following .ndd-sidebar-footer-area is pushed to the
+   bottom of the strip regardless of tab count. */
+.ndd-sidebar-tabs-list {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  flex: 1;
+  /* The same floor `.ndd-sidebar-header-area` and `.ndd-sidebar-footer-area` carry, for the same
+     reason — and this is the container that actually needed it. An active tab takes
+     `width: var(--ndd-tab-btn-active-width, 100%)`, and that percentage resolves against this
+     shrink-to-fit box; a rail holding exactly one tab has no other child to hold the box open, so
+     the tab collapsed to its icon's width (26px against a normal 44px) and its accent border sat
+     15px inboard of the rail's edge. A rail with several tabs hid it, because the inactive
+     buttons' intrinsic 44px kept the box open. */
+  min-width: 44px;
+}
+
+/* Position-specific tab strip border alignment */
+.ndd-sidebar-tabs-strip.ndd-left {
+  border-right: 1px solid var(--ndd-sidebar-border) !important;
+  border-left: none !important;
+}
+.ndd-sidebar-tabs-strip.ndd-right {
+  border-left: 1px solid var(--ndd-sidebar-border) !important;
+  border-right: none !important;
+}
+
+/* Sidebar Header */
+.ndd-sidebar-header-title {
+  font-family: monospace;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  color: var(--ndd-sidebar-text-title);
+  font-size: 0.85rem;
+}
+
+/* Tab Button with real tabbed integration */
+.ndd-sidebar-tab-btn {
+  width: 44px;
+  height: 44px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid transparent !important;
+  border-radius: 6px;
+  background: transparent;
+  color: var(--ndd-tab-icon-inactive);
+  position: relative;
+  transition: color 0.15s ease, background-color 0.15s ease, transform 0.15s ease;
+  cursor: pointer;
+  outline: none !important;
+}
+
+/* Micro-interactions & hover tactile feedback for inactive buttons */
+.ndd-sidebar-tab-btn:not(.ndd-active):hover {
+  color: var(--ndd-sidebar-text-title);
+  background-color: var(--ndd-sidebar-btn-hover-bg) !important;
+  transform: scale(1.05);
+}
+
+.ndd-sidebar-tab-btn.ndd-active {
+  width: var(--ndd-tab-btn-active-width, 100%) !important;
+  color: var(--ndd-tab-icon-active) !important;
+  background-color: var(--ndd-tab-btn-active-bg) !important;
+  border-top: 1px solid var(--ndd-sidebar-border) !important;
+  border-bottom: 1px solid var(--ndd-sidebar-border) !important;
+  border-radius: var(--ndd-tab-btn-active-radius, 0px) !important;
+  box-shadow: var(--ndd-tab-btn-active-shadow, none);
+  filter: var(--ndd-tab-btn-active-glow, none);
+  z-index: 6;
+  transition: color 0.15s ease, background-color 0.15s ease, box-shadow 0.15s ease;
+}
+
+/* Position-specific active button border & margin alignments */
+.ndd-sidebar-tabs-strip.ndd-left .ndd-sidebar-tab-btn.ndd-active {
+  border-left: var(--ndd-tab-accent-bar-width, 3px) solid var(--ndd-tab-icon-active) !important;
+  border-right: none !important;
+  margin-right: -2px !important;
+  margin-left: 0 !important;
+}
+.ndd-sidebar-tabs-strip.ndd-right .ndd-sidebar-tab-btn.ndd-active {
+  border-left: none !important;
+  border-right: var(--ndd-tab-accent-bar-width, 3px) solid var(--ndd-tab-icon-active) !important;
+  margin-left: -2px !important;
+  margin-right: 0 !important;
+}
+
+
+/* Animations are on by default. `[animations]="false"` on <ndd-desktop> adds
+   `ndd-no-animations` to the workspace root and mirrors it onto <html> (so
+   elements rendered into document.body — context menu, toasts, toolbar flyout — are covered too).
+   Scoped to only the library's own elements ([class*="ndd-"]) via the new
+   unified prefix — this never touches the consumer's own transitions/animations
+   elsewhere on the page, in either state. */
+.ndd-no-animations [class*="ndd-"],
+.ndd-no-animations [class*="ndd-"]::before,
+.ndd-no-animations [class*="ndd-"]::after,
+html.ndd-no-animations [class*="ndd-"],
+html.ndd-no-animations [class*="ndd-"]::before,
+html.ndd-no-animations [class*="ndd-"]::after {
+  transition: none !important;
+  animation: none !important;
+}
+
+
+
+@keyframes ndd-fade-in {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes ndd-scale-up {
+  from { transform: scale(0.95); opacity: 0; }
+  to { transform: scale(1); opacity: 1; }
+}
+
+/* Stacked Modal Classes */
+.ndd-modal-overlay {
+  position: fixed;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: calc(var(--ndd-z-base, 1000) + 9000);
+  animation: ndd-fade-in 0.18s ease-out;
+}
+
+.ndd-modal-curtain {
+  position: absolute;
+  inset: 0;
+  background-color: var(--ndd-modal-curtain-bg);
+  backdrop-filter: blur(6px);
+}
+
+.ndd-modal-window {
+  position: relative;
+  background: var(--ndd-modal-bg);
+  border: 1px solid var(--ndd-modal-border);
+  box-shadow: 0 24px 48px rgba(0, 0, 0, 0.6), inset 0 1px 0 rgba(255, 255, 255, 0.05);
+  border-radius: 12px;
+  display: flex;
+  flex-direction: column;
+  color: var(--ndd-text-primary);
+  max-width: 90%;
+  max-height: 90vh;
+  animation: ndd-scale-up 0.18s cubic-bezier(0.34, 1.56, 0.64, 1);
+  overflow: hidden;
+}
+
+.ndd-modal-header {
+  display: flex;
+  align-items: center;
+  padding: 12px 20px;
+  border-bottom: 1px solid var(--ndd-modal-header-border);
+  background-color: var(--ndd-modal-header-bg);
+}
+
+.ndd-modal-icon {
+  margin-right: 10px;
+  font-size: 1.1rem;
+  display: flex;
+  align-items: center;
+}
+
+.ndd-modal-title {
+  font-size: 1rem;
+  font-weight: 600;
+  margin: 0;
+  flex-grow: 1;
+}
+
+.ndd-modal-close-button {
+  background: transparent;
+  border: none;
+  color: var(--ndd-text-secondary);
+  cursor: pointer;
+  padding: 4px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 4px;
+  transition: all 0.15s ease;
+}
+
+.ndd-modal-close-button:hover {
+  background-color: rgba(255, 255, 255, 0.08);
+  color: var(--ndd-modal-close-hover-color);
+}
+
+.ndd-modal-body {
+  padding: 0;
+  overflow-y: auto;
+  max-height: calc(90vh - 70px);
+}
+
+/* Modal Sizes */
+.ndd-modal-size-small { 
+  width: 420px; 
+}
+.ndd-modal-size-medium { 
+  width: 560px; 
+}
+.ndd-modal-size-large { 
+  width: 800px; 
+}
+.ndd-modal-size-fullscreen {
+  width: 98vw;
+  height: 96vh;
+}
+.ndd-modal-size-auto { 
+  width: auto; 
+  min-width: 300px; 
+}
+
+/* Side Drawer Panels */
+/* position: fixed (not absolute) is deliberate: it anchors the panel to the
+   viewport directly, matching .ndd-modal-overlay's own position: fixed. A
+   position: absolute panel resolves its containing block against whatever
+   position: relative/absolute ancestor the consumer happens to have between
+   it and the document (per the documented "mount as a sibling of
+   WindowManager" pattern) — and while off-screen mid-slide-in (a pure
+   transform, not a visibility change), it then contributes real scrollable
+   overflow to THAT ancestor, which the browser auto-scrolls on focus and then
+   continuously re-clamps in lockstep with the animation, visibly dragging the
+   ancestor's entire content (the whole workspace) left/right and back over
+   the whole animation — not window/document, so no amount of watching
+   window.scrollX/scrollY (an earlier fix here, since reverted) can catch or
+   correct it. position: fixed removes the panel from that ancestor's overflow
+   calculation entirely, the same way it already does for modals. */
+.ndd-side-panel {
+  position: fixed;
+  top: 0;
+  bottom: 0;
+  width: 400px;
+  background: var(--ndd-side-panel-bg);
+  /* The library owns this container's background, so it owns its foreground too — as
+     `.ndd-modal-window`, `.ndd-workspace` and `.ndd-sidebar-content-drawer` all already do. This
+     one was missed, so content rendered into a drawer inherited the host page's text colour,
+     which on a dark panel is the user agent's black: measured at 1.18:1 in the demo's own Panel
+     manager, while the library's own title beside it sat at 16.31:1. rdd has the same omission;
+     its demo hides it by importing Bootstrap, and ours deliberately does not (ADR 0007). An
+     application that wants a different colour sets it on its own content, or reaches the body
+     through `createWorkspace({ classes: { sidePanelBody } })`. */
+  color: var(--ndd-text-primary);
+  backdrop-filter: blur(20px) saturate(180%);
+  -webkit-backdrop-filter: blur(20px) saturate(180%);
+  border-right: 1px solid var(--ndd-side-panel-border);
+  z-index: calc(var(--ndd-z-base, 1000) + 8000);
+  box-shadow: 10px 0 30px rgba(0, 0, 0, 0.4);
+  transition: transform 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+  display: flex;
+  flex-direction: column;
+}
+
+.ndd-side-panel-right {
+  right: 0;
+  border-right: none;
+  border-left: 1px solid var(--ndd-side-panel-border);
+  box-shadow: -10px 0 30px rgba(0, 0, 0, 0.4);
+}
+
+.ndd-side-panel-left {
+  left: 0;
+}
+
+.ndd-side-panel-window {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  width: 100%;
+}
+
+.ndd-side-panel-header {
+  display: flex;
+  align-items: center;
+  padding: 12px 20px;
+  border-bottom: 1px solid var(--ndd-side-panel-header-border);
+  background-color: var(--ndd-side-panel-header-bg);
+  min-height: 44px;
+}
+
+.ndd-side-panel-icon {
+  margin-right: 10px;
+  font-size: 1.1rem;
+  display: flex;
+  align-items: center;
+}
+
+.ndd-side-panel-title {
+  font-size: 0.95rem;
+  font-weight: 600;
+  margin: 0;
+  flex-grow: 1;
+  color: var(--ndd-text-primary);
+}
+
+.ndd-side-panel-close-button {
+  background: transparent;
+  border: none;
+  color: var(--ndd-text-secondary);
+  cursor: pointer;
+  padding: 4px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 4px;
+  transition: all 0.15s ease;
+}
+
+.ndd-side-panel-close-button:hover {
+  background-color: rgba(255, 255, 255, 0.08);
+  color: var(--ndd-side-panel-close-hover-color);
+}
+
+.ndd-side-panel-body {
+  flex-grow: 1;
+  overflow-y: auto;
+  padding: 0;
+}
+
+.ndd-side-panel-left.ndd-side-panel-visible {
+  animation: ndd-slide-in-left 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.ndd-side-panel-right.ndd-side-panel-visible {
+  animation: ndd-slide-in-right 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+@keyframes ndd-slide-in-left {
+  from { transform: translateX(-100%); }
+  to { transform: translateX(0); }
+}
+
+@keyframes ndd-slide-in-right {
+  from { transform: translateX(100%); }
+  to { transform: translateX(0); }
+}
+
+/* Outer Workspace Edge Drop Zones */
+.ndd-workspace-edge-trigger {
+  position: absolute;
+  z-index: calc(var(--ndd-z-base, 1000) + 8999);
+  background-color: rgba(0, 123, 255, 0.01);
+  transition: background-color 0.2s;
+}
+
+.ndd-workspace-edge-trigger:hover {
+  background-color: rgba(0, 123, 255, 0.12);
+}
+
+.ndd-edge-trigger-left {
+  left: 0;
+  top: 0;
+  bottom: 0;
+  width: 24px;
+}
+
+.ndd-edge-trigger-right {
+  right: 0;
+  top: 0;
+  bottom: 0;
+  width: 24px;
+}
+
+.ndd-edge-trigger-top {
+  top: 0;
+  left: 24px;
+  right: 24px;
+  height: 10px; /* thin strip — keeps clear of tab bar (38px tall) */
+}
+
+.ndd-edge-trigger-bottom {
+  bottom: 0;
+  left: 24px;
+  right: 24px;
+  height: 24px;
+}
+
+.ndd-workspace-edge-preview {
+  position: absolute;
+  z-index: calc(var(--ndd-z-base, 1000) + 8998);
+  background-color: rgba(0, 123, 255, 0.2);
+  border: 2px dashed #007bff;
+  pointer-events: none;
+  animation: ndd-fade-in 0.15s ease-out;
+}
+
+/* Workspace corner anchor drop zones */
+.ndd-corner-zone {
+  position: absolute;
+  width: 80px;
+  height: 80px;
+  border: 2px dashed var(--ndd-accent-color, #38bdf8);
+  border-radius: 8px;
+  background: rgba(56, 189, 248, 0.06);
+  pointer-events: auto;
+  z-index: calc(var(--ndd-z-base, 1000) + 9000);
+  opacity: 0.55;
+  transition: opacity 0.15s ease, background 0.15s ease, border-style 0.15s ease;
+}
+.ndd-corner-zone--top-left     { top: 0;    left: 0;  }
+.ndd-corner-zone--top-right    { top: 0;    right: 0; }
+.ndd-corner-zone--bottom-left  { bottom: 0; left: 0;  }
+.ndd-corner-zone--bottom-right { bottom: 0; right: 0; }
+.ndd-corner-zone--hovered {
+  opacity: 1;
+  background: rgba(56, 189, 248, 0.18);
+  border-style: solid;
+}
+
+[dir="rtl"] .ndd-corner-zone--top-right    { right: auto; left: 0;  }
+[dir="rtl"] .ndd-corner-zone--top-left     { left: auto;  right: 0; }
+[dir="rtl"] .ndd-corner-zone--bottom-right { right: auto; left: 0;  }
+[dir="rtl"] .ndd-corner-zone--bottom-left  { left: auto;  right: 0; }
+
+/* ==========================================
+   RTL (Right-to-Left) Support
+   ========================================== */
+
+[dir="rtl"] .ndd-workspace-tab {
+  border-right: none !important;
+  border-left: 1px solid var(--ndd-border-panel) !important;
+  padding: 0 14px 0 6px !important;
+}
+
+[dir="rtl"] .ndd-workspace-tab.ndd-drag-hover-left {
+  box-shadow: 3px 0 0 0 var(--ndd-accent-color, #38bdf8),
+              10px 0 10px -2px var(--ndd-accent-glow, rgba(56,189,248,0.35));
+}
+[dir="rtl"] .ndd-workspace-tab.ndd-drag-hover-right {
+  box-shadow: -3px 0 0 0 var(--ndd-accent-color, #38bdf8),
+              -10px 0 10px -2px var(--ndd-accent-glow, rgba(56,189,248,0.35));
+}
+
+[dir="rtl"] .ndd-workspace-tab > .ndd-text-truncate {
+  margin-right: 0 !important;
+  margin-left: 12px !important;
+}
+
+[dir="rtl"] .ndd-workspace-tab-icon {
+  margin-right: 0 !important;
+  margin-left: 6px !important;
+}
+
+[dir="rtl"] .ndd-tab-header-actions {
+  margin-left: 0 !important;
+  margin-right: auto !important;
+}
+
+[dir="rtl"] .ndd-close-tab-x {
+  margin-left: 0 !important;
+  margin-right: auto !important;
+}
+
+/* Floating window title bar RTL — inherited direction:rtl on the titlebar flex container
+   moves buttons (last in DOM) to the LEFT and title (first in DOM) to the RIGHT.
+   No explicit row-reverse needed; only prevent the button group from reordering internally. */
+[dir="rtl"] .ndd-titlebar-actions { flex-direction: row; }
+
+/* Side Panels transitions slide-in direction */
+[dir="rtl"] .ndd-side-panel-left {
+  left: auto !important;
+  right: 0 !important;
+  transform: translateX(100%) !important;
+}
+[dir="rtl"] .ndd-side-panel-left.ndd-side-panel-visible {
+  transform: translateX(0) !important;
+  border-right: none !important;
+  border-left: 1px solid var(--ndd-border-panel, #3c3c3c) !important;
+}
+
+[dir="rtl"] .ndd-side-panel-right {
+  right: auto !important;
+  left: 0 !important;
+  transform: translateX(-100%) !important;
+}
+[dir="rtl"] .ndd-side-panel-right.ndd-side-panel-visible {
+  transform: translateX(0) !important;
+  border-left: none !important;
+  border-right: 1px solid var(--ndd-border-panel, #3c3c3c) !important;
+}
+
+/* Minimize Taskbar adjustments */
+[dir="rtl"] .ndd-taskbar-footer-container {
+  flex-direction: row-reverse !important;
+}
+[dir="rtl"] .ndd-taskbar-item-icon {
+  margin-right: 0 !important;
+  margin-left: 4px !important;
+}
+
+/* macOS Skin - RTL floating window titlebar overrides
+   Dots must stay on the LEFT in both LTR and RTL (real macOS behavior).
+   In RTL context flex-direction:row flows items right-to-left, so
+   DOM [title][buttons] → title at RIGHT, buttons at LEFT. */
+[dir="rtl"] [data-ndd-skin="macos"] .ndd-floating-window-titlebar {
+  flex-direction: row !important;
+}
+/* Title: pack icon+text toward the visual right (flex-start = right in RTL) */
+[dir="rtl"] [data-ndd-skin="macos"] .ndd-floating-window-titlebar .ndd-floating-window-title {
+  justify-content: flex-start !important;
+}
+/* Button group: keep dots in correct visual order (Red → Yellow → Green, close at far left).
+   direction:rtl (inherited) + flex-direction:row = right-to-left → DOM first item (more) at right,
+   last item (close) at left. */
+[dir="rtl"] [data-ndd-skin="macos"] .ndd-floating-window-titlebar .ndd-titlebar-actions {
+  flex-direction: row !important;
+}
+
+/* Mirror close-button margins for macOS tabs under RTL */
+[dir="rtl"][data-ndd-skin="macos"] .ndd-close-tab-x {
+  margin-left: 0 !important;
+  margin-right: 2px !important;
+}
+
+/* ── Sidebar strips — separator border, accent indicator, drawer shadow ──
+   direction: rtl (inherited from workspace root) reverses the flex row so
+   `ndd-left` strips move visually to the RIGHT and `ndd-right` strips to the LEFT.
+   All physical border-left/border-right and box-shadow directions must swap. */
+
+[dir="rtl"] .ndd-sidebar-tabs-strip.ndd-left {
+  border-left: 1px solid var(--ndd-sidebar-border) !important;
+  border-right: none !important;
+}
+[dir="rtl"] .ndd-sidebar-tabs-strip.ndd-right {
+  border-right: 1px solid var(--ndd-sidebar-border) !important;
+  border-left: none !important;
+}
+
+[dir="rtl"] .ndd-sidebar-tabs-strip.ndd-left .ndd-sidebar-tab-btn.ndd-active {
+  border-left: none !important;
+  border-right: var(--ndd-tab-accent-bar-width, 3px) solid var(--ndd-tab-icon-active) !important;
+  margin-left: -2px !important;
+  margin-right: 0 !important;
+}
+[dir="rtl"] .ndd-sidebar-tabs-strip.ndd-right .ndd-sidebar-tab-btn.ndd-active {
+  border-right: none !important;
+  border-left: var(--ndd-tab-accent-bar-width, 3px) solid var(--ndd-tab-icon-active) !important;
+  margin-right: -2px !important;
+  margin-left: 0 !important;
+}
+
+[dir="rtl"] .ndd-sidebar-content-drawer.ndd-left {
+  border-left: 1px solid var(--ndd-sidebar-border) !important;
+  border-right: none !important;
+  box-shadow: -4px 0 16px rgba(0, 0, 0, 0.12);
+}
+[dir="rtl"] .ndd-sidebar-content-drawer.ndd-right {
+  border-right: 1px solid var(--ndd-sidebar-border) !important;
+  border-left: none !important;
+  box-shadow: 4px 0 16px rgba(0, 0, 0, 0.12);
+}
+
+/* obsidian & tokyo — flip the inset glow X offset sign */
+[dir="rtl"] [data-ndd-skin="obsidian"] .ndd-sidebar-tabs-strip.ndd-left .ndd-sidebar-tab-btn.ndd-active {
+  box-shadow: var(--ndd-tab-btn-active-shadow), inset -3px 0 8px rgba(255, 255, 255, 0.08) !important;
+}
+[dir="rtl"] [data-ndd-skin="obsidian"] .ndd-sidebar-tabs-strip.ndd-right .ndd-sidebar-tab-btn.ndd-active {
+  box-shadow: var(--ndd-tab-btn-active-shadow), inset 3px 0 8px rgba(255, 255, 255, 0.08) !important;
+}
+[dir="rtl"] [data-ndd-skin="tokyo"] .ndd-sidebar-tabs-strip.ndd-left .ndd-sidebar-tab-btn.ndd-active {
+  box-shadow: var(--ndd-tab-btn-active-shadow), inset -3px 0 12px rgba(122, 162, 247, 0.18) !important;
+}
+[dir="rtl"] [data-ndd-skin="tokyo"] .ndd-sidebar-tabs-strip.ndd-right .ndd-sidebar-tab-btn.ndd-active {
+  box-shadow: var(--ndd-tab-btn-active-shadow), inset 3px 0 12px rgba(122, 162, 247, 0.18) !important;
+}
+
+/* chrome — swap the capsule border-radius when strips change sides */
+[dir="rtl"] [data-ndd-skin="chrome"] .ndd-sidebar-tabs-strip.ndd-left .ndd-sidebar-tab-btn.ndd-active {
+  border-radius: 10px 0 0 10px !important;
+  margin-left: 0 !important;
+  margin-right: 0 !important;
+}
+[dir="rtl"] [data-ndd-skin="chrome"] .ndd-sidebar-tabs-strip.ndd-right .ndd-sidebar-tab-btn.ndd-active {
+  border-radius: 0 10px 10px 0 !important;
+  margin-right: 0 !important;
+  margin-left: 0 !important;
+}
+
+/* ==========================================================================
+   FRAMEWORK-AGNOSTIC UTILITY CLASSES
+   (replaces Bootstrap utility class dependencies)
+   ========================================================================== */
+
+/* Text truncation (equivalent to Bootstrap .ndd-text-truncate) */
+.ndd-text-truncate {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* Floating window titlebar button group */
+.ndd-titlebar-actions {
+  display: flex;
+  align-items: center;
+}
+
+
+/* Tab header custom actions slot */
+.ndd-tab-header-actions {
+  margin-inline-start: auto;
+  display: flex;
+  align-items: center;
+  margin-inline-end: 0.25rem;
+  gap: var(--ndd-header-button-gap, 4px);
+}
+
+/* Panel body (tab content area / floating window content area) */
+.ndd-panel-body {
+  flex-grow: 1;
+  width: 100%;
+  height: 100%;
+}
+
+/* Empty workspace section placeholder text */
+.ndd-empty-leaf-placeholder {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: monospace;
+  font-size: 0.875rem;
+  color: var(--ndd-text-secondary, #94a3b8);
+}
+
+
+/* Unregistered component error panel */
+.ndd-unregistered-panel {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  background: transparent;
+  color: #dc3545;
+  font-family: monospace;
+  padding: 1rem;
+  text-align: center;
+  box-sizing: border-box;
+}
+
+/* Taskbar scrollable items row */
+.ndd-taskbar-items-container {
+  display: flex;
+  flex-direction: row;
+  gap: 0.5rem;
+  overflow-x: auto;
+  align-items: center;
+  margin: 0 0.5rem;
+  padding: 2px 4px;
+  scrollbar-width: none;
+  scroll-snap-type: x mandatory;
+  max-width: 800px;
+}
+
+.ndd-taskbar-items-container::-webkit-scrollbar {
+  display: none;
+}
+
+/* Tooltip header row (title + close button) */
+.ndd-tooltip-header-row {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+  gap: 0.75rem;
+  padding: 0 0.25rem;
+}
+
+/* Drag ghost tab preview (floating label while dragging) */
+.ndd-drag-ghost-tab {
+  position: fixed;
+  background: rgba(0, 0, 0, 0.8);
+  border: 1px solid var(--ndd-accent-color, #38bdf8);
+  border-left: 3px solid var(--ndd-accent-color, #38bdf8);
+  border-radius: 4px;
+  color: var(--ndd-accent-color, #38bdf8);
+  font-family: monospace;
+  padding: 0.375rem 1rem;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.75rem;
+  white-space: nowrap;
+  pointer-events: none;
+}
+
+/* ConfirmationForm component styles */
+.ndd-confirmation-form-body {
+  padding: 0.75rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.ndd-confirmation-alert {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin: 0;
+  padding: 0.625rem;
+  font-size: 0.875rem;
+  border-radius: 0.375rem;
+}
+
+.ndd-confirmation-alert-danger {
+  background: rgba(220, 53, 69, 0.15);
+  border: 1px solid rgba(220, 53, 69, 0.3);
+  color: #f87171;
+}
+
+.ndd-confirmation-alert-info {
+  background: rgba(13, 202, 240, 0.15);
+  border: 1px solid rgba(13, 202, 240, 0.3);
+  color: #67e8f9;
+}
+
+.ndd-confirmation-alert-warning {
+  background: rgba(255, 193, 7, 0.15);
+  border: 1px solid rgba(255, 193, 7, 0.3);
+  color: #fbbf24;
+}
+
+.ndd-confirmation-alert-success {
+  background: rgba(25, 135, 84, 0.15);
+  border: 1px solid rgba(25, 135, 84, 0.3);
+  color: #4ade80;
+}
+
+/* The message body. rdd set these three values inline on the JSX, together with an <hr>
+   that existed only to draw a separator — so a consumer could restyle neither (D12). The
+   separator is this element's own border-bottom, which is one element instead of two and
+   leaves the spacing to the flex gap above. */
+.ndd-confirmation-message {
+  font-size: 0.9rem;
+  line-height: 1.5;
+  color: inherit;
+  padding-bottom: 0.5rem;
+  border-bottom: 1px solid var(--ndd-sidebar-border, rgba(255, 255, 255, 0.08));
+}
+
+.ndd-confirmation-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 0.5rem;
+}
+
+/* Sidebar drawer header */
+.ndd-sidebar-drawer-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  border-bottom: 1px solid var(--ndd-sidebar-border, rgba(255, 255, 255, 0.08));
+  padding: 0 0.75rem;
+  flex-shrink: 0;
+  background: var(--ndd-sidebar-drawer-header-bg);
+  min-height: 38px;
+}
+
+/* Optional close button (showCloseButton) — an extra way to collapse the sidebar besides
+   clicking the active tab's own icon again. */
+.ndd-sidebar-drawer-close-button {
+  background: transparent;
+  border: none;
+  color: var(--ndd-sidebar-text-muted, var(--ndd-text-secondary));
+  cursor: pointer;
+  padding: 4px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 4px;
+  transition: all 0.15s ease;
+  flex-shrink: 0;
+}
+
+.ndd-sidebar-drawer-close-button:hover {
+  background-color: var(--ndd-sidebar-btn-hover-bg);
+  color: var(--ndd-sidebar-text-title);
+}
+
+/* Sidebar drawer content body */
+.ndd-sidebar-drawer-body {
+  flex-grow: 1;
+  overflow: auto;
+}
+
+/* ==========================================================================
+   TOOLBAR STRIP
+   ========================================================================== */
+
+.ndd-toolbar-strip {
+  background-color: var(--ndd-sidebar-tabs-bg);
+  display: flex;
+  align-items: center;
+  flex-shrink: 0;
+  z-index: 5;
+}
+
+.ndd-toolbar-strip.ndd-left,
+.ndd-toolbar-strip.ndd-right {
+  flex-direction: column;
+  width: 48px;
+  height: 100%;
+  padding: 8px 0;
+  gap: 4px;
+  overflow: hidden;
+  transition: width 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.ndd-toolbar-strip.ndd-top,
+.ndd-toolbar-strip.ndd-bottom {
+  flex-direction: row;
+  width: 100%;
+  height: 48px;
+  padding: 0 8px;
+  gap: 4px;
+  overflow: hidden;
+  transition: height 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+@media (pointer: coarse) {
+  .ndd-toolbar-strip.ndd-left, .ndd-toolbar-strip.ndd-right { width: 56px; }
+  .ndd-toolbar-strip.ndd-top, .ndd-toolbar-strip.ndd-bottom { height: 56px; }
+}
+
+.ndd-toolbar-strip.ndd-left  { border-right:  1px solid var(--ndd-sidebar-border); }
+.ndd-toolbar-strip.ndd-right { border-left:   1px solid var(--ndd-sidebar-border); }
+.ndd-toolbar-strip.ndd-top   { border-bottom: 1px solid var(--ndd-sidebar-border); }
+.ndd-toolbar-strip.ndd-bottom{ border-top:    1px solid var(--ndd-sidebar-border); }
+/* Collapsed ([visible]=false): the inline size is 0, and the edge border goes too, or a 1px line
+   is left behind where the strip was (divergence N7). */
+.ndd-toolbar-strip.ndd-toolbar-strip--collapsed { border-width: 0; }
+
+/* Base button */
+.ndd-toolbar-btn {
+  width: 36px;
+  height: 36px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: transparent;
+  border: 1px solid transparent;
+  border-radius: 6px;
+  color: var(--ndd-tab-icon-inactive);
+  cursor: pointer;
+  flex-shrink: 0;
+  outline: none !important;
+  position: relative;
+  transition: color 0.15s ease, background-color 0.15s ease;
+}
+
+.ndd-toolbar-btn:hover:not(:disabled) {
+  background-color: var(--ndd-toolbar-btn-hover-bg);
+  color: var(--ndd-sidebar-text-title);
+}
+
+.ndd-toolbar-btn:disabled {
+  opacity: 0.35;
+  cursor: not-allowed;
+}
+
+/* Radio active — accent bar on the outer edge */
+.ndd-toolbar-btn-radio.ndd-active {
+  color: var(--ndd-tab-icon-active);
+  background-color: var(--ndd-toolbar-btn-radio-active-bg);
+  box-shadow: var(--ndd-toolbar-btn-active-shadow, none);
+  filter: var(--ndd-toolbar-btn-active-glow, none);
+  transition: color 0.15s ease, background-color 0.15s ease, box-shadow 0.15s ease;
+}
+
+.ndd-toolbar-strip.ndd-left   .ndd-toolbar-btn-radio.ndd-active { border-left:   var(--ndd-toolbar-accent-bar-width, 3px) solid var(--ndd-tab-icon-active); border-radius: 0 6px 6px 0; }
+.ndd-toolbar-strip.ndd-right  .ndd-toolbar-btn-radio.ndd-active { border-right:  var(--ndd-toolbar-accent-bar-width, 3px) solid var(--ndd-tab-icon-active); border-radius: 6px 0 0 6px; }
+.ndd-toolbar-strip.ndd-top    .ndd-toolbar-btn-radio.ndd-active { border-bottom: var(--ndd-toolbar-accent-bar-width, 3px) solid var(--ndd-tab-icon-active); border-radius: 6px 6px 0 0; }
+.ndd-toolbar-strip.ndd-bottom .ndd-toolbar-btn-radio.ndd-active { border-top:    var(--ndd-toolbar-accent-bar-width, 3px) solid var(--ndd-tab-icon-active); border-radius: 0 0 6px 6px; }
+
+/* Toggle active — lighter tint, no directional border */
+.ndd-toolbar-btn-toggle.ndd-active {
+  color: var(--ndd-tab-icon-active);
+  background-color: var(--ndd-toolbar-btn-toggle-active-bg);
+}
+
+/* Group button — corner triangle indicator shows a sub-tool family */
+.ndd-toolbar-btn-group {
+  position: relative;
+}
+
+.ndd-toolbar-btn-group::after {
+  content: '';
+  position: absolute;
+  bottom: 4px;
+  right: 4px;
+  width: 0;
+  height: 0;
+  border: 3.5px solid transparent;
+  border-top-color: currentColor;
+  border-right-color: currentColor;
+  opacity: 0.55;
+}
+
+/* Group active state — same directional accent as radio */
+.ndd-toolbar-btn-group.ndd-active {
+  color: var(--ndd-tab-icon-active);
+  background-color: var(--ndd-toolbar-btn-radio-active-bg);
+  box-shadow: var(--ndd-toolbar-btn-active-shadow, none);
+  filter: var(--ndd-toolbar-btn-active-glow, none);
+  transition: color 0.15s ease, background-color 0.15s ease, box-shadow 0.15s ease;
+}
+
+.ndd-toolbar-strip.ndd-left   .ndd-toolbar-btn-group.ndd-active { border-left:   var(--ndd-toolbar-accent-bar-width, 3px) solid var(--ndd-tab-icon-active); border-radius: 0 6px 6px 0; }
+.ndd-toolbar-strip.ndd-right  .ndd-toolbar-btn-group.ndd-active { border-right:  var(--ndd-toolbar-accent-bar-width, 3px) solid var(--ndd-tab-icon-active); border-radius: 6px 0 0 6px; }
+.ndd-toolbar-strip.ndd-top    .ndd-toolbar-btn-group.ndd-active { border-bottom: var(--ndd-toolbar-accent-bar-width, 3px) solid var(--ndd-tab-icon-active); border-radius: 6px 6px 0 0; }
+.ndd-toolbar-strip.ndd-bottom .ndd-toolbar-btn-group.ndd-active { border-top:    var(--ndd-toolbar-accent-bar-width, 3px) solid var(--ndd-tab-icon-active); border-radius: 0 0 6px 6px; }
+
+/* Separators */
+.ndd-toolbar-strip.ndd-left .ndd-toolbar-separator,
+.ndd-toolbar-strip.ndd-right .ndd-toolbar-separator {
+  width: 24px;
+  height: 1px;
+  background-color: var(--ndd-toolbar-separator-color);
+  flex-shrink: 0;
+  margin: 4px 0;
+  align-self: center;
+}
+
+.ndd-toolbar-strip.ndd-top .ndd-toolbar-separator,
+.ndd-toolbar-strip.ndd-bottom .ndd-toolbar-separator {
+  height: 24px;
+  width: 1px;
+  background-color: var(--ndd-toolbar-separator-color);
+  flex-shrink: 0;
+  margin: 0 4px;
+  align-self: center;
+}
+
+/* Touch targets on coarse-pointer devices */
+@media (pointer: coarse) {
+  .ndd-toolbar-btn { width: 44px; height: 44px; }
+}
+
+/* ==========================================================================
+   TOOLBAR GROUP FLYOUT
+   ========================================================================== */
+
+.ndd-toolbar-group-flyout {
+  position: fixed;
+  z-index: calc(var(--ndd-z-base, 1000) + 7000);
+  background: var(--ndd-sidebar-bg, var(--ndd-bg-panel));
+  border: 1px solid var(--ndd-sidebar-border);
+  border-radius: 8px;
+  padding: 4px;
+  min-width: 168px;
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.3), 0 2px 8px rgba(0, 0, 0, 0.15);
+  animation: ndd-toolbar-flyout-in 0.12s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+@keyframes ndd-toolbar-flyout-in {
+  from { opacity: 0; transform: scale(0.95); }
+  to   { opacity: 1; transform: scale(1); }
+}
+
+/* Animation origin matches the edge closest to the toolbar button */
+.ndd-toolbar-group-flyout.ndd-left   { transform-origin: top left; }
+.ndd-toolbar-group-flyout.ndd-right  { transform-origin: top right; }
+.ndd-toolbar-group-flyout.ndd-top    { transform-origin: top left; }
+.ndd-toolbar-group-flyout.ndd-bottom { transform-origin: bottom left; }
+/* RTL: physical sides swap, so animation origin flips horizontally */
+[dir="rtl"] .ndd-toolbar-group-flyout.ndd-left   { transform-origin: top right; }
+[dir="rtl"] .ndd-toolbar-group-flyout.ndd-right  { transform-origin: top left; }
+[dir="rtl"] .ndd-toolbar-group-flyout.ndd-top    { transform-origin: top right; }
+[dir="rtl"] .ndd-toolbar-group-flyout.ndd-bottom { transform-origin: bottom right; }
+
+[dir="rtl"] .ndd-toolbar-group-flyout-label {
+  text-align: right;
+}
+
+.ndd-toolbar-group-flyout-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 5px 8px;
+  border: 1px solid transparent;
+  border-radius: 6px;
+  background: transparent;
+  color: var(--ndd-sidebar-text-title, var(--ndd-text-primary));
+  cursor: pointer;
+  width: 100%;
+  text-align: start;
+  font-size: 0.8125rem;
+  font-family: inherit;
+  flex-shrink: 0;
+  transition: background-color 0.1s ease, color 0.1s ease;
+}
+
+.ndd-toolbar-group-flyout-item:hover:not(:disabled) {
+  background-color: var(--ndd-toolbar-btn-hover-bg);
+  color: var(--ndd-sidebar-text-title, var(--ndd-text-primary));
+}
+
+.ndd-toolbar-group-flyout-item:disabled {
+  opacity: 0.35;
+  cursor: not-allowed;
+}
+
+.ndd-toolbar-group-flyout-item.ndd-active {
+  color: var(--ndd-tab-icon-active);
+  background-color: var(--ndd-toolbar-btn-radio-active-bg);
+}
+
+.ndd-toolbar-group-flyout-icon {
+  flex-shrink: 0;
+  width: 16px;
+  height: 16px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+
+.ndd-toolbar-group-flyout-label {
+  flex: 1;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.ndd-toolbar-group-flyout-shortcut {
+  flex-shrink: 0;
+  font-size: 0.6875rem;
+  color: var(--ndd-text-secondary);
+  opacity: 0.7;
+}
+
+.ndd-toolbar-group-flyout-sep {
+  height: 1px;
+  background: var(--ndd-toolbar-separator-color);
+  margin: 3px 4px;
+  flex-shrink: 0;
+}
+
+
+/* Button base — used in ConfirmationForm and similar dialogs */
+.ndd-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-family: monospace;
+  font-weight: 500;
+  cursor: pointer;
+  border-radius: 4px;
+  transition: all 0.15s ease;
+  white-space: nowrap;
+  user-select: none;
+  line-height: 1.2;
+}
+
+.ndd-btn-sm {
+  padding: 0.25rem 0.75rem;
+  font-size: 0.8125rem;
+}
+
+.ndd-btn-outline {
+  background: transparent;
+  border: 1px solid var(--ndd-text-secondary, #6c757d);
+  color: var(--ndd-text-secondary, #6c757d);
+}
+
+.ndd-btn-outline:hover {
+  background: rgba(255, 255, 255, 0.08);
+  border-color: var(--ndd-text-primary, #f1f5f9);
+  color: var(--ndd-text-primary, #f1f5f9);
+}
+
+[data-color-scheme="light"] .ndd-btn-outline {
+  border-color: #6c757d;
+  color: #6c757d;
+}
+
+[data-color-scheme="light"] .ndd-btn-outline:hover {
+  background: rgba(0, 0, 0, 0.05);
+  border-color: #495057;
+  color: #495057;
+}
+
+.ndd-btn-primary {
+  background: var(--ndd-accent-color, #38bdf8);
+  border: 1px solid var(--ndd-accent-color, #38bdf8);
+  color: #090b11;
+}
+
+.ndd-btn-primary:hover {
+  filter: brightness(1.1);
+}
+
+[data-color-scheme="light"] .ndd-btn-primary {
+  color: #ffffff;
+}
+
+/* ============================================================
+   TOUCH SUPPORT (Phase 1C, 2A–B, 3B, 4A, 4C)
+   ============================================================ */
+
+/* Phase 1C: touch-action — suppress scroll on drag handles,
+   allow horizontal pan on tab bar */
+.ndd-workspace-tab              { touch-action: none; }
+.ndd-floating-window-titlebar   { touch-action: none; }
+.ndd-resizer-bar                { touch-action: none; }
+.ndd-resize-handle              { touch-action: none; }
+
+/* Phase 2A: Expand resizer hit area to 44px on touch devices */
+@media (pointer: coarse) {
+  .ndd-resizer-bar[style*="cursor: col-resize"]::before {
+    left: -20px;
+    width: 44px;
+  }
+  .ndd-resizer-bar[style*="cursor: row-resize"]::before {
+    top: -32px;
+    height: 33px; /* 32px upward into safe content area, 0px downward into tab bar */
+  }
+}
+
+/* Phase 3B: 8-direction resize handles on floating windows */
+.ndd-resize-handle {
+  position: absolute;
+  z-index: 30;
+}
+
+/*
+ * Resize handles sit fully INSIDE their window.
+ *
+ * rdd positions every handle at `-4px`, straddling the edge for an 8px grab area — but the
+ * elements that carry them (`.rdd-floating-window`, `.rdd-panel-float`) are `overflow:
+ * hidden`, which clips the outer half away. Measured in Chrome: an 8px edge handle leaves
+ * ~4px hittable, a 16px corner handle leaves ~12px, and at the extreme corner the window's
+ * own `border-radius` means *nothing* is hit at all — the click falls straight through to
+ * the grid behind, so a corner drag does nothing.
+ *
+ * Insetting to 0 makes the whole nominal area hittable. The trade is that you cannot grab
+ * from just outside the window; in exchange, every pixel of the handle works, which it did
+ * not before. See docs/PARITY.md divergence D5.
+ */
+
+/* Edge handles */
+.ndd-resize-n  { top: 0;    left: 16px;   right: 16px;  height: 8px;  cursor: n-resize; }
+.ndd-resize-s  { bottom: 0; left: 16px;   right: 16px;  height: 8px;  cursor: s-resize; }
+.ndd-resize-e  { right: 0;  top: 16px;    bottom: 16px; width:  8px;  cursor: e-resize; }
+.ndd-resize-w  { left: 0;   top: 16px;    bottom: 16px; width:  8px;  cursor: w-resize; }
+
+/* Corner handles */
+.ndd-resize-ne { top: 0;    right: 0;  width: 16px; height: 16px; cursor: ne-resize; }
+.ndd-resize-se { bottom: 0; right: 0;  width: 16px; height: 16px; cursor: se-resize; }
+.ndd-resize-sw { bottom: 0; left: 0;   width: 16px; height: 16px; cursor: sw-resize; }
+.ndd-resize-nw { top: 0;    left: 0;   width: 16px; height: 16px; cursor: nw-resize; }
+
+/* SE corner subtle visual indicator (preserve existing look) */
+.ndd-resize-se::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(135deg, transparent 50%, rgba(255,255,255,0.2) 50%);
+}
+
+/*
+ * Touch: larger hit areas — still fully inside the box.
+ *
+ * rdd enlarges these to 12px but positions them at -6px, so `overflow: hidden` clips half of
+ * the enlargement away: the intent is 12px and the reality is 6px, on exactly the devices
+ * that need a *bigger* target. The enlargement is kept and the insets are zeroed, so the
+ * whole 12px is grabbable. Same reasoning as the handle note above; see PARITY.md D5.
+ */
+@media (pointer: coarse) {
+  .ndd-resize-ne, .ndd-resize-se, .ndd-resize-sw, .ndd-resize-nw {
+    width: 28px;
+    height: 28px;
+  }
+  .ndd-resize-n, .ndd-resize-s {
+    left: 28px;
+    right: 28px;
+    height: 12px;
+    top: 0;
+  }
+  .ndd-resize-s { top: auto; bottom: 0; }
+  .ndd-resize-e, .ndd-resize-w {
+    top: 28px;
+    bottom: 28px;
+    width: 12px;
+    right: 0;
+  }
+  .ndd-resize-w { right: auto; left: 0; }
+}
+
+/* Phase 2B: Adaptive density for coarse-pointer (touch) devices */
+@media (pointer: coarse) {
+  /* Taller tabs for touch targets */
+  .ndd-workspace-tab {
+    min-height: 44px !important;
+    height: 44px !important;
+    padding: 0 12px 0 14px !important;
+  }
+
+  /* Always-visible close button (no hover-to-reveal) */
+  .ndd-workspace-tab .ndd-close-tab-x {
+    opacity: 0.8 !important;
+    width: 24px !important;
+    height: 24px !important;
+  }
+
+  /* Larger titlebar action buttons */
+  .ndd-custom-tab-btn {
+    width: 28px !important;
+    height: 28px !important;
+  }
+
+  /* Taller taskbar items */
+  .ndd-taskbar-glassmorphic-item {
+    width: 48px !important;
+    height: 48px !important;
+  }
+
+  /* Wider tab min-width on touch */
+  .ndd-workspace-tab { min-width: 88px; }
+
+  /* Wider scroll arrows on touch */
+
+  /* Keep top edge trigger thin even on touch — avoids collision with tab bar */
+  .ndd-edge-trigger-top { height: 14px; }
+}
+
+/* Phase 4A: Long-press active animation (visual feedback during 300ms hold) */
+.ndd-long-press-active {
+  animation: ndd-long-press-pulse 0.25s ease-out forwards;
+  transform-origin: center;
+}
+
+@keyframes ndd-long-press-pulse {
+  0%   { transform: scale(1);    box-shadow: 0 0 0 0 var(--ndd-accent-glow, rgba(56,189,248,0.3)); }
+  60%  { transform: scale(1.04); box-shadow: 0 0 0 6px var(--ndd-accent-glow, rgba(56,189,248,0.15)); }
+  100% { transform: scale(1.02); box-shadow: 0 0 0 4px var(--ndd-accent-glow, rgba(56,189,248,0.1)); }
+}
+
+/* Phase 4C: Tab bar horizontal scroll (handled by existing .ndd-tab-headers-container overflow-x: auto) */
+/* Note: touch-action and -webkit-overflow-scrolling intentionally omitted — they cause iOS Safari
+   to fire pointercancel before the 300ms long-press timer can activate tab drag */
+.ndd-tab-headers-container::-webkit-scrollbar { display: none; }
+
+/* ==========================================================================
+   PANEL OVERLAY — Per-skin token overrides
+   ========================================================================== */
+
+[data-ndd-skin="vscode"] {
+  --ndd-panel-toolbar-btn-hover-bg: rgba(255, 255, 255, 0.12);
+}
+
+[data-ndd-skin="macos"] {
+  --ndd-panel-toolbar-btn-hover-bg: rgba(255, 255, 255, 0.18);
+}
+
+[data-ndd-skin="slate"] {
+  --ndd-panel-toolbar-btn-active-color: #60a5fa;
+  --ndd-panel-toolbar-btn-active-bg: rgba(96, 165, 250, 0.15);
+}
+
+[data-ndd-skin="nord"] {
+  --ndd-panel-toolbar-btn-active-color: #88c0d0;
+  --ndd-panel-toolbar-btn-active-bg: rgba(136, 192, 208, 0.15);
+}
+
+[data-ndd-skin="obsidian"] {
+  --ndd-panel-toolbar-btn-active-color: #a78bfa;
+  --ndd-panel-toolbar-btn-active-bg: rgba(167, 139, 250, 0.15);
+}
+
+[data-ndd-skin="tokyo"] {
+  --ndd-panel-toolbar-btn-active-color: #7aa2f7;
+  --ndd-panel-toolbar-btn-active-bg: rgba(122, 162, 247, 0.15);
+}
+
+/* ==========================================================================
+   PANEL OVERLAY — PanelToolbar + PanelFloatingWindow
+   ========================================================================== */
+
+/* ── Root container ── */
+.ndd-panel-overlay-root {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+}
+
+/* ── Toolbar container ── */
+.ndd-panel-toolbar {
+  position: absolute;
+  z-index: 5;
+  pointer-events: none;
+  display: flex;
+  align-items: center;
+  gap: var(--ndd-panel-toolbar-gap, 4px);
+  padding: var(--ndd-panel-toolbar-padding, 8px);
+  box-sizing: border-box;
+}
+
+.ndd-panel-toolbar--top,
+.ndd-panel-toolbar--bottom {
+  flex-direction: row;
+}
+
+.ndd-panel-toolbar--left,
+.ndd-panel-toolbar--right {
+  flex-direction: column;
+}
+
+/* Restore pointer-events on every direct child */
+.ndd-panel-toolbar > * {
+  pointer-events: auto;
+}
+
+/* ── Toolbar button (shared by ToolbarButton + ToolbarToggle) ── */
+.ndd-panel-toolbar-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: var(--ndd-panel-toolbar-btn-size, 32px);
+  height: var(--ndd-panel-toolbar-btn-size, 32px);
+  flex-shrink: 0;
+  border-radius: var(--ndd-panel-toolbar-btn-radius, 6px);
+  border: none;
+  background: transparent;
+  color: var(--ndd-panel-toolbar-fg, rgba(255, 255, 255, 0.65));
+  cursor: pointer;
+  padding: 0;
+  transition: background 0.12s ease, color 0.12s ease, transform 0.1s ease, border-color 0.12s ease;
+}
+
+.ndd-panel-toolbar-btn:hover:not(:disabled) {
+  background: var(--ndd-panel-toolbar-btn-hover-bg, rgba(255, 255, 255, 0.15));
+  color: var(--ndd-panel-toolbar-fg-hover, rgba(255, 255, 255, 0.95));
+  transform: scale(1.07);
+}
+
+.ndd-panel-toolbar-btn:active:not(:disabled) {
+  transform: scale(0.94);
+}
+
+.ndd-panel-toolbar-btn--active {
+  background: var(--ndd-panel-toolbar-btn-active-bg, rgba(56, 189, 248, 0.14));
+  color: var(--ndd-panel-toolbar-btn-active-color, #38bdf8);
+}
+
+.ndd-panel-toolbar-btn--active:hover:not(:disabled) {
+  background: var(--ndd-panel-toolbar-btn-active-bg, rgba(56, 189, 248, 0.22));
+}
+
+.ndd-panel-toolbar-btn:disabled {
+  opacity: 0.38;
+  cursor: not-allowed;
+}
+
+/* ── Toolbar strip variants ── */
+.ndd-panel-toolbar[data-variant="frosted"] {
+  background: rgba(15, 20, 30, 0.55);
+  backdrop-filter: blur(10px) saturate(150%);
+  -webkit-backdrop-filter: blur(10px) saturate(150%);
+}
+.ndd-panel-toolbar[data-variant="solid"] {
+  background: var(--ndd-bg-tab-bar, #0d0f16);
+}
+[data-color-scheme="light"] .ndd-panel-toolbar[data-variant="frosted"] {
+  background: rgba(233, 236, 239, 0.72);
+}
+.ndd-panel-toolbar--top[data-variant="frosted"],
+.ndd-panel-toolbar--top[data-variant="solid"] {
+  border-bottom: 1px solid var(--ndd-panel-toolbar-separator-color, rgba(255, 255, 255, 0.09));
+}
+.ndd-panel-toolbar--bottom[data-variant="frosted"],
+.ndd-panel-toolbar--bottom[data-variant="solid"] {
+  border-top: 1px solid var(--ndd-panel-toolbar-separator-color, rgba(255, 255, 255, 0.09));
+}
+.ndd-panel-toolbar--left[data-variant="frosted"],
+.ndd-panel-toolbar--left[data-variant="solid"] {
+  border-right: 1px solid var(--ndd-panel-toolbar-separator-color, rgba(255, 255, 255, 0.09));
+}
+.ndd-panel-toolbar--right[data-variant="frosted"],
+.ndd-panel-toolbar--right[data-variant="solid"] {
+  border-left: 1px solid var(--ndd-panel-toolbar-separator-color, rgba(255, 255, 255, 0.09));
+}
+
+/* ── Button variants — toolbar-level default ── */
+
+/* soft */
+.ndd-panel-toolbar[data-btn-variant="soft"] .ndd-panel-toolbar-btn,
+.ndd-panel-toolbar-btn[data-variant="soft"] {
+  background: rgba(255, 255, 255, 0.06);
+}
+.ndd-panel-toolbar[data-btn-variant="soft"] .ndd-panel-toolbar-btn:hover:not(:disabled),
+.ndd-panel-toolbar-btn[data-variant="soft"]:hover:not(:disabled) {
+  background: rgba(255, 255, 255, 0.15);
+}
+[data-color-scheme="light"] .ndd-panel-toolbar[data-btn-variant="soft"] .ndd-panel-toolbar-btn,
+[data-color-scheme="light"] .ndd-panel-toolbar-btn[data-variant="soft"] {
+  background: rgba(0, 0, 0, 0.04);
+}
+[data-color-scheme="light"] .ndd-panel-toolbar[data-btn-variant="soft"] .ndd-panel-toolbar-btn:hover:not(:disabled),
+[data-color-scheme="light"] .ndd-panel-toolbar-btn[data-variant="soft"]:hover:not(:disabled) {
+  background: rgba(0, 0, 0, 0.08);
+}
+
+/* outlined */
+.ndd-panel-toolbar[data-btn-variant="outlined"] .ndd-panel-toolbar-btn,
+.ndd-panel-toolbar-btn[data-variant="outlined"] {
+  border: 1px solid var(--ndd-panel-toolbar-separator-color, rgba(255, 255, 255, 0.18));
+}
+.ndd-panel-toolbar[data-btn-variant="outlined"] .ndd-panel-toolbar-btn:hover:not(:disabled),
+.ndd-panel-toolbar-btn[data-variant="outlined"]:hover:not(:disabled) {
+  background: rgba(255, 255, 255, 0.12);
+  border-color: rgba(255, 255, 255, 0.38);
+}
+[data-color-scheme="light"] .ndd-panel-toolbar[data-btn-variant="outlined"] .ndd-panel-toolbar-btn:hover:not(:disabled),
+[data-color-scheme="light"] .ndd-panel-toolbar-btn[data-variant="outlined"]:hover:not(:disabled) {
+  background: rgba(0, 0, 0, 0.06);
+  border-color: rgba(0, 0, 0, 0.25);
+}
+
+/* filled */
+.ndd-panel-toolbar[data-btn-variant="filled"] .ndd-panel-toolbar-btn,
+.ndd-panel-toolbar-btn[data-variant="filled"] {
+  background: var(--ndd-panel-toolbar-btn-active-bg, rgba(56, 189, 248, 0.2));
+  color: var(--ndd-panel-toolbar-btn-active-color, #38bdf8);
+  border: 1px solid var(--ndd-panel-toolbar-btn-active-color, #38bdf8);
+}
+.ndd-panel-toolbar[data-btn-variant="filled"] .ndd-panel-toolbar-btn:hover:not(:disabled),
+.ndd-panel-toolbar-btn[data-variant="filled"]:hover:not(:disabled) {
+  background: var(--ndd-panel-toolbar-btn-active-color, #38bdf8);
+  color: #000;
+  border-color: transparent;
+}
+
+/* ── Separator ── */
+.ndd-panel-toolbar__sep {
+  flex-shrink: 0;
+  background: var(--ndd-panel-toolbar-separator-color, rgba(255, 255, 255, 0.09));
+  align-self: center;
+}
+
+.ndd-panel-toolbar--top .ndd-panel-toolbar__sep,
+.ndd-panel-toolbar--bottom .ndd-panel-toolbar__sep {
+  width: 1px;
+  height: 18px;
+}
+
+.ndd-panel-toolbar--left .ndd-panel-toolbar__sep,
+.ndd-panel-toolbar--right .ndd-panel-toolbar__sep {
+  height: 1px;
+  width: 18px;
+}
+
+/* ── Spacer — pushes subsequent items to the opposite end ── */
+.ndd-panel-toolbar__spacer {
+  flex: 1;
+  pointer-events: none;
+}
+
+/* ── ToolbarItem wrapper (restores pointer-events for custom controls) ── */
+.ndd-panel-toolbar__item {
+  display: inline-flex;
+  align-items: center;
+  pointer-events: auto;
+}
+
+/* ── ToolbarCenter — absolutely centered, independent of left/right widths ── */
+.ndd-panel-toolbar__center {
+  position: absolute;
+  display: flex;
+  align-items: center;
+  gap: var(--ndd-panel-toolbar-gap, 4px);
+  pointer-events: none;
+}
+.ndd-panel-toolbar__center > * {
+  pointer-events: auto;
+}
+/* Horizontal toolbars: center horizontally */
+.ndd-panel-toolbar--top .ndd-panel-toolbar__center,
+.ndd-panel-toolbar--bottom .ndd-panel-toolbar__center {
+  flex-direction: row;
+  top: 0;
+  bottom: 0;
+  left: 50%;
+  transform: translateX(-50%);
+}
+/* Vertical toolbars: center vertically */
+.ndd-panel-toolbar--left .ndd-panel-toolbar__center,
+.ndd-panel-toolbar--right .ndd-panel-toolbar__center {
+  flex-direction: column;
+  left: 0;
+  right: 0;
+  top: 50%;
+  transform: translateY(-50%);
+}
+
+/* ── ToolbarSearchInput ── */
+.ndd-panel-toolbar-search {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.ndd-panel-toolbar-search__input {
+  height: var(--ndd-panel-toolbar-btn-size, 28px);
+  width: 200px;
+  border: 1px solid var(--ndd-panel-toolbar-separator-color, rgba(255, 255, 255, 0.15));
+  border-radius: var(--ndd-panel-toolbar-btn-radius, 6px);
+  background: rgba(0, 0, 0, 0.18);
+  color: inherit;
+  padding: 0 8px;
+  font-size: 12px;
+  outline: none;
+  box-sizing: border-box;
+}
+
+.ndd-panel-toolbar-search__input::placeholder {
+  opacity: 0.45;
+}
+
+.ndd-panel-toolbar-search__input:focus {
+  border-color: var(--ndd-panel-toolbar-btn-active-color, #38bdf8);
+}
+
+.ndd-panel-toolbar-search__dropdown {
+  /* Shifts with --ndd-z-base like every other chrome overlay; above the context menu
+     (+8500/+8501) since it's opened from a toolbar that can sit under one. */
+  z-index: calc(var(--ndd-z-base, 1000) + 8502);
+  background: var(--ndd-panel-float-bg, rgba(22, 24, 34, 0.95));
+  border: 1px solid var(--ndd-panel-float-border, rgba(255, 255, 255, 0.1));
+  border-radius: var(--ndd-panel-float-radius, 8px);
+  box-shadow: var(--ndd-panel-float-shadow-active, 0 8px 28px rgba(0, 0, 0, 0.55));
+  overflow: hidden;
+  max-height: 300px;
+  overflow-y: auto;
+}
+
+.ndd-panel-toolbar-search__group {
+  padding: 6px 12px 2px;
+  font-size: 10px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  opacity: 0.45;
+}
+
+.ndd-panel-toolbar-search__item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  padding: 7px 12px;
+  border: none;
+  background: transparent;
+  color: inherit;
+  text-align: start;
+  cursor: pointer;
+  font-size: 12px;
+}
+
+.ndd-panel-toolbar-search__item:hover {
+  background: var(--ndd-panel-toolbar-btn-hover-bg, rgba(255, 255, 255, 0.08));
+}
+
+.ndd-panel-toolbar-search__item-icon { flex-shrink: 0; opacity: 0.7; }
+.ndd-panel-toolbar-search__item-label { flex: 1; }
+.ndd-panel-toolbar-search__item-desc { opacity: 0.45; font-size: 11px; }
+
+/* ── Floating window ── */
+.ndd-panel-float {
+  position: absolute;
+  min-width: 120px;
+  min-height: 60px;
+  display: flex;
+  flex-direction: column;
+  border-radius: var(--ndd-panel-float-radius, 8px);
+  background: var(--ndd-panel-float-bg, rgba(22, 24, 34, 0.92));
+  border: 1px solid var(--ndd-panel-float-border, rgba(255, 255, 255, 0.1));
+  box-shadow: var(--ndd-panel-float-shadow, 0 4px 16px rgba(0, 0, 0, 0.35));
+  backdrop-filter: blur(8px);
+  overflow: hidden;
+}
+
+.ndd-panel-float--active {
+  box-shadow: var(--ndd-panel-float-shadow-active, 0 8px 28px rgba(0, 0, 0, 0.55));
+}
+
+.ndd-panel-float__header {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 0 8px;
+  height: 28px;
+  flex-shrink: 0;
+  background: var(--ndd-panel-float-header-bg, rgba(255, 255, 255, 0.04));
+  cursor: grab;
+  user-select: none;
+}
+
+.ndd-panel-float__header:active {
+  cursor: grabbing;
+}
+
+.ndd-panel-float--active .ndd-panel-float__header {
+  background: var(--ndd-panel-float-header-bg-active, rgba(56, 189, 248, 0.08));
+}
+
+.ndd-panel-float__title {
+  flex: 1;
+  font-size: 11px;
+  font-weight: 500;
+  color: var(--ndd-panel-float-title-color, rgba(255, 255, 255, 0.6));
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.ndd-panel-float--active .ndd-panel-float__title {
+  color: var(--ndd-panel-float-title-color-active, rgba(255, 255, 255, 0.9));
+}
+
+.ndd-panel-float__icon {
+  flex-shrink: 0;
+  width: 14px;
+  height: 14px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  opacity: 0.7;
+  color: var(--ndd-panel-float-title-color, rgba(255, 255, 255, 0.6));
+}
+.ndd-panel-float--active .ndd-panel-float__icon {
+  opacity: 1;
+  color: var(--ndd-panel-float-title-color-active, rgba(255, 255, 255, 0.9));
+}
+
+.ndd-panel-float__close {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 18px;
+  height: 18px;
+  flex-shrink: 0;
+  background: var(--ndd-custom-btn-bg, rgba(255, 255, 255, 0.03));
+  border: 1px solid var(--ndd-custom-btn-border, rgba(255, 255, 255, 0.05));
+  color: var(--ndd-text-secondary, #94a3b8);
+  cursor: pointer;
+  border-radius: 4px;
+  padding: 0;
+  line-height: 1;
+  transition: all 0.15s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.ndd-panel-float__close:hover {
+  background-color: var(--ndd-custom-btn-hover-bg, rgba(255, 255, 255, 0.12));
+  color: var(--ndd-custom-btn-hover-color, #ffffff);
+  border-color: var(--ndd-custom-btn-border, rgba(255, 255, 255, 0.05));
+  transform: scale(1.05);
+}
+
+.ndd-panel-float__body {
+  flex: 1;
+  overflow: auto;
+  min-height: 0;
+}
+
+/* A `.ndd-panel-float__resize` rule lived here in rdd and was dead: nothing rendered that
+   class in either library — the widget's handles are `.ndd-resize-handle.ndd-resize-<dir>`,
+   which have their own rules. Removed in M13, when the class/rule correspondence sweep found
+   it. A rule that matches nothing looks exactly like styling and does nothing at all. */
+
+/* ── Docking drop zones (visible while dragging a floating window) ── */
+/* Armed for resize-to-stretch: the clamps already hold the widget exactly where a stretched axis
+   would sit, so releasing now locks it there. The outline is the cue that it *will* lock — without
+   it the gesture is invisible and undiscoverable. Same dashed accent vocabulary as the drop zones
+   below. */
+.ndd-panel-float--snapping {
+  outline: 2px dashed var(--ndd-accent-color, #38bdf8);
+  outline-offset: -2px;
+}
+
+.ndd-panel-float-dropzone {
+  position: absolute;
+  width: 80px;
+  height: 80px;
+  border: 2px dashed var(--ndd-accent-color, #38bdf8);
+  border-radius: 8px;
+  background: rgba(56, 189, 248, 0.06);
+  pointer-events: none;
+  z-index: 200;
+  opacity: 0.55;
+  transition: opacity 0.15s ease, background 0.15s ease, border-style 0.15s ease;
+}
+
+.ndd-panel-float-dropzone--hovered {
+  opacity: 1;
+  background: rgba(56, 189, 248, 0.18);
+  border-style: solid;
+}
+
+.ndd-panel-float-dropzone--top-left     { top:    8px; left:  8px; }
+.ndd-panel-float-dropzone--top-right    { top:    8px; right: 8px; }
+.ndd-panel-float-dropzone--bottom-left  { bottom: 8px; left:  8px; }
+.ndd-panel-float-dropzone--bottom-right { bottom: 8px; right: 8px; }
+
+[dir="rtl"] .ndd-panel-float-dropzone--top-right    { right: auto; left:  8px; }
+[dir="rtl"] .ndd-panel-float-dropzone--top-left     { left:  auto; right: 8px; }
+[dir="rtl"] .ndd-panel-float-dropzone--bottom-right { right: auto; left:  8px; }
+[dir="rtl"] .ndd-panel-float-dropzone--bottom-left  { left:  auto; right: 8px; }
+
+[dir="rtl"] .ndd-panel-float__title  { text-align: right; }
+
+/* ── Toast ── */
+
+/* Color tokens — match confirmation-alert-* palette exactly */
+:root {
+  --ndd-toast-info-color:    #67e8f9;
+  --ndd-toast-success-color: #4ade80;
+  --ndd-toast-warning-color: #fbbf24;
+  --ndd-toast-error-color:   #f87171;
+  --ndd-toast-bg:            #2a2d32;
+  --ndd-toast-border:        rgba(255, 255, 255, 0.14);
+}
+[data-color-scheme="light"] {
+  --ndd-toast-info-color:    #0369a1;
+  --ndd-toast-success-color: #15803d;
+  --ndd-toast-warning-color: #b45309;
+  --ndd-toast-error-color:   #b91c1c;
+  --ndd-toast-bg:            #ffffff;
+  --ndd-toast-border:        rgba(0, 0, 0, 0.14);
+}
+
+/* Position containers */
+.ndd-toast-container {
+  position: fixed; z-index: calc(var(--ndd-z-base, 1000) + 9100);
+  display: flex; gap: 8px; padding: 16px;
+  pointer-events: none;
+  box-sizing: border-box;
+}
+.ndd-toast-container--top-right    { top: var(--ndd-toast-offset-top, 0px); right: 0; flex-direction: column; }
+.ndd-toast-container--top-left     { top: var(--ndd-toast-offset-top, 0px); left:  0; flex-direction: column; }
+.ndd-toast-container--bottom-right { bottom: var(--ndd-toast-offset-bottom, 0px); right: 0; flex-direction: column-reverse; }
+.ndd-toast-container--bottom-left  { bottom: var(--ndd-toast-offset-bottom, 0px); left:  0; flex-direction: column-reverse; }
+/* newestOnTop override inverts the column direction */
+.ndd-toast-container--newest-top.ndd-toast-container--bottom-right,
+.ndd-toast-container--newest-top.ndd-toast-container--bottom-left  { flex-direction: column; }
+.ndd-toast-container--newest-bottom.ndd-toast-container--top-right,
+.ndd-toast-container--newest-bottom.ndd-toast-container--top-left  { flex-direction: column-reverse; }
+
+/* Individual toast — base card */
+.ndd-toast {
+  pointer-events: all; position: relative; overflow: hidden;
+  display: flex; align-items: flex-start; gap: 10px;
+  padding: 20px 14px; border-radius: 6px;
+  background: var(--ndd-toast-bg, #2a2d32);
+  border: 1px solid var(--ndd-toast-border, rgba(255,255,255,0.14)); border-inline-start-width: 3px;
+  box-shadow: 0 8px 24px rgba(0,0,0,.4), 0 2px 8px rgba(0,0,0,.2);
+  color: var(--ndd-sidebar-text-title, #cccccc);
+  font-size: 13.5px; line-height: 1.4; width: 100%;
+  transition: opacity 200ms ease, transform 200ms ease,
+              max-height 300ms ease, padding 300ms ease, margin 300ms ease;
+}
+/* Reserve space for the absolute-positioned close button */
+.ndd-toast:has(.ndd-toast__close) { padding-inline-end: 32px; }
+
+/* Type-specific: solid background, accent inline-start border only */
+.ndd-toast--info    { border-inline-start-color: var(--ndd-toast-info-color); }
+.ndd-toast--success { border-inline-start-color: var(--ndd-toast-success-color); }
+.ndd-toast--warning { border-inline-start-color: var(--ndd-toast-warning-color); }
+.ndd-toast--error   { border-inline-start-color: var(--ndd-toast-error-color); }
+
+/* Entry animation classes toggled by JS on next frame */
+.ndd-toast--entering        { opacity: 0; transform: translateX(110%); }
+.ndd-toast--entering-left   { opacity: 0; transform: translateX(-110%); }
+.ndd-toast--fade-entering   { opacity: 0; transform: translateX(0); }
+.ndd-toast--visible         { opacity: 1; transform: translateX(0); }
+/* Exit: fade out + height collapse for gravity slide effect */
+.ndd-toast--exiting {
+  opacity: 0; max-height: 0 !important;
+  padding-top: 0; padding-bottom: 0; margin: 0;
+}
+
+/* Icon */
+.ndd-toast__icon { flex-shrink: 0; width: 16px; height: 16px; margin-top: 1px; }
+.ndd-toast--info    .ndd-toast__icon { color: var(--ndd-toast-info-color); }
+.ndd-toast--success .ndd-toast__icon { color: var(--ndd-toast-success-color); }
+.ndd-toast--warning .ndd-toast__icon { color: var(--ndd-toast-warning-color); }
+.ndd-toast--error   .ndd-toast__icon { color: var(--ndd-toast-error-color); }
+
+/* Body & close button */
+.ndd-toast__body { flex: 1; min-width: 0; word-break: break-word; }
+.ndd-toast__close {
+  position: absolute; top: 8px; inset-inline-end: 10px;
+  background: none; border: none; cursor: pointer;
+  opacity: .5; padding: 2px; color: inherit; line-height: 1;
+}
+.ndd-toast__close:hover { opacity: 1; }
+
+/* Progress bar */
+.ndd-toast__progress {
+  position: absolute; bottom: 0; left: 0; right: 0; height: 3px;
+  transform-origin: left; animation: ndd-toast-shrink linear forwards;
+}
+.ndd-toast--paused .ndd-toast__progress { animation-play-state: paused; }
+.ndd-toast--info    .ndd-toast__progress { background: var(--ndd-toast-info-color); }
+.ndd-toast--success .ndd-toast__progress { background: var(--ndd-toast-success-color); }
+.ndd-toast--warning .ndd-toast__progress { background: var(--ndd-toast-warning-color); }
+.ndd-toast--error   .ndd-toast__progress { background: var(--ndd-toast-error-color); }
+
+@keyframes ndd-toast-shrink { from { transform: scaleX(1); } to { transform: scaleX(0); } }
+
+/* Toast RTL: flip icon/body order and progress bar collapse direction */
+[dir="rtl"] .ndd-toast           { flex-direction: row-reverse; }
+[dir="rtl"] .ndd-toast__progress { transform-origin: right; }
+
+/* ==========================================================================
+   Structure for zero-unmount persistence
+   ==========================================================================
+   The persistence port and its slots. These carry no cosmetics — they exist so
+   panel DOM can be moved between hosts without Angular observing it. See
+   docs/decisions/0002-zero-unmount-via-host-element.md. */
+
+/*
+ * Structure the React library carried as inline JSX styles.
+ *
+ * rdd set `display:flex`, `flexDirection:column`, `height:100%` and friends inline on its
+ * workspace, grid and panel elements. Ported here as CSS instead: the percentage-height
+ * chain has to be unbroken from the workspace down to a leaf's body, or every descendant
+ * collapses — a split divider in a row ends up 0px tall and cannot be grabbed at all, which
+ * is exactly what the M4 browser gate caught.
+ */
+.ndd-workspace {
+  display: flex;
+  flex-direction: column;
+  position: relative;
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+  /* Dragging a tab or a divider must not select text across the workspace. Panel *content*
+     is exempt below, so a panel can still contain selectable text. */
+  user-select: none;
+}
+
+.ndd-panel-content {
+  user-select: text;
+}
+
+.ndd-workspace-panel {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+  position: relative;
+}
+
+.ndd-panel-body {
+  flex-grow: 1;
+  min-height: 0;
+  position: relative;
+  overflow: hidden;
+}
+
+.ndd-workspace-viewport {
+  flex-grow: 1;
+  width: 100%;
+  position: relative;
+  overflow: hidden;
+}
+
+
+/* The off-screen store a panel waits in while minimised, or before its first host. */
+.ndd-panel-store {
+  display: none !important;
+}
+
+/* A host: the box a panel's element is moved into. */
+.ndd-panel-slot {
+  width: 100%;
+  height: 100%;
+  position: relative;
+  overflow: hidden;
+}
+
+/* The element that is moved. One per panel, for the panel's whole lifetime. */
+.ndd-panel-mount,
+.ndd-panel-content {
+  width: 100%;
+  height: 100%;
+}
+
+.ndd-workspace-branch {
+  width: 100%;
+  height: 100%;
+}
+
+/* A floating window is a flex column: title bar, then a body that takes the rest. rdd set
+   this inline; see the note above. */
+.ndd-floating-window {
+  display: flex;
+  flex-direction: column;
+}
+
+/* The letter tile shown for a panel that opts out of a live preview. */
+.ndd-taskbar-item-preview-letter {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  height: 100%;
+  font-size: 2rem;
+  font-weight: 600;
+  color: var(--ndd-panel-title-color, var(--ndd-panel-text));
+  background: rgba(108, 117, 125, 0.15);
+  border: 1px dashed var(--ndd-taskbar-item-border);
+  user-select: none;
+}
+
+.ndd-floating-window-body {
+  flex-grow: 1;
+  min-height: 0;
+  width: 100%;
+  overflow: hidden;
+  position: relative;
+  /* A new stacking context, so panel content cannot escape its own window. */
+  isolation: isolate;
+}
+
+/* ==========================================================================
+   Angular port additions
+   ==========================================================================
+   Layout vdd carried inline on the grid (D12: load-bearing layout belongs in the stylesheet,
+   where a consumer can reach it), and the few elements only the Angular port renders. */
+
+.ndd-workspace-branch {
+  display: flex;
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+  position: relative;
+}
+.ndd-workspace-branch.ndd-row { flex-direction: row; }
+.ndd-workspace-branch.ndd-column { flex-direction: column; }
+
+/* One child of a branch. Its flex-grow/flex-basis are the split sizes, set per render. */
+.ndd-branch-child {
+  overflow: hidden;
+  position: relative;
+  min-width: 0;
+  min-height: 0;
+}
+
+.ndd-workspace-branch.ndd-row > .ndd-resizer-bar { cursor: col-resize; width: 1px; height: 100%; z-index: 20; }
+.ndd-workspace-branch.ndd-column > .ndd-resizer-bar { cursor: row-resize; width: 100%; height: 1px; z-index: 20; }
+
+/* An NddIcon rendered from a CSS class list (Bootstrap Icons, Font Awesome, …). */
+.ndd-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  line-height: 1;
+}
+
+/* A lazy panel (`loadComponent`) while its chunk loads. */
+.ndd-panel-loading {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  height: 100%;
+  color: var(--ndd-panel-muted-text, rgba(255, 255, 255, 0.5));
+  font-size: 12px;
+}
+
+/* Structural component hosts: the element exists for Angular, the layout ignores it. */
+ndd-workspace-grid,
+ndd-leaf-group {
+  display: contents;
+}
+
+ndd-drop-zones,
+ndd-edge-zones,
+ndd-drag-ghost {
+  display: contents;
+}
+
+ndd-taskbar,
+ndd-taskbar-preview {
+  display: contents;
+}
+
+/* An inline icon that must sit on its own line box (vdd set display:block inline). */
+.ndd-icon-block { display: block; }
+
+ndd-context-menu { display: contents; }
+
+/* Hosts that *are* the box vdd rendered as a <div>. A custom element defaults to display: inline,
+   and an inline box reports clientWidth 0 — so a widget inside the overlay measured a container of
+   nothing and every resize clamped to the minimum size. Found by the M11 browser gate. */
+.ndd-panel-overlay-root { display: block; }

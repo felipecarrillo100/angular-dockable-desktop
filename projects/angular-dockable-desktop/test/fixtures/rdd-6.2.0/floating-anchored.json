@@ -1,0 +1,57 @@
+{
+  "version": 2,
+  "activePanelId": "keep",
+  "gridRoot": {
+    "type": "leaf",
+    "id": "group-default",
+    "panels": [
+      "keep"
+    ],
+    "activePanelId": "keep"
+  },
+  "floating": [
+    {
+      "x": 40,
+      "y": 60,
+      "width": 420,
+      "height": 300,
+      "id": "f1",
+      "z": 1001,
+      "anchor": null
+    },
+    {
+      "x": 300,
+      "y": 150,
+      "width": 450,
+      "height": 350,
+      "id": "f2",
+      "z": 1002,
+      "anchor": "bottom-right",
+      "maximized": true
+    }
+  ],
+  "minimized": [],
+  "panels": {
+    "f1": {
+      "id": "f1",
+      "title": "f1",
+      "component": "map",
+      "state": "floating",
+      "serializable": true
+    },
+    "f2": {
+      "id": "f2",
+      "title": "Editor",
+      "component": "editor",
+      "state": "floating",
+      "serializable": true
+    },
+    "keep": {
+      "id": "keep",
+      "title": "keep",
+      "component": "map",
+      "state": "docked",
+      "serializable": true
+    }
+  }
+}

@@ -1,0 +1,187 @@
+/*
+ * The demo's own styles.
+ *
+ * `dd-` prefixed, and deliberately *not* in the library's stylesheet: rdd leaked its demo's
+ * `sb-*` utility classes into the published CSS, which is the leak ADR 0008 closes. A
+ * consumer of the library should never receive a byte of this file.
+ */
+html, body, dd-root { margin: 0; height: 100%; }
+body { font-family: system-ui, -apple-system, 'Segoe UI', sans-serif; }
+
+.dd-shell { display: flex; flex-direction: column; height: 100vh; overflow: hidden; }
+
+.dd-topbar {
+  display: flex; align-items: center; gap: 0.5rem; flex-wrap: wrap;
+  padding: 0.4rem 0.75rem; flex-shrink: 0;
+  background: var(--ndd-bg-panel, #1e2024);
+  color: var(--ndd-text-primary, #e8eaed);
+  border-bottom: 1px solid var(--ndd-border-color, rgba(255,255,255,0.08));
+  font-size: 0.8rem;
+}
+.dd-brand { font-weight: 600; letter-spacing: -0.01em; margin-right: 0.5rem; }
+.dd-brand small { opacity: 0.55; font-weight: 400; }
+.dd-spacer { flex: 1; }
+
+.dd-main { flex: 1; min-height: 0; display: flex; }
+.dd-main--column { flex-direction: column; }
+/* Both the sidebar (a flex item in .dd-main) and the wrapper inside the sidebar's own slot.
+   The inner one is not a flex item — `.ndd-sidebar-main` is a block — so it needs a real
+   height rather than `flex: 1`, which silently did nothing and left the workspace short. */
+.dd-workspace { flex: 1; min-width: 0; min-height: 0; height: 100%; }
+
+/*
+ * A stacking context around map content.
+ *
+ * Leaflet gives its own panes `z-index: 400`, which is higher than a floating widget's, so
+ * without this the tiles paint straight over the panel's overlay — the legend and the status
+ * strip are in the DOM, laid out correctly, and invisible. `isolation` contains Leaflet's
+ * stacking inside this element instead of letting it compete with the overlay's.
+ *
+ * Any panel content with its own high z-indexes needs this; the library cannot know what a
+ * panel renders, so it is the application's to apply. Documented in manual chapter 7.
+ */
+.dd-leaflet { isolation: isolate; }
+
+/* A panel's own body: the library styles its chrome, never its content. */
+.dd-panel { height: 100%; overflow: auto; padding: 0.75rem; box-sizing: border-box; font-size: 0.82rem; }
+.dd-panel--flush { padding: 0; overflow: hidden; }
+.dd-panel h4 { margin: 0 0 0.5rem; font-size: 0.9rem; }
+.dd-panel p { margin: 0 0 0.5rem; line-height: 1.5; opacity: 0.85; }
+
+.dd-fill { width: 100%; height: 100%; }
+.dd-row { display: flex; align-items: center; gap: 0.4rem; flex-wrap: wrap; }
+.dd-col { display: flex; flex-direction: column; gap: 0.4rem; }
+.dd-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); gap: 0.4rem; }
+
+.dd-section { margin-bottom: 0.9rem; }
+.dd-section > h5 {
+  margin: 0 0 0.4rem; font-size: 0.7rem; text-transform: uppercase;
+  letter-spacing: 0.06em; opacity: 0.5;
+}
+
+.dd-note {
+  font-size: 0.72rem; opacity: 0.6; line-height: 1.45; margin: 0.35rem 0 0;
+}
+
+.dd-kv { display: grid; grid-template-columns: max-content 1fr; gap: 0.15rem 0.6rem; font-size: 0.75rem; }
+.dd-kv dt { opacity: 0.55; }
+.dd-kv dd { margin: 0; font-family: ui-monospace, monospace; }
+
+.dd-swatch { width: 10px; height: 10px; border-radius: 2px; display: inline-block; flex-shrink: 0; }
+
+.dd-monaco { width: 100%; height: 100%; }
+.dd-leaflet { width: 100%; height: 100%; }
+.dd-leaflet .leaflet-container { background: #1a1d21; }
+
+/* OpenStreetMap's standard tiles need no API key, and inverting them gives a dark base map
+   that matches the workspace without a second tile provider or a token. */
+[data-color-scheme='light'] .dd-leaflet .leaflet-tile-pane { filter: none; }
+.dd-leaflet .leaflet-tile-pane { filter: invert(1) hue-rotate(180deg) brightness(0.92) contrast(0.9); }
+
+.dd-markdown { padding: 0.9rem 1.1rem; line-height: 1.6; }
+.dd-markdown h1, .dd-markdown h2, .dd-markdown h3 { margin: 1.1em 0 0.4em; line-height: 1.25; }
+.dd-markdown h1 { font-size: 1.5rem; }
+.dd-markdown h2 { font-size: 1.2rem; }
+.dd-markdown pre { padding: 0.7rem; border-radius: 6px; overflow: auto; background: rgba(0,0,0,0.28); }
+.dd-markdown code { font-family: ui-monospace, monospace; font-size: 0.85em; }
+.dd-markdown blockquote {
+  margin: 0.8em 0; padding: 0.1em 0.9em; opacity: 0.85;
+  border-inline-start: 3px solid var(--ndd-accent-color, #38bdf8);
+}
+.dd-markdown table { border-collapse: collapse; margin: 0.8em 0; }
+.dd-markdown th, .dd-markdown td { border: 1px solid var(--ndd-border-color, rgba(255,255,255,0.12)); padding: 0.3em 0.6em; }
+.dd-markdown img { max-width: 100%; }
+
+.dd-split { display: flex; height: 100%; }
+.dd-split > * { flex: 1; min-width: 0; }
+.dd-split--divider > * + * { border-inline-start: 1px solid var(--ndd-border-color, rgba(255,255,255,0.1)); }
+
+.dd-camera { position: relative; width: 100%; height: 100%; overflow: hidden; border-radius: 4px; }
+.dd-camera__label {
+  position: absolute; inset-block-start: 4px; inset-inline-start: 6px;
+  font: 600 0.65rem/1 ui-monospace, monospace; letter-spacing: 0.04em;
+  text-shadow: 0 1px 2px rgba(0,0,0,0.8);
+}
+.dd-camera__sweep {
+  position: absolute; inset: 0;
+  background: linear-gradient(120deg, transparent 40%, rgba(255,255,255,0.14) 50%, transparent 60%);
+  animation: dd-sweep 3.5s linear infinite;
+}
+@keyframes dd-sweep { from { transform: translateX(-100%); } to { transform: translateX(100%); } }
+
+/* ==========================================================================
+   "mono" — a custom skin, defined by the application rather than the library
+   ==========================================================================
+   The worked example from the users manual, living here so it runs: ADR 0013 asks that the
+   manual's examples be code that executes, and the M14 browser gate measures this skin beside
+   the seven built-in ones.
+
+   Three things it demonstrates:
+
+   1. **Unqualified attribute selectors**, the same shape the built-in skins use. Qualifying with
+      `html[data-ndd-skin="mono"]` is tempting — it outranks the library's `:root` block, which a
+      bare attribute selector only ties with — but it is wrong here, and measurably so: the skin
+      attribute is on the workspace element as well as the root, and an `html`-qualified block
+      cannot match the workspace element, where the library's own `[data-color-scheme="light"]`
+      block then re-declares the tokens closer to the content and wins. Measured: the tab bar came
+      back `rgb(233,236,239)` (the library's light default) instead of this skin's `#e4e4e4`.
+      Unqualified matches both elements and outranks the scheme block at each.
+      The tie with `:root` is settled by order instead — list `angular-dockable-desktop/styles.css` in angular.json's `styles`
+      before your own stylesheet, which is what the manual's setup does.
+   2. A second block for light mode. The workspace mirrors `data-color-scheme` onto its own
+      element, so the pair matches there as well as on the root — a custom skin gets dark/light
+      for free, exactly like a built-in.
+   3. Tokens only, no element rules. Recolouring the whole workspace needs nothing else; the
+      built-ins' structural flourishes (macOS's blur, the accent bars) are the tier above. */
+
+[data-ndd-skin="mono"] {
+  --ndd-bg-primary: #0b0b0b;
+  --ndd-bg-workspace: #121212;
+  --ndd-bg-panel: #1a1a1a;
+  --ndd-bg-tab-bar: #0f0f0f;
+  --ndd-bg-tab-inactive: #141414;
+  --ndd-bg-tab-hover: #1f1f1f;
+  --ndd-text-primary: #ededed;
+  --ndd-text-secondary: #9a9a9a;
+  --ndd-text-tab-active: #ffffff;
+  --ndd-text-tab-inactive: #8a8a8a;
+  --ndd-accent-color: #e5e5e5;
+  --ndd-accent-glow: rgba(229, 229, 229, 0.18);
+  --ndd-border-color: rgba(255, 255, 255, 0.1);
+  --ndd-border-panel: rgba(255, 255, 255, 0.1);
+  --ndd-window-bg: rgba(20, 20, 20, 0.92);
+  --ndd-window-border: rgba(255, 255, 255, 0.12);
+  --ndd-tab-icon-active: #ffffff;
+  --ndd-tab-bg-active-focused: #1a1a1a;
+  --ndd-tab-bg-active-unfocused: #151515;
+  --ndd-tab-text-active-unfocused: rgba(255, 255, 255, 0.6);
+  --ndd-tab-indicator-focused: #ffffff;
+  --ndd-tab-indicator-unfocused: rgba(255, 255, 255, 0.3);
+  /* Square everything off, so the skin reads as a deliberate look rather than a palette swap. */
+  --ndd-panel-float-radius: 0;
+}
+
+[data-ndd-skin="mono"][data-color-scheme="light"] {
+  --ndd-bg-primary: #f7f7f7;
+  --ndd-bg-workspace: #ededed;
+  --ndd-bg-panel: #ffffff;
+  --ndd-bg-tab-bar: #e4e4e4;
+  --ndd-bg-tab-inactive: #ececec;
+  --ndd-bg-tab-hover: #e0e0e0;
+  --ndd-text-primary: #171717;
+  --ndd-text-secondary: #5f5f5f;
+  --ndd-text-tab-active: #000000;
+  --ndd-text-tab-inactive: #6b6b6b;
+  --ndd-accent-color: #171717;
+  --ndd-accent-glow: rgba(23, 23, 23, 0.12);
+  --ndd-border-color: rgba(0, 0, 0, 0.12);
+  --ndd-border-panel: rgba(0, 0, 0, 0.12);
+  --ndd-window-bg: rgba(255, 255, 255, 0.95);
+  --ndd-window-border: rgba(0, 0, 0, 0.12);
+  --ndd-tab-icon-active: #000000;
+  --ndd-tab-bg-active-focused: #ffffff;
+  --ndd-tab-bg-active-unfocused: #f4f4f4;
+  --ndd-tab-text-active-unfocused: rgba(0, 0, 0, 0.55);
+  --ndd-tab-indicator-focused: #171717;
+  --ndd-tab-indicator-unfocused: rgba(0, 0, 0, 0.25);
+}

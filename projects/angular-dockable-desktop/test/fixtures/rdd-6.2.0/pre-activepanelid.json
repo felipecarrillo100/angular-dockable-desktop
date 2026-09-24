@@ -1,0 +1,30 @@
+{
+  "version": 2,
+  "gridRoot": {
+    "type": "leaf",
+    "id": "group-default",
+    "panels": [
+      "p1",
+      "p2"
+    ],
+    "activePanelId": "p2"
+  },
+  "floating": [],
+  "minimized": [],
+  "panels": {
+    "p1": {
+      "id": "p1",
+      "title": "p1",
+      "component": "map",
+      "state": "docked",
+      "serializable": true
+    },
+    "p2": {
+      "id": "p2",
+      "title": "Editor",
+      "component": "editor",
+      "state": "docked",
+      "serializable": true
+    }
+  }
+}

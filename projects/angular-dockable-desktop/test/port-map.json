@@ -1,0 +1,411 @@
+{
+  "_": "vdd suite -> ndd spec, vdd test count (the floor), and the milestone it is due. Enforced by scripts/gates/counts.mjs. Source: vue-dockable-desktop/test/baseline-counts.json.",
+  "vddTotal": 765,
+  "suites": [
+    {
+      "vdd": "smoke.test.ts",
+      "ndd": "smoke.spec.ts",
+      "min": 1,
+      "milestone": 1
+    },
+    {
+      "vdd": "anchorGeometry.test.ts",
+      "ndd": "anchor-geometry.spec.ts",
+      "min": 12,
+      "milestone": 2
+    },
+    {
+      "vdd": "dragResize.test.ts",
+      "ndd": "drag-resize.spec.ts",
+      "min": 10,
+      "milestone": 2
+    },
+    {
+      "vdd": "layoutTree.test.ts",
+      "ndd": "layout-tree.spec.ts",
+      "min": 40,
+      "milestone": 2
+    },
+    {
+      "vdd": "serializable.test.ts",
+      "ndd": "serializable.spec.ts",
+      "min": 12,
+      "milestone": 2
+    },
+    {
+      "vdd": "stretch.test.ts",
+      "ndd": "stretch.spec.ts",
+      "min": 12,
+      "milestone": 2
+    },
+    {
+      "vdd": "stylesheet.test.ts",
+      "ndd": "stylesheet.spec.ts",
+      "min": 7,
+      "milestone": 2
+    },
+    {
+      "vdd": "eventBus.test.ts",
+      "ndd": "event-bus.spec.ts",
+      "min": 11,
+      "milestone": 3
+    },
+    {
+      "vdd": "useWorkspace.test.ts",
+      "ndd": "inject-workspace.spec.ts",
+      "min": 9,
+      "milestone": 3
+    },
+    {
+      "vdd": "rdd-fixtures.test.ts",
+      "ndd": "rdd-fixtures.spec.ts",
+      "min": 30,
+      "milestone": 3
+    },
+    {
+      "vdd": "registry.test.ts",
+      "ndd": "registry.spec.ts",
+      "min": 9,
+      "milestone": 3
+    },
+    {
+      "vdd": "round-trip.test.ts",
+      "ndd": "round-trip.spec.ts",
+      "min": 26,
+      "milestone": 3
+    },
+    {
+      "vdd": "selfDrop.test.ts",
+      "ndd": "self-drop.spec.ts",
+      "min": 20,
+      "milestone": 3
+    },
+    {
+      "vdd": "stateTransitions.test.ts",
+      "ndd": "state-transitions.spec.ts",
+      "min": 45,
+      "milestone": 3
+    },
+    {
+      "vdd": "workspace.test.ts",
+      "ndd": "workspace.spec.ts",
+      "min": 30,
+      "milestone": 3
+    },
+    {
+      "vdd": "desktop.test.ts",
+      "ndd": "desktop.spec.ts",
+      "min": 24,
+      "milestone": 4
+    },
+    {
+      "vdd": "usePanel.test.ts",
+      "ndd": "inject-panel.spec.ts",
+      "min": 14,
+      "milestone": 4
+    },
+    {
+      "vdd": "floatingWindows.test.ts",
+      "ndd": "floating-windows.spec.ts",
+      "min": 25,
+      "milestone": 5
+    },
+    {
+      "vdd": "dragDock.test.ts",
+      "ndd": "drag-dock.spec.ts",
+      "min": 27,
+      "milestone": 6
+    },
+    {
+      "vdd": "taskbar.test.ts",
+      "ndd": "taskbar.spec.ts",
+      "min": 20,
+      "milestone": 7
+    },
+    {
+      "vdd": "contextMenu.test.ts",
+      "ndd": "context-menu.spec.ts",
+      "min": 33,
+      "milestone": 8
+    },
+    {
+      "vdd": "sidebar.test.ts",
+      "ndd": "sidebar.spec.ts",
+      "min": 91,
+      "milestone": 9
+    },
+    {
+      "vdd": "toolbar.test.ts",
+      "ndd": "toolbar.spec.ts",
+      "min": 42,
+      "milestone": 9
+    },
+    {
+      "vdd": "useOverlays.test.ts",
+      "ndd": "modals-side-panels.spec.ts",
+      "min": 9,
+      "milestone": 10
+    },
+    {
+      "vdd": "overlays.test.ts",
+      "ndd": "overlays.spec.ts",
+      "min": 6,
+      "milestone": 10
+    },
+    {
+      "vdd": "panelLifecycle.test.ts",
+      "ndd": "panel-lifecycle.spec.ts",
+      "min": 25,
+      "milestone": 10
+    },
+    {
+      "vdd": "toast.test.ts",
+      "ndd": "toast.spec.ts",
+      "min": 16,
+      "milestone": 10
+    },
+    {
+      "vdd": "panelOverlay.test.ts",
+      "ndd": "panel-overlay.spec.ts",
+      "min": 69,
+      "milestone": 11
+    },
+    {
+      "vdd": "panelToolbarControls.test.ts",
+      "ndd": "panel-toolbar-controls.spec.ts",
+      "min": 16,
+      "milestone": 11
+    },
+    {
+      "vdd": "contributions.test.ts",
+      "ndd": "contributions.spec.ts",
+      "min": 21,
+      "milestone": 12
+    },
+    {
+      "vdd": "diagnostics.test.ts",
+      "ndd": "diagnostics.spec.ts",
+      "min": 14,
+      "milestone": 12
+    },
+    {
+      "vdd": "i18n.test.ts",
+      "ndd": "i18n.spec.ts",
+      "min": 25,
+      "milestone": 12
+    },
+    {
+      "vdd": "styleHookups.test.ts",
+      "ndd": "style-hookups.spec.ts",
+      "min": 14,
+      "milestone": 13
+    }
+  ],
+  "_modules": "Source modules the non-vacuity sweep stubs (scripts/gates/non-vacuity.mjs): each must turn the suite red once its milestone is reached.",
+  "modules": [
+    {
+      "file": "src/lib/core/anchor-geometry.ts",
+      "milestone": 2
+    },
+    {
+      "file": "src/lib/core/drag-resize.ts",
+      "milestone": 2
+    },
+    {
+      "file": "src/lib/core/layout-tree.ts",
+      "milestone": 2
+    },
+    {
+      "file": "src/lib/core/stretch.ts",
+      "milestone": 2
+    },
+    {
+      "file": "src/lib/core/serialize.ts",
+      "milestone": 2
+    },
+    {
+      "file": "src/lib/core/serializable.ts",
+      "milestone": 2
+    },
+    {
+      "file": "src/lib/workspace/workspace.ts",
+      "milestone": 3
+    },
+    {
+      "file": "src/lib/workspace/provide.ts",
+      "milestone": 3
+    },
+    {
+      "file": "src/lib/core/registry.ts",
+      "milestone": 3
+    },
+    {
+      "file": "src/lib/core/event-bus.ts",
+      "milestone": 3
+    },
+    {
+      "file": "src/lib/panel/panel-dom.ts",
+      "milestone": 4
+    },
+    {
+      "file": "src/lib/panel/panel-host.ts",
+      "milestone": 4
+    },
+    {
+      "file": "src/lib/panel/panel-ref.ts",
+      "milestone": 4
+    },
+    {
+      "file": "src/lib/panel/panel-slot.ts",
+      "milestone": 4
+    },
+    {
+      "file": "src/lib/desktop/desktop.ts",
+      "milestone": 4
+    },
+    {
+      "file": "src/lib/desktop/workspace-grid.ts",
+      "milestone": 4
+    },
+    {
+      "file": "src/lib/desktop/leaf-group.ts",
+      "milestone": 4
+    },
+    {
+      "file": "src/lib/core/color-scheme.ts",
+      "milestone": 4
+    },
+    {
+      "file": "src/lib/desktop/floating-window.ts",
+      "milestone": 5
+    },
+    {
+      "file": "src/lib/desktop/drag-dock.ts",
+      "milestone": 6
+    },
+    {
+      "file": "src/lib/desktop/drop-zones.ts",
+      "milestone": 6
+    },
+    {
+      "file": "src/lib/desktop/edge-zones.ts",
+      "milestone": 6
+    },
+    {
+      "file": "src/lib/desktop/drag-ghost.ts",
+      "milestone": 6
+    },
+    {
+      "file": "src/lib/desktop/taskbar.ts",
+      "milestone": 7
+    },
+    {
+      "file": "src/lib/desktop/taskbar-preview.ts",
+      "milestone": 7
+    },
+    {
+      "file": "src/lib/common/portal.ts",
+      "milestone": 7
+    },
+    {
+      "file": "src/lib/core/panel-menu.ts",
+      "milestone": 8
+    },
+    {
+      "file": "src/lib/context-menu/context-menu.ts",
+      "milestone": 8
+    },
+    {
+      "file": "src/lib/context-menu/inject-context-menu.ts",
+      "milestone": 8
+    },
+    {
+      "file": "src/lib/desktop/menus.ts",
+      "milestone": 8
+    },
+    {
+      "file": "src/lib/core/context-menu.ts",
+      "milestone": 8
+    },
+    {
+      "file": "src/lib/sidebar/sidebar.ts",
+      "milestone": 9
+    },
+    {
+      "file": "src/lib/toolbar/toolbar.ts",
+      "milestone": 9
+    },
+    {
+      "file": "src/lib/core/sidebar-types.ts",
+      "milestone": 9
+    },
+    {
+      "file": "src/lib/core/toolbar-types.ts",
+      "milestone": 9
+    },
+    {
+      "file": "src/lib/core/toolbar-state.ts",
+      "milestone": 9
+    },
+    {
+      "file": "src/lib/core/overlays.ts",
+      "milestone": 10
+    },
+    {
+      "file": "src/lib/overlays/overlay-host.ts",
+      "milestone": 10
+    },
+    {
+      "file": "src/lib/overlays/modals.ts",
+      "milestone": 10
+    },
+    {
+      "file": "src/lib/overlays/confirm.ts",
+      "milestone": 10
+    },
+    {
+      "file": "src/lib/toast/toast.ts",
+      "milestone": 10
+    },
+    {
+      "file": "src/lib/toast/toasts.ts",
+      "milestone": 10
+    },
+    {
+      "file": "src/lib/panel-overlay/overlay-store.ts",
+      "milestone": 11
+    },
+    {
+      "file": "src/lib/panel-overlay/floating-widget.ts",
+      "milestone": 11
+    },
+    {
+      "file": "src/lib/panel-overlay/panel-overlay.ts",
+      "milestone": 11
+    },
+    {
+      "file": "src/lib/panel-overlay/toolbar-controls.ts",
+      "milestone": 11
+    },
+    {
+      "file": "src/lib/panel-overlay/toolbar-search.ts",
+      "milestone": 11
+    },
+    {
+      "file": "src/lib/core/panel-overlay.ts",
+      "milestone": 11
+    },
+    {
+      "file": "src/lib/contributions/inject-contributions.ts",
+      "milestone": 12
+    },
+    {
+      "file": "src/lib/core/contributions.ts",
+      "milestone": 12
+    },
+    {
+      "file": "src/lib/core/messages.ts",
+      "milestone": 12
+    }
+  ]
+}

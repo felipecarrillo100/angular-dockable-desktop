@@ -1,0 +1,53 @@
+# The repository's own verification, run the way it is run locally: one command.
+#
+# `npm run gate -- M15` is the release gate: types, lint, the whole unit suite, the library build,
+# test counts, the CSS-prefix, API-surface and docs/API checks, the playground, demo and zone.js
+# builds, the M15 rules, and the M15 browser gate. The browser gates drive real Chrome through
+# playwright-core with `channel: 'chrome'`, which the ubuntu runner image already ships.
+#
+# Written, not yet run remotely (the port was built without a remote, ADR 0010).
+name: Gate
+
+on:
+  push:
+    branches: [ "main" ]
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: gate-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  gate:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v5
+
+      - name: Set up Node
+        uses: actions/setup-node@v5
+        with:
+          node-version: 24
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Release gate
+        run: npm run gate -- M15
+
+      # The gates record their own evidence: screenshots, browser.json, gate.json. Kept on
+      # failure as well as success, because a failed browser gate is when the trace matters.
+      - name: Upload gate evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: gate-evidence
+          path: artifacts/
+          if-no-files-found: warn
+          retention-days: 14

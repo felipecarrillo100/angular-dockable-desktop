@@ -1,0 +1,35 @@
+{
+  "name": "angular-dockable-desktop",
+  "version": "1.0.0",
+  "description": "A dockable layout engine and window manager for Angular: split docking, tab groups, floating windows, and zero-unmount panels that keep their live state across every layout change.",
+  "license": "MIT",
+  "keywords": [
+    "angular",
+    "dockable",
+    "docking",
+    "window-manager",
+    "layout",
+    "panels",
+    "workspace",
+    "ide",
+    "signals",
+    "zoneless"
+  ],
+  "peerDependencies": {
+    "@angular/common": "^22.0.0",
+    "@angular/core": "^22.0.0"
+  },
+  "sideEffects": [
+    "**/*.css"
+  ],
+  "exports": {
+    "./styles.css": {
+      "default": "./styles.css"
+    }
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/felipecarrillo100/angular-dockable-desktop.git"
+  },
+  "author": "Felipe Carrillo Romero"
+}

@@ -1,0 +1,22 @@
+{
+  "version": 2,
+  "gridRoot": {
+    "type": "leaf",
+    "id": "group-default",
+    "panels": [
+      "ok"
+    ],
+    "activePanelId": "ok"
+  },
+  "floating": [],
+  "minimized": [],
+  "panels": {
+    "ok": {
+      "id": "ok",
+      "title": "ok",
+      "component": "map",
+      "state": "docked",
+      "serializable": true
+    }
+  }
+}

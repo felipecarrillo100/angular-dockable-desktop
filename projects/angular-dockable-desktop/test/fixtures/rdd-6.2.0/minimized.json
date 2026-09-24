@@ -1,0 +1,91 @@
+{
+  "version": 2,
+  "activePanelId": "stay",
+  "gridRoot": {
+    "type": "branch",
+    "orientation": "horizontal",
+    "sizes": [
+      0.6,
+      0.4
+    ],
+    "children": [
+      {
+        "type": "branch",
+        "orientation": "vertical",
+        "sizes": [
+          0.7,
+          0.3
+        ],
+        "children": [
+          {
+            "type": "leaf",
+            "id": "main",
+            "panels": [
+              "stay"
+            ],
+            "activePanelId": "stay"
+          },
+          {
+            "type": "leaf",
+            "id": "console",
+            "panels": [],
+            "activePanelId": null,
+            "keepOnEmpty": true
+          }
+        ]
+      },
+      {
+        "type": "leaf",
+        "id": "side",
+        "panels": [],
+        "activePanelId": null
+      }
+    ]
+  },
+  "floating": [],
+  "minimized": [
+    {
+      "id": "m1",
+      "title": "m1",
+      "component": "map"
+    },
+    {
+      "id": "m2",
+      "title": "m2",
+      "component": "map"
+    }
+  ],
+  "panels": {
+    "m1": {
+      "id": "m1",
+      "title": "m1",
+      "component": "map",
+      "state": "minimized",
+      "serializable": true,
+      "previousState": "docked",
+      "lastLeafId": "main"
+    },
+    "stay": {
+      "id": "stay",
+      "title": "Editor",
+      "component": "editor",
+      "state": "docked",
+      "serializable": true
+    },
+    "m2": {
+      "id": "m2",
+      "title": "m2",
+      "component": "map",
+      "state": "minimized",
+      "serializable": true,
+      "previousState": "floating",
+      "lastFloatingRect": {
+        "x": 10,
+        "y": 20,
+        "width": 300,
+        "height": 200,
+        "anchor": null
+      }
+    }
+  }
+}
