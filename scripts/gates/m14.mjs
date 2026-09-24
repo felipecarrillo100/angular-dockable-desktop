@@ -151,7 +151,12 @@ for (const f of [...sources, ...sourceFiles()]) {
 const deps = { ...pkg.dependencies, ...pkg.devDependencies };
 for (const kept of ['monaco-editor', 'leaflet', 'unified', 'remark-gfm', 'remark-math', 'rehype-katex', 'rehype-highlight', 'rehype-raw', 'rehype-slug', 'katex', 'highlight.js']) must(kept in deps, `ADR 0012 keeps ${kept}, and it is not installed`);
 for (const swapped of ['react', 'react-dom', 'react-intl', 'react-markdown', '@monaco-editor/react', 'vue', 'ngx-monaco-editor', '@asymmetrik/ngx-leaflet']) must(!(swapped in deps), `${swapped} is a framework wrapper the demo does not need`);
-must(Object.keys(libPkg.dependencies ?? {}).length === 0, `the library must have no runtime dependencies; found ${Object.keys(libPkg.dependencies ?? {}).join(', ')}`);
+must(Object.keys(libPkg.dependencies ?? {}).length === 0, `the library's source package.json must declare no dependencies; found ${Object.keys(libPkg.dependencies ?? {}).join(', ')}`);
+// What is published is the *built* manifest, and ng-packagr adds `tslib` to every library's
+// dependencies whether or not it is used. That one is allowed; anything else is a real dependency.
+const builtPkg = JSON.parse(read('dist/angular-dockable-desktop/package.json'));
+const builtDeps = Object.keys(builtPkg.dependencies ?? {}).filter(d => d !== 'tslib');
+must(builtDeps.length === 0, `the published package declares runtime dependencies: ${builtDeps.join(', ')}`);
 must(libPkg.peerDependencies?.['@angular/core'] && libPkg.peerDependencies?.['@angular/common'], '@angular/core and @angular/common must be peer dependencies');
 for (const f of readdirSync(join(ROOT, 'dist/angular-dockable-desktop/fesm2022')).filter(f => f.endsWith('.mjs'))) {
   const bundle = readFileSync(join(ROOT, 'dist/angular-dockable-desktop/fesm2022', f), 'utf8');
@@ -164,4 +169,4 @@ if (failures.length) {
   failures.forEach(f => console.error('  ' + f));
   process.exit(1);
 }
-console.log(`M14: ok — ${sources.length} demo sources, ${Object.keys(CAPABILITIES).length} capabilities demonstrated, no demo classes in the library, zero runtime dependencies`);
+console.log(`M14: ok — ${sources.length} demo sources, ${Object.keys(CAPABILITIES).length} capabilities demonstrated, no demo classes in the library, no runtime dependencies beyond tslib`);

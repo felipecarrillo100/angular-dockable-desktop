@@ -85,8 +85,9 @@ The full list, each pinned by a test or a gate, is [docs/PARITY.md §4](docs/PAR
 
 ### Dependencies
 
-- Peer: `@angular/core` and `@angular/common` `^22.0.0`. **No runtime dependencies**, not even
-  `tslib`, and no dependency on `@angular/cdk` or `@angular/aria`.
+- Peer: `@angular/core` and `@angular/common` `^22.0.0`. **No runtime dependencies** beyond `tslib`,
+  which ng-packagr declares for every Angular library (the bundle itself imports only
+  `@angular/core` and `@angular/common`), and no dependency on `@angular/cdk` or `@angular/aria`.
 
 [Unreleased]: https://github.com/felipecarrillo100/angular-dockable-desktop/compare/v1.0.0...HEAD
 [1.0.0]: https://github.com/felipecarrillo100/angular-dockable-desktop/releases/tag/v1.0.0

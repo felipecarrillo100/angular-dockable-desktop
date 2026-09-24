@@ -3,7 +3,7 @@
 **Status:** Accepted (owner decision, 2026-09-24)
 
 Peer dependencies are `@angular/core` and `@angular/common` `^22.0.0`, and nothing else
-(`tslib` is the only dependency). Built and tested on 22.x; published in Angular Package
+(`tslib`, which ng-packagr declares for every library, is the only dependency). Built and tested on 22.x; published in Angular Package
 Format with partial compilation, so later 22.x minors — and 23 once it is tested and the
 range widened in a deliberate release — consume the same build.
 

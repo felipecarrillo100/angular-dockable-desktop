@@ -29,7 +29,11 @@
   },
   "repository": {
     "type": "git",
-    "url": "https://github.com/felipecarrillo100/angular-dockable-desktop.git"
+    "url": "git+https://github.com/felipecarrillo100/angular-dockable-desktop.git"
   },
-  "author": "Felipe Carrillo Romero"
+  "author": "Felipe Carrillo Romero",
+  "homepage": "https://felipecarrillo100.github.io/angular-dockable-desktop/",
+  "bugs": {
+    "url": "https://github.com/felipecarrillo100/angular-dockable-desktop/issues"
+  }
 }

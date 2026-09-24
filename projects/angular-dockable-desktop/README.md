@@ -26,7 +26,8 @@ npm install angular-dockable-desktop
 ```
 
 Requires Angular 22 (`@angular/core` and `@angular/common` as peers). **No runtime
-dependencies** — no CDK, no UI kit, not even `tslib`. Works zoneless (the default for a new
+dependencies** beyond `tslib`, which the Angular packager declares for every library and every
+Angular app already has — no CDK, no UI kit. Works zoneless (the default for a new
 Angular app) and with zone.js, and server-renders and hydrates.
 
 ## Quick start
