@@ -38,14 +38,18 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
+      # The vdd comparisons (the M6 differential and the M13 round trips) need a
+      # vue-dockable-desktop checkout beside this repository; they run locally, not in CI.
       - name: Release gate
         run: npm run gate -- M15
+        env:
+          NDD_NO_VDD: '1'
 
       # The gates record their own evidence: screenshots, browser.json, gate.json. Kept on
       # failure as well as success, because a failed browser gate is when the trace matters.
       - name: Upload gate evidence
         if: always()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v5
         with:
           name: gate-evidence
           path: artifacts/

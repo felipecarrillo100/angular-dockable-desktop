@@ -12,7 +12,9 @@
  *   5  PARITY.md and the migration chapter carry every N-series row; every ADR is indexed
  *   6  the CI workflows are well-formed, run this gate, and use a Node the toolchain supports
  *   7  everything again: every browser gate M4–M14 and its controls, the vdd differential, the
- *      round trips, the consumer smoke and coexistence — so the release is judged on one run
+ *      round trips, the consumer smoke and coexistence — so the release is judged on one run.
+ *      `NDD_NO_VDD=1` (set by CI, which has no vue-dockable-desktop checkout) skips the two vdd
+ *      comparisons, and says so.
  *
  * The clean install (`rm -rf node_modules dist && npm ci`) precedes the run; the evidence says so.
  */
@@ -146,9 +148,13 @@ for (let n = 4; n <= 14; n++) {
 }
 must(sub('scripts/gates/browser/m13.mjs', ['--control'], { expectFail: true }), 'the M13 browser control passed');
 must(sub('scripts/gates/browser/m15.mjs', ['--control'], { expectFail: true }), 'the M15 divider control passed — direction is not being measured');
-must(sub('scripts/gates/browser/m6-diff.mjs'), 'the vdd differential no longer passes');
+// The vdd comparisons need vdd's playground, built from a checkout beside this repository.
+// CI has none and sets NDD_NO_VDD=1; the skip is announced, never silent.
+const noVdd = process.env['NDD_NO_VDD'] === '1';
+if (noVdd) console.log('  skipped (NDD_NO_VDD=1): the vdd differential and the vdd↔ndd round trips');
+else must(sub('scripts/gates/browser/m6-diff.mjs'), 'the vdd differential no longer passes');
 step('round trips, coexistence, consumer smoke');
-must(sub('scripts/gates/browser/m13-roundtrip.mjs'), 'the vdd↔ndd round trips no longer pass');
+if (!noVdd) must(sub('scripts/gates/browser/m13-roundtrip.mjs'), 'the vdd↔ndd round trips no longer pass');
 must(sub('scripts/gates/browser/m13-coexist.mjs'), 'the coexistence gate no longer passes');
 must(sub('scripts/gates/m13-consumer.mjs'), 'the consumer smoke no longer passes');
 
