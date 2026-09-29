@@ -90,7 +90,8 @@ declares; a skin that should look different is the [skin of your own](#defining-
 ## Brand your app
 
 Every built-in skin, in dark and light, takes your company's colour and font from three
-variables set on `:root`:
+variables set on `:root` — and, if you want them, [your surfaces](#your-surfaces) and
+[corner shape](#corners) from three more:
 
 ```css
 /* src/styles.css — listed after angular-dockable-desktop/styles.css in angular.json */
@@ -202,6 +203,39 @@ are read. Angular Material 3 declares its `--mat-sys-*` tokens wherever you incl
 `mat.theme()`; include it on `html`, as Angular Material's theming guide does. The coexistence gate (M13) already
 runs the workspace beside Bootstrap, Tailwind and Angular Material; their colours reach it only
 through these variables, never by the library reading them.
+
+### Your surfaces
+
+Two more variables replace a skin's backgrounds and text with your own, per scheme: `--ndd-brand-surface` (the app background) and `--ndd-brand-text` (the main text colour). The library derives every other surface from those two — panels and the workspace a few percent towards the text, the tab bar and rail a little darker, borders and muted text as mixes of the two — so layers stay distinct and text stays readable:
+
+```css
+/* dark is the default: a missing data-color-scheme reads as dark */
+:root:not([data-color-scheme="light"]) {
+  --ndd-brand-surface: #0b1f3a;
+  --ndd-brand-text: #e8eef7;
+}
+:root[data-color-scheme="light"] {
+  --ndd-brand-surface: #f4f1ec;
+  --ndd-brand-text: #2b2620;
+}
+```
+
+- **Set both, or neither.** With only one of them set, every skin keeps its own surfaces — half a palette is the case most likely to be unreadable.
+- **A scheme you leave out keeps the skin's surfaces.** Brand dark only, and light mode looks as it always did.
+- **A skin keeps its shape and effects** — macOS's glass and window buttons, Chrome's tabs, the VS Code accent bar. Only the colours come from you, so with a brand surface set the skins differ by shape, not by colour. Each translucent surface (macOS panels, floating windows, modals) keeps the skin's own transparency.
+- **Not affected:** the accent (that's `--ndd-brand-accent`), status colours (errors, warnings, the toast types), and shadows.
+
+Pick a surface and a text colour with enough contrast between them — the text is used as-is on the panels. The M17 gate requires 4.5:1 for the main text on panels with the two colours above.
+
+### Corners
+
+`--ndd-radius-scale` multiplies every corner the library draws:
+
+```css
+:root { --ndd-radius-scale: 0; }    /* square corners, everywhere */
+```
+
+`1` (the default) is each skin's own shape, `0` is square, `1.5` is rounder; a skin keeps its own proportions at every scale, so macOS stays rounder than VS Code. Circles and pills stay round: macOS's window buttons and the taskbar's peek handle. It also scales the radius tokens you can set yourself (`--ndd-panel-float-radius`, `--ndd-panel-toolbar-btn-radius`, `--ndd-tab-btn-active-radius`).
 
 ### Your logo
 
@@ -356,16 +390,20 @@ scoped under `[data-ndd-skin="…"]`, if it wants them. `mono` deliberately uses
 
 Pick `mono` from the demo's skin dropdown to see it in both schemes.
 
-> **Let your skin take a brand, as the built-in ones do.** Three habits keep a skin brandable
-> with [`--ndd-brand-accent`](#brand-your-app):
+> **Let your skin take a brand, as the built-in ones do.** Four habits keep a skin brandable:
 >
 > - Declare the accent as `var(--ndd-brand-accent, <your colour>)`, never as a bare colour.
 > - Write every tint of it as `color-mix(in srgb, var(--ndd-accent-color) N%, transparent)`
 >   instead of an `rgba()` of the same colour — then one accent drives them all.
 > - Give your skin a font with `--ndd-skin-font-family`, never `--ndd-font-family`: declared in a
 >   skin, `--ndd-font-family` would override the one an application sets on `:root`. Likewise,
->   never declare `--ndd-brand-accent` or `--ndd-brand-on-accent` in a skin — those belong to the
->   application.
+>   never declare `--ndd-brand-accent`, `--ndd-brand-on-accent`, `--ndd-brand-surface` or
+>   `--ndd-brand-text` in a skin — those belong to the application.
+> - Write a corner radius your own rules add as `calc(6px * var(--ndd-radius-scale, 1))`, so
+>   [`--ndd-radius-scale`](#corners) reaches it too.
+>
+> A skin of your own keeps its own surfaces: [brand surfaces](#your-surfaces) recolour the
+> built-in skins, and a custom skin is where you choose every colour yourself.
 >
 > A skin that sets no accent of its own gets the default skin's (`#38bdf8` dark, `#0066cc` light),
 > and one that sets no font gets the library's fallback stack. The library's own tints, the
@@ -520,6 +558,15 @@ Never declared by the library, only read. See [Brand your app](#brand-your-app).
 |---|---|---|
 | `--ndd-brand-accent` | *(unset)* | Replaces every skin's accent, in dark and light. |
 | `--ndd-brand-on-accent` | *(unset — `#090b11`; `#ffffff` on the primary button in light mode)* | Text on a solid accent fill, in both schemes: the primary button, the active dock target. |
+| `--ndd-brand-surface` | *(unset)* | With `--ndd-brand-text`, replaces every skin's backgrounds; see [Your surfaces](#your-surfaces). |
+| `--ndd-brand-text` | *(unset)* | With `--ndd-brand-surface`, replaces every skin's text; borders and muted text are mixes of the two. |
+| `--ndd-radius-scale` | *(unset — `1`)* | Multiplies every corner; see [Corners](#corners). |
+
+**Internal — don't set these.** `:root` also declares one value per surface token, each a mix of
+`--ndd-brand-surface` and `--ndd-brand-text` built on `--ndd--b-base`, which is valid only while
+both are set; every skin surface reads its own first. They are not API and may change in any
+release; they are listed here only because the token reference names everything `:root`
+declares: `--ndd--b-base` · `--ndd--b-bg-panel` · `--ndd--b-bg-primary` · `--ndd--b-bg-tab-bar` · `--ndd--b-bg-tab-hover` · `--ndd--b-bg-tab-inactive` · `--ndd--b-bg-workspace` · `--ndd--b-border-panel` · `--ndd--b-close-btn-active-color` · `--ndd--b-close-btn-color` · `--ndd--b-close-btn-hover-color` · `--ndd--b-custom-btn-hover-color` · `--ndd--b-dock-target-bg` · `--ndd--b-dock-target-center-bg` · `--ndd--b-modal-bg` · `--ndd--b-modal-close-hover-color` · `--ndd--b-modal-curtain-bg` · `--ndd--b-panel-card-bg` · `--ndd--b-panel-card-border` · `--ndd--b-panel-float-bg` · `--ndd--b-panel-text` · `--ndd--b-panel-toolbar-frosted-bg` · `--ndd--b-placeholder-bg` · `--ndd--b-side-panel-bg` · `--ndd--b-side-panel-close-hover-color` · `--ndd--b-sidebar-badge-bg` · `--ndd--b-sidebar-badge-text` · `--ndd--b-sidebar-bg` · `--ndd--b-sidebar-card-bg` · `--ndd--b-sidebar-tabs-bg` · `--ndd--b-sidebar-text-muted` · `--ndd--b-sidebar-text-title` · `--ndd--b-tab-bg-active-unfocused` · `--ndd--b-tab-btn-active-bg` · `--ndd--b-tab-icon-inactive` · `--ndd--b-tab-text-active-focused` · `--ndd--b-tab-text-active-unfocused` · `--ndd--b-taskbar-bg` · `--ndd--b-taskbar-item-bg` · `--ndd--b-taskbar-item-hover-bg` · `--ndd--b-text-primary` · `--ndd--b-text-secondary` · `--ndd--b-text-tab-active` · `--ndd--b-text-tab-hover` · `--ndd--b-text-tab-inactive` · `--ndd--b-toast-bg` · `--ndd--b-window-bg` · `--ndd--b-window-border` · `--ndd--b-window-border-focused` · `--ndd--b-window-header-bg` · `--ndd--b-window-text`.
 
 ### Fonts
 

@@ -410,7 +410,16 @@ minimum, PARITY); **browser:** every skin × scheme against a 1.0.0 baseline all
 intended fixes, a red brand with no trace of any original accent, on-accent text, skin and brand
 fonts on every chrome root, and a `--control` run that must fail.
 
-**Totals:** 16 milestones for 1.0.0 (M16 added for 1.1.0), ≥ 765 ported test equivalents, and three gates that could force an
+### M17 — Brand surfaces and corner scale (1.2.0) · S
+react-dockable-desktop 7.3.0's Phase 2 branding, ported ([ADR 0016](decisions/0016-brand-surfaces-and-corners.md)):
+`--ndd-brand-surface` / `--ndd-brand-text` with every surface derived by role, and
+`--ndd-radius-scale` on every corner.
+**Gate:** the standing gate; M17 rules (the 1.2.0 entry, ADR, manual, PARITY, baseline present);
+**browser:** corners against a 1.1.0 baseline at scales unset / 0 / 1.5; brand surfaces with no
+skin colour left, distinct layers and readable text in all 14 scenes; one input alone changes
+nothing. M16's browser gate must still pass unchanged.
+
+**Totals:** 16 milestones for 1.0.0 (M16 added for 1.1.0, M17 for 1.2.0), ≥ 765 ported test equivalents, and three gates that could force an
 architectural fallback (M0, M3, M13), each with its fallback named in B4.
 
 ---

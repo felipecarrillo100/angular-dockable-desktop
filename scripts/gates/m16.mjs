@@ -1,7 +1,8 @@
 /**
  * M16 — skin branding (1.1.0), ported from react-dockable-desktop 7.2.0 (ADR 0014).
  *
- *   1  the release files agree: package version 1.1.0 = VERSION; CHANGELOG has a 1.1.0 entry
+ *   1  the release files agree: the package version = VERSION and has its own CHANGELOG entry (not
+ *      pinned, ADR 0015/0016); the 1.1.0 entry
  *      whose parity line names react-dockable-desktop 7.2.0, and a link for it
  *   2  the decision is recorded: ADR 0014 exists and is indexed
  *   3  the manual documents the feature, and agrees with the stylesheet: the theming chapter has
@@ -31,9 +32,11 @@ const SKINS = ['vscode', 'macos', 'chrome', 'slate', 'nord', 'obsidian', 'tokyo'
 // ── 1. Release files ────────────────────────────────────────────────────────
 step('release files');
 const libPkg = JSON.parse(read('projects/angular-dockable-desktop/package.json') || '{}');
-must(libPkg.version === '1.1.0', `the package version is ${libPkg.version}, not 1.1.0`);
 must(read('projects/angular-dockable-desktop/src/lib/version.ts').includes(`'${libPkg.version}'`), 'VERSION does not match the package version');
 const changelog = read('CHANGELOG.md');
+// Not pinned to 1.1.0 (ADR 0015's rule, applied here in 1.2.0 — ADR 0016): the current version has its
+// own entry; the 1.1.0 entry, which introduced branding, is checked below.
+must(changelog.includes(`## [${libPkg.version}]`), `CHANGELOG.md has no entry for the package version ${libPkg.version}`);
 const start = changelog.indexOf('## [1.1.0]');
 must(start >= 0, 'CHANGELOG.md has no 1.1.0 entry');
 const entry = start >= 0 ? changelog.slice(start, changelog.indexOf('\n## [', start + 1)) : '';

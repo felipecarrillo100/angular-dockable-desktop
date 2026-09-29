@@ -79,6 +79,16 @@ Every template's context is typed through `ngTemplateContextGuard`.
 `injectSidebarTab()` / `injectToolbar()` / `injectContextMenu()` / `injectMerged*()`; lazy panels
 through `registerLazy`; server-side rendering and hydration (§4.2 N12).
 
+### Brand surfaces and corners (1.2.0, from rdd 7.3.0)
+
+| rdd 7.3.0 | vdd 1.4.0 | ndd 1.2.0 |
+|---|---|---|
+| `--rdd-brand-surface`, `--rdd-brand-text` | `--vdd-brand-surface`, `--vdd-brand-text` | `--ndd-brand-surface`, `--ndd-brand-text` |
+| `--rdd-radius-scale` | `--vdd-radius-scale` | `--ndd-radius-scale` |
+| `--rdd--b-*` derived values on `:root`, built on `--rdd--b-base` | the same, `vdd-` | the same, `ndd-` — one transform for all three, prefix aside |
+| `--rdd-placeholder-bg` (a token since rdd 7.1.2) | the preview letter's rule reads `--vdd--b-placeholder-bg` | the same, `ndd-` |
+| `--rdd-danger-color` on the unregistered-panel message | the literal danger red | the literal danger red |
+
 ### Branding (1.1.0, from rdd 7.2.0)
 
 | rdd 7.2.0 | vdd 1.1.1 | ndd 1.1.0 |
@@ -192,6 +202,9 @@ vdd accounted for rdd's 26 suites; each lands in ndd through the vdd suite it be
 | `tests/browser/branding.browser.ts` — 14-scene baseline, red brand, on-accent | `scripts/gates/browser/m16.mjs` (baseline in `scripts/gates/browser/fixtures/m16-branding-baseline.json`, captured from 1.0.0), both schedulers, plus a `--control` run that must fail |
 | `tests/browser/fonts.browser.ts` — skin fonts, brand font in every skin | `scripts/gates/browser/m16.mjs` (fonts) |
 | `StylesheetContract.test.ts` — "branding contract" (5) | `stylesheet.spec.ts` — "branding contract (styles.css)" (5, names kept) |
+| `tests/browser/radius.browser.ts` (7.3.0) — corner baseline, scale 0 and 1.5 | `scripts/gates/browser/m17.mjs` (corners; baseline `fixtures/m17-radius-baseline.json`, captured from 1.1.0), both schedulers |
+| `branding.browser.ts` brand-surface cases (7.3.0) — leftovers, layers, contrast, one input | `scripts/gates/browser/m17.mjs` (surfaces) |
+| `StylesheetContract.test.ts` — "corner contract" (2), "surface contract" (3) | `stylesheet.spec.ts` — the same, names kept |
 
 ## 4. Deliberate divergences
 

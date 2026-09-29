@@ -17,3 +17,4 @@
 | [0013](0013-actions-are-untracked.md) | Every action is untracked; an unchanged write publishes nothing |
 | [0014](0014-brand-variables.md) | Brand variables: read by the library, never declared by it; one accent source; skin fonts |
 | [0015](0015-release-gate-version-follows-changelog.md) | The release gate checks the current version, not 1.0.0 |
+| [0016](0016-brand-surfaces-and-corners.md) | Brand surfaces and corner scale: derived, guarded, never declared by the library |

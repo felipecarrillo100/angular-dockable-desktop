@@ -24,6 +24,10 @@ if (zone) await import('zone.js');
 if (params.get('cs') === 'light') document.documentElement.setAttribute('data-color-scheme', 'light');
 if (params.get('ba')) document.documentElement.style.setProperty('--ndd-brand-accent', `#${params.get('ba')}`);
 if (params.get('bon')) document.documentElement.style.setProperty('--ndd-brand-on-accent', `#${params.get('bon')}`);
+// The M17 gate: `?bs=HEX` / `?bt=HEX` set --ndd-brand-surface / --ndd-brand-text, `?rs=N` --ndd-radius-scale.
+if (params.get('bs')) document.documentElement.style.setProperty('--ndd-brand-surface', `#${params.get('bs')}`);
+if (params.get('bt')) document.documentElement.style.setProperty('--ndd-brand-text', `#${params.get('bt')}`);
+if (params.get('rs')) document.documentElement.style.setProperty('--ndd-radius-scale', params.get('rs')!);
 
 const TWO_LEAF = JSON.stringify({
   version: 2,

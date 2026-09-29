@@ -17,7 +17,7 @@ any of the three loads in the others.
 
 > **Versioning.** ndd follows its own semver. This release tracks **vue-dockable-desktop 1.1.1**
 > and, through it, **react-dockable-desktop 6.3.1**, feature by feature in
-> [docs/PARITY.md](docs/PARITY.md) — plus react-dockable-desktop 7.2.0's skin branding.
+> [docs/PARITY.md](docs/PARITY.md) — plus react-dockable-desktop 7.2.0 and 7.3.0's skin branding.
 
 ## Install
 
@@ -138,8 +138,17 @@ anywhere, for menus, the unsaved-changes question, drawers and notifications
   ```
 
   Point them at your UI framework's theme to follow it — `var(--mat-sys-primary)` (Angular
-  Material 3), `var(--bs-primary)` (Bootstrap). See
-  [Brand your app](docs/manual/10-theming.md#brand-your-app)
+  Material 3), `var(--bs-primary)` (Bootstrap). Your own surfaces and corner shape, too:
+
+  ```css
+  :root:not([data-color-scheme="light"]) {  /* dark: the attribute's absence */
+    --ndd-brand-surface: #0b1f3a;   /* app background — panels, bars and borders derive from it */
+    --ndd-brand-text: #e8eef7;      /* main text — set both, or neither */
+  }
+  :root { --ndd-radius-scale: 0; }  /* 0 square · 1 each skin's own · 1.5 rounder */
+  ```
+
+  See [Brand your app](docs/manual/10-theming.md#brand-your-app)
 - **i18n and RTL** — every string goes through one `formatMessage` function; a signal-backed
   locale relabels live; `setDirection('rtl')` mirrors the whole workspace structurally
 - **Accessible** — WAI-ARIA tabs, menus and dialogs, verified with axe-core; no change detection

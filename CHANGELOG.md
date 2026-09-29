@@ -10,6 +10,63 @@ feature-by-feature map is [docs/PARITY.md](docs/PARITY.md).
 
 ## [Unreleased]
 
+## [1.2.0] — 2026-09-30
+
+**Parity: vue-dockable-desktop 1.1.1, react-dockable-desktop 6.3.1, plus react-dockable-desktop
+7.2.0 and 7.3.0's skin branding** (vue-dockable-desktop 1.4.0 made the same port). Branding, part
+two: your own surfaces and corner shape on any built-in skin. See
+[Your surfaces](docs/manual/10-theming.md#your-surfaces) and [Corners](docs/manual/10-theming.md#corners).
+
+### Added
+
+- **`--ndd-brand-surface`** and **`--ndd-brand-text`**: set per scheme on `:root`, they replace
+  every built-in skin's backgrounds and text — the workspace, panels, tab bar, sidebar, floating
+  windows, modals, drawers, the taskbar, toasts, borders and muted text are all derived from the
+  two. Set both or neither: with only one set, every skin keeps its own surfaces. A skin keeps
+  its shape and effects (macOS's glass, Chrome's tabs, the VS Code accent bar) and each
+  translucent surface keeps the skin's own transparency; the accent, status colours and shadows
+  are not affected.
+- **`--ndd-radius-scale`**: multiplies every corner the library draws — `0` square, `1` each
+  skin's own (the default), `1.5` rounder. Circles and pills stay round. It also scales the
+  radius tokens you set yourself (`--ndd-panel-float-radius`, `--ndd-panel-toolbar-btn-radius`,
+  `--ndd-tab-btn-active-radius`).
+- Manual: **Your surfaces** and **Corners** under Brand your app, the corner habit for custom
+  skins, and the three variables in the token reference.
+
+### Fixed
+
+- **The workspace-edge drop preview was Bootstrap blue** (`#007bff`) in every skin, instead of
+  the skin's accent. It follows `--ndd-accent-color` and `--ndd-brand-accent` now. It shows only
+  while you drag a panel to a workspace edge.
+- **Colours no token reached**: the dock-target chips, the light-mode outline button (the
+  confirm dialog's Cancel) and the frosted panel toolbar painted literal colours in their own
+  rules. They read the surface tokens now, and follow a brand surface; unbranded they are
+  unchanged.
+
+### Tests
+
+- **M17 browser gate** (`scripts/gates/browser/m17.mjs`, real Chrome, both schedulers): the corner
+  radii of every library element and pseudo-element, in all 7 skins × dark/light, match a 1.1.0
+  baseline with the scale unset, are `0px` at scale `0` and 1.5× at `1.5`, with circles and pills
+  unchanged; with a brand surface set, no colour of any skin's own palette remains — rendered,
+  hovered or as a token — the workspace, panel and tab bar stay distinct, and text on panels meets
+  4.5:1 (muted 3:1); with only one of the two set, a scene matches M16's baseline. M16's gate still
+  holds with no brand set.
+- `stylesheet.spec.ts`, ported from rdd 7.3.0: every corner length is scaled and the library never
+  declares the scale; every coloured surface reads a derived value first, declared only on `:root`
+  and built on the guarded base; no element rule paints a colour of its own.
+- M17 rules (`scripts/gates/m17.mjs`). M16's scene helpers moved to
+  `scripts/gates/lib/branding-scenes.mjs`, shared with M17. The playground takes `?bs=`, `?bt=` and
+  `?rs=`.
+- **M16 no longer pins version 1.1.0**: the current version must have its own CHANGELOG entry, the
+  rule ADR 0015 set for M15 (ADR 0016).
+
+### Docs
+
+- Theming chapter: Your surfaces, Corners, the fourth brandable-skin habit, token rows; README
+  snippet; ADR 0016; PARITY.md; the plan's M17.
+
+
 ## [1.1.0] — 2026-09-27
 
 **Parity: vue-dockable-desktop 1.1.1, react-dockable-desktop 6.3.1, plus react-dockable-desktop
@@ -189,6 +246,7 @@ The full list, each pinned by a test or a gate, is [docs/PARITY.md §4](docs/PAR
   which ng-packagr declares for every Angular library (the bundle itself imports only
   `@angular/core` and `@angular/common`), and no dependency on `@angular/cdk` or `@angular/aria`.
 
-[Unreleased]: https://github.com/felipecarrillo100/angular-dockable-desktop/compare/v1.1.0...HEAD
+[Unreleased]: https://github.com/felipecarrillo100/angular-dockable-desktop/compare/v1.2.0...HEAD
+[1.2.0]: https://github.com/felipecarrillo100/angular-dockable-desktop/compare/v1.1.0...v1.2.0
 [1.1.0]: https://github.com/felipecarrillo100/angular-dockable-desktop/compare/v1.0.0...v1.1.0
 [1.0.0]: https://github.com/felipecarrillo100/angular-dockable-desktop/releases/tag/v1.0.0
