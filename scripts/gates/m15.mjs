@@ -2,7 +2,8 @@
  * M15 — documentation and release readiness: the last gate.
  *
  *   1  the release files exist and agree: LICENSE (MIT, also in the package), CHANGELOG with a
- *      1.0.0 entry whose parity line names vdd 1.1.1 and rdd 6.3.1, package version = VERSION
+ *      1.0.0 entry whose parity line names vdd 1.1.1 and rdd 6.3.1, package version = VERSION and has
+ *      its own CHANGELOG entry (ADR 0015)
  *   2  the quick start is the code the consumer smoke proves: the panel and the root component of
  *      `m13-consumer.mjs` appear verbatim in README.md and in manual chapter 1
  *   3  the package README is the root README's user-facing half (scripts/sync-package-readme.mjs)
@@ -44,7 +45,8 @@ const entry = changelog.slice(changelog.indexOf('## [1.0.0]'));
 must(changelog.includes('## [1.0.0]'), 'CHANGELOG.md has no 1.0.0 entry');
 must(/Parity: vue-dockable-desktop 1\.1\.1, react-dockable-desktop 6\.3\.1/.test(entry), 'the 1.0.0 entry must state its parity line');
 const libPkg = JSON.parse(read('projects/angular-dockable-desktop/package.json'));
-must(libPkg.version === '1.0.0', `the package version is ${libPkg.version}, not 1.0.0`);
+// ADR 0015: the current version, whatever it is, must have its own changelog entry.
+must(changelog.includes(`## [${libPkg.version}]`), `CHANGELOG.md has no entry for the package version ${libPkg.version}`);
 must(read('projects/angular-dockable-desktop/src/lib/version.ts').includes(`'${libPkg.version}'`), 'VERSION does not match the package version');
 must(libPkg.license === 'MIT', 'the package must declare the MIT licence');
 

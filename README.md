@@ -17,7 +17,7 @@ any of the three loads in the others.
 
 > **Versioning.** ndd follows its own semver. This release tracks **vue-dockable-desktop 1.1.1**
 > and, through it, **react-dockable-desktop 6.3.1**, feature by feature in
-> [docs/PARITY.md](docs/PARITY.md).
+> [docs/PARITY.md](docs/PARITY.md) — plus react-dockable-desktop 7.2.0's skin branding.
 
 ## Install
 
@@ -25,7 +25,8 @@ any of the three loads in the others.
 npm install angular-dockable-desktop
 ```
 
-Requires Angular 22 (`@angular/core` and `@angular/common` as peers). **No runtime
+Requires Angular 22 (`@angular/core` and `@angular/common` as peers), and a browser with CSS
+`color-mix()` (Chrome / Edge 111, Safari 16.2, Firefox 113 or later). **No runtime
 dependencies** beyond `tslib`, which the Angular packager declares for every library and every
 Angular app already has — no CDK, no UI kit. Works zoneless (the default for a new
 Angular app) and with zone.js, and server-renders and hydrates.
@@ -123,8 +124,22 @@ anywhere, for menus, the unsaved-changes question, drawers and notifications
   toasts callable from anywhere, and context menus with a typed custom template
 - **Layout serialisation** — the whole workspace as one JSON string, byte-compatible with rdd
   and vdd, including each panel's own saved state
-- **Theming** — seven skins plus your own, light and dark, 125 documented `--ndd-*` tokens; the
-  library styles only its own DOM and coexists with Bootstrap, Tailwind and Angular Material
+- **Theming** — seven skins plus your own, light and dark, each with its own font, 126 documented
+  `--ndd-*` tokens; the library styles only its own DOM and coexists with Bootstrap, Tailwind and
+  Angular Material
+- **Branding** — your company's colour and font on any built-in skin, from three variables:
+
+  ```css
+  :root {
+    --ndd-brand-accent: #e4002b;                 /* every accent use, in every skin, dark and light */
+    --ndd-brand-on-accent: #ffffff;              /* text on a brand-coloured fill — a dark one for light brands */
+    --ndd-font-family: 'Acme Sans', sans-serif;  /* your font (the library loads none) */
+  }
+  ```
+
+  Point them at your UI framework's theme to follow it — `var(--mat-sys-primary)` (Angular
+  Material 3), `var(--bs-primary)` (Bootstrap). See
+  [Brand your app](docs/manual/10-theming.md#brand-your-app)
 - **i18n and RTL** — every string goes through one `formatMessage` function; a signal-backed
   locale relabels live; `setDirection('rtl')` mirrors the whole workspace structurally
 - **Accessible** — WAI-ARIA tabs, menus and dialogs, verified with axe-core; no change detection

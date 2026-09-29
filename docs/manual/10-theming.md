@@ -12,6 +12,9 @@ styling framework. Bootstrap, Tailwind, Angular Material or plain CSS: none of t
 `ndd-`, and nothing in the stylesheet redefines a generic class such as `.active` or styles a
 bare element selector. The library never loads any of those frameworks itself.
 
+To put your company's colour and font on a built-in skin you need no skin of your own — see
+[Brand your app](#brand-your-app).
+
 The stylesheet is imported once, globally, through `angular.json` (see
 [chapter 1](01-getting-started.md)):
 
@@ -42,11 +45,13 @@ Bootstrap's `vertical-align: middle` moves them. These are single-class rules pl
 the stylesheet: they beat any element selector a framework uses, and the library's later rules
 still decide the actual look.
 
-The base font family is `var(--ndd-font-family, 'Outfit', 'Inter', system-ui, -apple-system,
-sans-serif)`. The library does not load Outfit or Inter; if neither is installed the system font
-is used. Every rule that sets a font reads the same token — the workspace, window title bars,
-tooltips and the context menu keep their own default stacks as fallbacks — so setting
-`--ndd-font-family` once changes the font of all of the chrome.
+The base font family is `var(--ndd-font-family)`. `:root` declares that token as the skin's own
+font, `--ndd-skin-font-family` (see [Skin fonts](#skin-fonts)), and, for a skin that sets none,
+`'Outfit', 'Inter', system-ui, -apple-system, sans-serif`. The library loads none of these
+fonts: each is a stack of system fonts, and a machine uses the first one it has. Every rule that
+sets a font reads the same token — the workspace, window title bars, tooltips and the context
+menu included — so setting `--ndd-font-family` once, on `:root`, changes the font of all of the
+chrome in every skin (see [Your brand font](#your-brand-font)).
 
 Content *inside* a chrome root — a panel, a drawer tab, a modal body — inherits that base, and
 your framework's own classes work there as usual.
@@ -57,7 +62,7 @@ Override the tokens. Anywhere that wins the cascade will do:
 
 ```css
 :root {
-  --ndd-accent-color:  #7c3aed;
+  --ndd-brand-accent:  #7c3aed;
   --ndd-bg-primary:    #0b0b12;
   --ndd-bg-workspace:  #12121c;
   --ndd-bg-panel:      #181826;
@@ -70,10 +75,180 @@ Tokens are grouped by area, so you can retheme one part of the UI: after the pre
 families are `window-`, `modal-`, `side-panel-`, `taskbar-`, `tab-`, `sidebar-`,
 `toolbar-`, `panel-toolbar-`, `panel-float-` and `scrollbar-`. The complete list is the [token reference](#token-reference) below.
 
+The accent is set through `--ndd-brand-accent`, not `--ndd-accent-color`. Six of the seven
+skins (all but `vscode`), and the light scheme, declare `--ndd-accent-color` themselves, with a
+selector that also matches the workspace element, so a `:root` value of it is replaced there —
+in every skin in light mode, and in all but `vscode` in dark. A skin's light block replaces it on
+`<html>` as well, being more specific than `:root`. The same goes for any other token a skin
+declares; a skin that should look different is the [skin of your own](#defining-your-own).
+
 > Tokens live on `:root` by design. The context menu, toasts, modals, drawers, toolbar flyouts
 > and the overlay search dropdown all render into `document.body`, and `<ndd-sidebar>` is
 > normally an *ancestor* of `<ndd-desktop>`. CSS variables only cascade downward, so scoping
 > them to the workspace element would leave those parts unthemed.
+
+## Brand your app
+
+Every built-in skin, in dark and light, takes your company's colour and font from three
+variables set on `:root`:
+
+```css
+/* src/styles.css — listed after angular-dockable-desktop/styles.css in angular.json */
+:root {
+  --ndd-brand-accent: #e4002b;                 /* your brand colour */
+  --ndd-brand-on-accent: #ffffff;              /* text on a brand-coloured fill (see below) */
+  --ndd-font-family: 'Acme Sans', sans-serif;  /* your brand font */
+}
+```
+
+That is all. Leave a variable unset and the skin keeps its own value.
+
+| Variable | What follows it | Default |
+|---|---|---|
+| `--ndd-brand-accent` | Everything a skin draws in its accent: tab indicators, the active sidebar tab and toolbar button, hover and active tints, glows, the focused window's glow, the taskbar, the drop and snap highlights, the primary button. | Each skin's own accent |
+| `--ndd-brand-on-accent` | Text drawn on a solid accent fill, in both schemes: the confirm dialog's primary button and the highlighted dock target while you drag. | `#090b11`; `#ffffff` on the primary button in light mode |
+| `--ndd-font-family` | Every piece of chrome — tabs, title bars, toolbar, sidebar, menus, flyouts, toasts, drawers, modals — and panel content, which inherits the workspace font. | Each skin's own font |
+
+Set them on `:root`, not on a wrapper around the workspace: the context menu, the toolbar
+flyout, modals, drawers and toasts render straight into `document.body`, so a value set on a
+wrapper does not reach them. And keep your stylesheet after the library's, as for any token
+override: the library's own `:root` block declares `--ndd-font-family`, and the tie is settled by
+order.
+
+The library itself only ever *reads* `--ndd-brand-accent` and `--ndd-brand-on-accent`. Every
+skin declares its accent as `var(--ndd-brand-accent, <its own colour>)`, and every tint of it —
+hover fills, glows, the sidebar's card tokens — is a `color-mix()` of `--ndd-accent-color` at a
+fixed percentage, so one colour drives them all.
+
+> **Light brand colours.** The library cannot tell whether your colour is light or dark. With a
+> light brand colour — yellow, lime, a pale cyan — set `--ndd-brand-on-accent` to a dark colour,
+> so text on a brand-coloured button stays readable:
+>
+> ```css
+> :root {
+>   --ndd-brand-accent: #facc15;
+>   --ndd-brand-on-accent: #1a1a1a;
+> }
+> ```
+>
+> It applies in both schemes. Unset, the defaults are as before: `#090b11`, and `#ffffff` on the
+> primary button in light mode.
+
+### A different brand colour for light mode
+
+One brand colour applies to both schemes. If yours needs a darker shade on a light background,
+scope a second value to the light scheme — the attribute your application already sets on
+`<html>`:
+
+```css
+:root                            { --ndd-brand-accent: #ff5a5f; }
+:root[data-color-scheme="light"] { --ndd-brand-accent: #d93b40; }
+```
+
+### Your brand font
+
+The library never loads a font. Load your company font the way you already do — an
+`@font-face` rule, a `<link>` to your font provider in `index.html`, your design system's font
+package listed in `angular.json` — and name it in `--ndd-font-family`, followed by fallbacks:
+
+```css
+@font-face {
+  font-family: 'Acme Sans';
+  src: url('/fonts/acme-sans.woff2') format('woff2');
+  font-display: swap;
+}
+:root {
+  --ndd-font-family: 'Acme Sans', system-ui, sans-serif;
+}
+```
+
+It replaces every skin's own font. A skin never declares `--ndd-font-family` itself (it sets
+`--ndd-skin-font-family`, which the `:root` value falls back to), so yours wins in every skin,
+portalled chrome included.
+
+To use your page's own font instead, set `--ndd-font-family: inherit` on `:root`, or
+`--ndd-font-family: initial` on `<body>`. Both leave the token without a value, and the chrome
+then inherits the page's font. (`inherit` works only on `:root`: below it, a custom property set
+to `inherit` just copies the skin's stack down. `initial` on a wrapper reaches only the chrome
+inside that wrapper.)
+
+### Use your UI framework's theme
+
+The library depends on no UI framework ([ADR 0007](../decisions/0007-styling-agnostic.md)), so
+it cannot read your theme by itself — but a framework's theme is already CSS variables on the
+page, so pointing the brand variables at them is one line each, and the workspace then follows
+your theme, including when it changes at runtime:
+
+| Framework | Brand colour | Text on it | Font |
+|---|---|---|---|
+| Angular Material 3 | `var(--mat-sys-primary)` | `var(--mat-sys-on-primary)` | your typography's font family (`--mat-sys-body-medium-font`, or the family you gave `mat.theme`) |
+| Bootstrap 5.3 | `var(--bs-primary)` | — | `var(--bs-body-font-family)` |
+| Tailwind CSS v4 | a theme colour, e.g. `var(--color-indigo-600)` | — | `var(--font-sans)` |
+| MUI (with `cssVariables: true` in `createTheme`) | `var(--mui-palette-primary-main)` | `var(--mui-palette-primary-contrastText)` | your `theme.typography.fontFamily` |
+| shadcn/ui | `var(--primary)` — or `hsl(var(--primary))` in versions that store it as HSL numbers | `var(--primary-foreground)` (same rule) | your font |
+
+With Angular Material, for example:
+
+```css
+/* src/styles.css, after the library's stylesheet and your mat.theme() */
+:root {
+  --ndd-brand-accent: var(--mat-sys-primary);
+  --ndd-brand-on-accent: var(--mat-sys-on-primary);
+}
+```
+
+The variable you point at must be defined on `:root` (or `<html>`), where the brand variables
+are read. Angular Material 3 declares its `--mat-sys-*` tokens wherever you include
+`mat.theme()`; include it on `html`, as Angular Material's theming guide does. The coexistence gate (M13) already
+runs the workspace beside Bootstrap, Tailwind and Angular Material; their colours reach it only
+through these variables, never by the library reading them.
+
+### Your logo
+
+The library draws no logo of its own — where one goes is your application's decision. Two
+natural places:
+
+- **Your own header or toolbar content**, outside the workspace — it is your markup, so anything
+  goes.
+- **The top of the `<ndd-sidebar>` rail**, where VS Code, Slack and Teams put theirs. A custom
+  rail entry in `headerAction` renders your component as-is
+  ([chapter 6](06-sidebar-toolbar.md#pinned-rail-entries)):
+
+```ts
+import { Component } from '@angular/core';
+import { NddDesktop, NddSidebar } from 'angular-dockable-desktop';
+import type { SidebarRailEntry, SidebarTab } from 'angular-dockable-desktop';
+
+@Component({
+  selector: 'app-logo',
+  template: `<img src="/acme-mark.svg" alt="Acme" class="acme-logo" />`,
+})
+export class AppLogo {}
+
+@Component({
+  selector: 'app-root',
+  imports: [NddSidebar, NddDesktop],
+  template: `
+    <ndd-sidebar [tabs]="tabs" [headerAction]="logo">
+      <ndd-desktop class="ndd-fill-viewport" />
+    </ndd-sidebar>
+  `,
+})
+export class App {
+  protected readonly tabs: SidebarTab[] = [];
+  protected readonly logo: SidebarRailEntry = { custom: true, component: AppLogo };
+}
+```
+
+The rail is narrow, so a square mark fits better than a wide wordmark. Adjust its spacing with
+`--ndd-sidebar-header-area-padding-top` and `--ndd-sidebar-header-area-padding-bottom` (both
+`8px`).
+
+### Browser support
+
+Branding relies on CSS `color-mix()`, available since Chrome 111, Edge 111, Safari 16.2 and
+Firefox 113 (all 2023). In an older browser the tinted hover and active highlights lose their
+colour; layout and behaviour are unaffected.
 
 ## Skins
 
@@ -91,6 +266,30 @@ or, bound to a signal:
 
 Built in: `vscode` (the default), `macos`, `chrome`, `slate`, `nord`, `obsidian`, `tokyo`. Each
 ships a dark and a light variant.
+
+### Skin fonts
+
+Each skin also brings its own font, the platform's UI font where it has a known one. They are
+system font stacks — the library loads none of them, so each machine uses the first one it has —
+and your `--ndd-font-family` replaces them all ([Your brand font](#your-brand-font)):
+
+| Skin | Font (`--ndd-skin-font-family`) |
+|---|---|
+| `vscode` | VS Code's workbench font: `-apple-system, BlinkMacSystemFont, 'Segoe WPC', 'Segoe UI', system-ui, 'Ubuntu', 'Droid Sans', sans-serif` |
+| `macos` | San Francisco: `-apple-system, BlinkMacSystemFont, 'SF Pro Text', 'Helvetica Neue', Helvetica, Arial, sans-serif` |
+| `chrome` | Google's UI fonts: `'Google Sans Text', 'Google Sans', Roboto, system-ui, -apple-system, 'Segoe UI', sans-serif` |
+| `slate` | Fluent's stack: `'Segoe UI Variable Text', 'Segoe UI', -apple-system, BlinkMacSystemFont, Roboto, 'Helvetica Neue', sans-serif` |
+| `nord` | No official font; a softer humanist sans: `'Avenir Next', 'Nunito', 'Segoe UI', system-ui, sans-serif` |
+| `obsidian` | The library's fallback stack: `'Outfit', 'Inter', system-ui, -apple-system, sans-serif` |
+| `tokyo` | No official font; a terminal/editor feel: `'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo, Consolas, monospace` |
+
+Panel content inherits the workspace font, so in `tokyo` your own panels turn monospace too
+unless they set a font of their own.
+
+A skin's font reaches the sidebar, the toolbar and everything portalled into `document.body`
+for the same reason its colours do: `data-ndd-skin` is mirrored onto `<html>` (below), where
+`:root` resolves `--ndd-font-family` from the skin's `--ndd-skin-font-family`, and every element
+inherits the result.
 
 The name is mirrored as a `data-ndd-skin` attribute onto **two** elements:
 
@@ -115,7 +314,8 @@ shortened version:
 [data-ndd-skin="mono"] {
   --ndd-bg-panel: #1a1a1a;
   --ndd-bg-tab-bar: #0f0f0f;
-  --ndd-accent-color: #e5e5e5;
+  --ndd-accent-color: var(--ndd-brand-accent, #e5e5e5);
+  --ndd-accent-glow: color-mix(in srgb, var(--ndd-accent-color) 18%, transparent);
   --ndd-tab-indicator-focused: #ffffff;
   --ndd-panel-float-radius: 0;
 }
@@ -123,7 +323,8 @@ shortened version:
 [data-ndd-skin="mono"][data-color-scheme="light"] {
   --ndd-bg-panel: #ffffff;
   --ndd-bg-tab-bar: #e4e4e4;
-  --ndd-accent-color: #171717;
+  --ndd-accent-color: var(--ndd-brand-accent, #171717);
+  --ndd-accent-glow: color-mix(in srgb, var(--ndd-accent-color) 12%, transparent);
   --ndd-tab-indicator-focused: #171717;
 }
 ```
@@ -154,6 +355,22 @@ accent bar on an active tab — and your skin can add rules of that kind against
 scoped under `[data-ndd-skin="…"]`, if it wants them. `mono` deliberately uses tokens only.
 
 Pick `mono` from the demo's skin dropdown to see it in both schemes.
+
+> **Let your skin take a brand, as the built-in ones do.** Three habits keep a skin brandable
+> with [`--ndd-brand-accent`](#brand-your-app):
+>
+> - Declare the accent as `var(--ndd-brand-accent, <your colour>)`, never as a bare colour.
+> - Write every tint of it as `color-mix(in srgb, var(--ndd-accent-color) N%, transparent)`
+>   instead of an `rgba()` of the same colour — then one accent drives them all.
+> - Give your skin a font with `--ndd-skin-font-family`, never `--ndd-font-family`: declared in a
+>   skin, `--ndd-font-family` would override the one an application sets on `:root`. Likewise,
+>   never declare `--ndd-brand-accent` or `--ndd-brand-on-accent` in a skin — those belong to the
+>   application.
+>
+> A skin that sets no accent of its own gets the default skin's (`#38bdf8` dark, `#0066cc` light),
+> and one that sets no font gets the library's fallback stack. The library's own tints, the
+> active tab icon and the sidebar's accent tokens all follow `--ndd-accent-color`, so a skin that
+> sets only its accent is recoloured throughout.
 
 ## Light and dark
 
@@ -291,7 +508,27 @@ In vdd the class did nothing on the desktop element, because the later
 
 Every token the library declares in the stylesheet's top-level `:root` block, with its default
 (the dark look). This is the surface a skin or a retheme overrides; the built-in skins and the
-`[data-color-scheme="light"]` block redefine these same names. 119 tokens in all.
+`[data-color-scheme="light"]` block redefine these same names. 120 tokens in all. Where a
+default below is "the accent at N%", it is `color-mix(in srgb, var(--ndd-accent-color) N%,
+transparent)`.
+
+### Branding — set by your application
+
+Never declared by the library, only read. See [Brand your app](#brand-your-app).
+
+| Token | Default | What it paints |
+|---|---|---|
+| `--ndd-brand-accent` | *(unset)* | Replaces every skin's accent, in dark and light. |
+| `--ndd-brand-on-accent` | *(unset — `#090b11`; `#ffffff` on the primary button in light mode)* | Text on a solid accent fill, in both schemes: the primary button, the active dock target. |
+
+### Fonts
+
+| Token | Default | What it paints |
+|---|---|---|
+| `--ndd-font-family` | `var(--ndd-skin-font-family, 'Outfit', 'Inter', system-ui, -apple-system, sans-serif)` | Font of all of the chrome: the roots, the workspace, title bars, tooltips and the context menu (see [the coexistence base](#the-coexistence-base)). Set it on `:root` to brand the application. |
+
+A skin sets its own font as `--ndd-skin-font-family` — declared by each built-in skin (see
+[Skin fonts](#skin-fonts)), never on `:root` — which `--ndd-font-family` falls back to.
 
 ### Surfaces
 
@@ -321,8 +558,8 @@ Every token the library declares in the stylesheet's top-level `:root` block, wi
 
 | Token | Default | What it paints |
 |---|---|---|
-| `--ndd-accent-color` | `#38bdf8` | The one colour that carries selection and focus throughout. |
-| `--ndd-accent-glow` | `rgba(56, 189, 248, 0.15)` | Translucent halo behind accented elements. |
+| `--ndd-accent-color` | `var(--ndd-brand-accent, #38bdf8)` (light: `#0066cc`) | The one colour that carries selection and focus throughout. Every tint of it in the library is a `color-mix()` of this token. |
+| `--ndd-accent-glow` | the accent at 15% | Translucent halo behind accented elements. |
 
 ### Tabs
 
@@ -455,7 +692,7 @@ Every token the library declares in the stylesheet's top-level `:root` block, wi
 | `--ndd-sidebar-text-title` | `#f8f9fa` | Headings inside the drawer. |
 | `--ndd-sidebar-text-muted` | `#8a90a0` | Secondary text inside the drawer. |
 | `--ndd-tab-icon-inactive` | `#9ea4b0` | Icon of an unselected rail button. |
-| `--ndd-tab-icon-active` | `#38bdf8` | Icon of the selected rail button, and of an active toolbar button. |
+| `--ndd-tab-icon-active` | `var(--ndd-accent-color)` | Icon of the selected rail button, and of an active toolbar button. |
 | `--ndd-tab-btn-active-bg` | `#1e2024` | The selected rail button behind its icon. |
 | `--ndd-tab-btn-active-shadow` | `none` | Shadow behind it. |
 | `--ndd-sidebar-btn-hover-bg` | `rgba(255, 255, 255, 0.05)` | A rail button under the pointer. |
@@ -464,22 +701,22 @@ Every token the library declares in the stylesheet's top-level `:root` block, wi
 | `--ndd-sidebar-card-bg` | `rgba(255, 255, 255, 0.03)` | Card surface offered to drawer content. |
 | `--ndd-sidebar-card-border` | `rgba(255, 255, 255, 0.08)` | That card border. |
 | `--ndd-sidebar-card-hover-bg` | `rgba(255, 255, 255, 0.04)` | That card on hover. |
-| `--ndd-sidebar-card-hover-border` | `rgba(56, 189, 248, 0.25)` | Its border on hover. |
-| `--ndd-sidebar-card-active-bg` | `rgba(56, 189, 248, 0.06)` | That card when selected. |
-| `--ndd-sidebar-card-active-border` | `rgba(56, 189, 248, 0.3)` | Its border when selected. |
-| `--ndd-sidebar-card-active-shadow` | `rgba(56, 189, 248, 0.08)` | Its glow when selected. |
+| `--ndd-sidebar-card-hover-border` | the accent at 25% | Its border on hover. |
+| `--ndd-sidebar-card-active-bg` | the accent at 6% | That card when selected. |
+| `--ndd-sidebar-card-active-border` | the accent at 30% | Its border when selected. |
+| `--ndd-sidebar-card-active-shadow` | the accent at 8% | Its glow when selected. |
 | `--ndd-sidebar-btn-front-bg` | `transparent` | Primary-button style offered to drawer content. |
-| `--ndd-sidebar-btn-front-border` | `#38bdf8` | Its border. |
-| `--ndd-sidebar-btn-front-text` | `#38bdf8` | Its label. |
-| `--ndd-sidebar-btn-front-hover-bg` | `rgba(56, 189, 248, 0.1)` | Its background on hover. |
+| `--ndd-sidebar-btn-front-border` | `var(--ndd-accent-color)` | Its border. |
+| `--ndd-sidebar-btn-front-text` | `var(--ndd-accent-color)` | Its label. |
+| `--ndd-sidebar-btn-front-hover-bg` | the accent at 10% | Its background on hover. |
 
 ### Workspace toolbar
 
 | Token | Default | What it paints |
 |---|---|---|
 | `--ndd-toolbar-btn-hover-bg` | `rgba(255, 255, 255, 0.06)` | A workspace-toolbar button under the pointer. |
-| `--ndd-toolbar-btn-radio-active-bg` | `rgba(56, 189, 248, 0.14)` | The selected radio button in a workspace toolbar. |
-| `--ndd-toolbar-btn-toggle-active-bg` | `rgba(56, 189, 248, 0.08)` | An engaged toggle in a workspace toolbar. |
+| `--ndd-toolbar-btn-radio-active-bg` | the accent at 14% | The selected radio button in a workspace toolbar. |
+| `--ndd-toolbar-btn-toggle-active-bg` | the accent at 8% | An engaged toggle in a workspace toolbar. |
 | `--ndd-toolbar-btn-active-glow` | `none` | Halo behind an active workspace-toolbar button. |
 | `--ndd-toolbar-btn-active-shadow` | `none` | Shadow behind either of those. |
 | `--ndd-toolbar-accent-bar-width` | `3px` | Thickness of the accent bar on an active workspace-toolbar button. |
@@ -515,7 +752,6 @@ fallback.
 | Token | Fallback where read | What it paints |
 |---|---|---|
 | `--ndd-window-opacity` | `0.85` (the alpha inside `--ndd-window-bg`; skins use their own) | Opacity of a floating window's background. Read inside `--ndd-window-bg`, so it applies only while that token keeps the `var(--ndd-window-opacity, …)` form. |
-| `--ndd-font-family` | `'Outfit', 'Inter', system-ui, -apple-system, sans-serif` | Font of all of the chrome: the roots, the workspace, title bars, tooltips and the context menu (see [the coexistence base](#the-coexistence-base)). |
 | `--ndd-sidebar-header-area-padding-top` | `8px` | Space above the sidebar rail's header-action area. |
 | `--ndd-sidebar-header-area-padding-bottom` | `8px` | Space below it. |
 | `--ndd-sidebar-footer-area-padding-top` | `8px` | Space above the rail's footer-action area. |

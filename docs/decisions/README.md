@@ -15,3 +15,5 @@
 | [0011](0011-token-only-unscoped-selectors.md) | Unscoped selectors may declare only `--ndd-*` tokens |
 | [0012](0012-demo-scope.md) | Demo: vdd's capabilities, no framework wrappers |
 | [0013](0013-actions-are-untracked.md) | Every action is untracked; an unchanged write publishes nothing |
+| [0014](0014-brand-variables.md) | Brand variables: read by the library, never declared by it; one accent source; skin fonts |
+| [0015](0015-release-gate-version-follows-changelog.md) | The release gate checks the current version, not 1.0.0 |

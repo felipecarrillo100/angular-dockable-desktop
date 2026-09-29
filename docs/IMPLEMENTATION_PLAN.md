@@ -396,8 +396,21 @@ README (quick start, features, API), a user manual (chapters mirroring vdd's), a
 gate workflow and Pages workflow (written, not run remotely), and `LICENSE` (MIT).
 **Gate:** the full standing gate plus every browser gate from M4–M14 re-run from a clean
 install (`rm -rf node_modules dist && npm ci`); docs-api clean; the consumer smoke re-run.
+It is also the CI release gate. Since 1.1.0 ([ADR 0015](decisions/0015-release-gate-version-follows-changelog.md)) its
+release-file rule checks the *current* version — equal to `VERSION`, with its own CHANGELOG
+entry — instead of pinning 1.0.0, so it holds for every release.
 
-**Totals:** 16 milestones, ≥ 765 ported test equivalents, and three gates that could force an
+### M16 — Skin branding (1.1.0) · S
+Added after the 1.0.0 release: react-dockable-desktop 7.2.0's skin branding, ported
+([ADR 0014](decisions/0014-brand-variables.md)). `--ndd-brand-accent` / `--ndd-brand-on-accent`
+read by every skin, every accent tint a `color-mix()` of `--ndd-accent-color`, per-skin fonts
+through `--ndd-skin-font-family`.
+**Gate:** the standing gate; M16 rules (release files, ADR, manual ↔ stylesheet, browser
+minimum, PARITY); **browser:** every skin × scheme against a 1.0.0 baseline allowing only the
+intended fixes, a red brand with no trace of any original accent, on-accent text, skin and brand
+fonts on every chrome root, and a `--control` run that must fail.
+
+**Totals:** 16 milestones for 1.0.0 (M16 added for 1.1.0), ≥ 765 ported test equivalents, and three gates that could force an
 architectural fallback (M0, M3, M13), each with its fallback named in B4.
 
 ---

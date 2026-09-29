@@ -32,6 +32,7 @@ This chapter maps concepts in both directions from ndd. The authoritative, line-
 | `usePanelFloatingWindow()` + `open` / `onClose` | `v-model:open` | `[(open)]` |
 | `[data-workspace-skin="…"]` in your skin CSS | `[data-vdd-skin="…"]` | `[data-ndd-skin="…"]` ([chapter 10](10-theming.md#defining-your-own)) |
 | partly prefixed classes and tokens (rdd's migration left `--sidebar-*`, `--tab-*`, `--toolbar-*` unprefixed) | `vdd-`-prefixed classes and custom properties | `ndd-`-prefixed classes and custom properties — the names after the prefix match vdd's |
+| `--rdd-brand-accent`, `--rdd-brand-on-accent`, `--rdd-skin-font-family` (rdd 7.2.0) | none in vdd 1.1.1 | `--ndd-brand-accent`, `--ndd-brand-on-accent`, `--ndd-skin-font-family` (1.1.0), with the same meaning ([chapter 10](10-theming.md#brand-your-app)) |
 
 Every workspace action keeps its name and signature: `openPanel`, `closePanel`,
 `requestClosePanel`, `focusPanel`, `floatPanel`, `dockPanel`, `dockPanelToGroup`,

@@ -6,6 +6,10 @@ fixed (its D-series), so ndd ports vdd's behaviour and vdd's tests, and consults
 vdd leaves something out. Where ndd behaves differently from vdd, it says so here (the N-series)
 and a test or a gate rule pins the difference.
 
+**1.1.0** adds one feature ahead of vdd: react-dockable-desktop **7.2.0**'s skin branding
+(§1, *Branding*, and §3, *rdd 7.2.0 branding, traced*), with the same variables under the
+`ndd-` prefix and the same tests ([ADR 0014](decisions/0014-brand-variables.md)).
+
 ## 1. API map
 
 The concepts are the same; the surface is Angular's.
@@ -74,6 +78,23 @@ Every template's context is typed through `ngTemplateContextGuard`.
 `injectModals()` / `injectSidePanels()` / `injectFloatingWidgets()` / `injectSidebar()` /
 `injectSidebarTab()` / `injectToolbar()` / `injectContextMenu()` / `injectMerged*()`; lazy panels
 through `registerLazy`; server-side rendering and hydration (§4.2 N12).
+
+### Branding (1.1.0, from rdd 7.2.0)
+
+| rdd 7.2.0 | vdd 1.1.1 | ndd 1.1.0 |
+|---|---|---|
+| `--rdd-brand-accent` on `:root` | — | `--ndd-brand-accent` on `:root` |
+| `--rdd-brand-on-accent` | — | `--ndd-brand-on-accent` |
+| `--rdd-skin-font-family` (set by a skin) | — | `--ndd-skin-font-family` |
+| `--rdd-font-family: var(--rdd-skin-font-family, …)` on `:root` | — | `--ndd-font-family: var(--ndd-skin-font-family, …)` on `:root` |
+| every skin's `--rdd-accent-color: var(--rdd-brand-accent, …)`, tints as `color-mix()` | — | the same, `ndd-`: 14 accent declarations, 142 tints and 2 on-accent rules, textually identical to rdd's after the prefix |
+| `WindowManager` sets `data-rdd-skin` on `<html>` | `data-vdd-skin` on `<html>` | `<ndd-desktop>` sets `data-ndd-skin` on `<html>` (1.0.0 already did), so the skin font resolves there |
+
+Two differences in ndd's stylesheet, both older than 1.1.0: ndd's default stack has no
+`'Segoe UI'` (`'Outfit', 'Inter', system-ui, -apple-system, sans-serif`, kept as it was), and ndd
+had not declared `--ndd-font-family` at all — five rules carried their own fallbacks, which 1.1.0
+removes, as rdd 6.4.0 had. ndd has no `--ndd-font-family-mono` token; its monospaced labels keep
+`monospace`.
 
 ## 2. Layout compatibility *(hard requirement, [ADR 0008](decisions/0008-layout-json-compatibility.md))*
 
@@ -163,6 +184,14 @@ vdd accounted for rdd's 26 suites; each lands in ndd through the vdd suite it be
 | `serializable` | Ported | `serializable.spec.ts` |
 | `sidePanelPositioning` | Ported, folded into the stylesheet suite | `stylesheet.spec.ts` |
 | `useColorScheme` | Ported | `diagnostics.spec.ts` (CS1–CS5) |
+
+### rdd 7.2.0 branding, traced
+
+| rdd 7.2.0 test | ndd |
+|---|---|
+| `tests/browser/branding.browser.ts` — 14-scene baseline, red brand, on-accent | `scripts/gates/browser/m16.mjs` (baseline in `scripts/gates/browser/fixtures/m16-branding-baseline.json`, captured from 1.0.0), both schedulers, plus a `--control` run that must fail |
+| `tests/browser/fonts.browser.ts` — skin fonts, brand font in every skin | `scripts/gates/browser/m16.mjs` (fonts) |
+| `StylesheetContract.test.ts` — "branding contract" (5) | `stylesheet.spec.ts` — "branding contract (styles.css)" (5, names kept) |
 
 ## 4. Deliberate divergences
 

@@ -13,10 +13,17 @@ import { pgFormatMessage } from './app/locale';
  *
  * `?zone` boots the same app on zone.js, so every browser gate runs under both schedulers
  * (ADR 0006). `?layout=two-leaf` starts from two side-by-side groups.
+ *
+ * Set before bootstrap, as an application would (the M16 branding gate):
+ * `?cs=light` puts `data-color-scheme="light"` on <html> (dark is the attribute's absence);
+ * `?ba=HEX` / `?bon=HEX` set `--ndd-brand-accent` / `--ndd-brand-on-accent` on :root (hex without `#`).
  */
 const params = new URLSearchParams(location.search);
 const zone = params.has('zone');
 if (zone) await import('zone.js');
+if (params.get('cs') === 'light') document.documentElement.setAttribute('data-color-scheme', 'light');
+if (params.get('ba')) document.documentElement.style.setProperty('--ndd-brand-accent', `#${params.get('ba')}`);
+if (params.get('bon')) document.documentElement.style.setProperty('--ndd-brand-on-accent', `#${params.get('bon')}`);
 
 const TWO_LEAF = JSON.stringify({
   version: 2,

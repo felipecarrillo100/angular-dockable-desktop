@@ -90,3 +90,57 @@ describe('the port left nothing of the Vue implementation behind', () => {
     expect(rules).not.toMatch(/data-vdd-skin|data-workspace-skin/);
   });
 });
+
+// ── Branding (1.1.0) ────────────────────────────────────────────────────────
+// Ported from react-dockable-desktop 7.2.0 `StylesheetContract.test.ts`, "branding contract"
+// (5 tests, names kept, `rdd-` → `ndd-`). A consumer sets --ndd-brand-accent /
+// --ndd-brand-on-accent on :root and every built-in skin follows. Two things make that work, and
+// both are easy to undo by accident: the library only ever *reads* the brand variables (a
+// declaration here would override the consumer's :root value on the element that carries
+// data-ndd-skin), and each skin's accent colour appears exactly once, in its --ndd-accent-color
+// declaration. The rendered result is gated in real Chrome by scripts/gates/browser/m16.mjs.
+
+describe('branding contract (styles.css)', () => {
+  /** Every skin accent, plus the active-state colours slate, tokyo and obsidian used before 1.1.0. */
+  const ACCENT_FAMILY = ['#38bdf8', '#0066cc', '#8ab4f8', '#1a73e8', '#0078d4', '#88c0d0', '#5e81ac', '#bb9af7', '#9854f1']
+    .map(h => [1, 3, 5].map(i => parseInt(h.slice(i, i + 2), 16)))
+    .concat([[96, 165, 250], [122, 162, 247], [56, 90, 246], [167, 139, 250]]);
+
+  it('every --ndd-accent-color declaration reads --ndd-brand-accent first', () => {
+    const decls = [...rules.matchAll(/--ndd-accent-color\s*:\s*([^;]+);/g)].map(m => m[1]!.trim());
+    expect(decls.length).toBeGreaterThanOrEqual(14); // :root, the light scheme, and 6 skins × 2
+    expect(decls.filter(v => !/^var\(--ndd-brand-accent,\s*#[0-9a-f]{6}\)$/i.test(v))).toEqual([]);
+  });
+
+  it('never declares a --ndd-brand-* variable (the consumer does)', () => {
+    expect(rules.match(/--ndd-brand-[\w-]+\s*:/g) ?? []).toEqual([]);
+  });
+
+  it('no accent colour is written as a literal outside its --ndd-accent-color declaration', () => {
+    const literals: string[] = [];
+    for (const m of rules.matchAll(/#[0-9a-fA-F]{6}\b|rgba?\(\s*(\d+)\s*,\s*(\d+)\s*,\s*(\d+)[^)]*\)/g)) {
+      const rgb = m[0].startsWith('#') ? [1, 3, 5].map(i => parseInt(m[0].slice(i, i + 2), 16)) : [m[1], m[2], m[3]].map(Number);
+      if (!ACCENT_FAMILY.some(a => a.every((v, i) => v === rgb[i]))) continue;
+      const before = rules.slice(Math.max(0, m.index - 60), m.index);
+      // A var() fallback — the skin's own colour inside var(--ndd-brand-accent, …), or a fallback
+      // of a variable that is always defined — is the one place a literal belongs.
+      if (/var\(--ndd-[\w-]+,\s*$/.test(before)) continue;
+      literals.push(`${m[0]} after …${before.slice(-40).replace(/\s+/g, ' ')}`);
+    }
+    expect(literals).toEqual([]);
+  });
+
+  it('only :root declares --ndd-font-family; a skin sets --ndd-skin-font-family instead', () => {
+    // A skin-level --ndd-font-family would override the consumer's :root font on the workspace.
+    const declaring = [...rules.matchAll(/([^{}]+)\{[^{}]*--ndd-font-family\s*:/g)].map(m => m[1]!.trim());
+    expect(declaring).toEqual([':root']);
+    expect(rules).toMatch(/--ndd-font-family:\s*var\(--ndd-skin-font-family,/);
+  });
+
+  it('text on a solid accent fill reads --ndd-brand-on-accent', () => {
+    for (const sel of ['.ndd-btn-primary', '[data-color-scheme="light"] .ndd-btn-primary', '.ndd-dock-target-box--active']) {
+      const body = rules.match(new RegExp(`(^|\\})\\s*${sel.replace(/[.\-[\]"=]/g, '\\$&')}\\s*\\{([^}]*)\\}`))?.[2] ?? '';
+      expect(body, sel).toMatch(/(^|[;\s])color:\s*var\(--ndd-brand-on-accent,/);
+    }
+  });
+});

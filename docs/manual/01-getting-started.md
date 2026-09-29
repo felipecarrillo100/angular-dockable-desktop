@@ -9,6 +9,10 @@ npm install angular-dockable-desktop
 Requires **Angular 22** (`@angular/core` and `@angular/common` `^22`, as peer dependencies).
 The library has no other runtime dependencies.
 
+It needs a browser with CSS `color-mix()`: Chrome / Edge 111, Safari 16.2, Firefox 113 or later
+(all 2023). In an older browser the tinted hover and active highlights lose their colour; layout
+and behaviour are unaffected.
+
 It is zoneless-first, as a new Angular application is, and works unchanged on zone.js. It
 server-renders and hydrates, so an application created with `--ssr` needs nothing extra.
 

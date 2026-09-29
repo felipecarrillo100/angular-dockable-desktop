@@ -10,6 +10,106 @@ feature-by-feature map is [docs/PARITY.md](docs/PARITY.md).
 
 ## [Unreleased]
 
+## [1.1.0] — 2026-09-27
+
+**Parity: vue-dockable-desktop 1.1.1, react-dockable-desktop 6.3.1, plus react-dockable-desktop
+7.2.0's skin branding.** Put your company's colour and font on any built-in skin with a few CSS
+variables — no skin of your own needed. See
+[Brand your app](docs/manual/10-theming.md#brand-your-app).
+
+### Added
+
+- **`--ndd-brand-accent`**: set on `:root`, it replaces the accent of every built-in skin in dark
+  and light — tab indicators, active sidebar tabs and toolbar buttons, hover and active tints,
+  glows, the focused window's glow, the taskbar, the drop and snap highlights, the
+  primary button. Unset, each skin keeps its own accent.
+- **`--ndd-brand-on-accent`**: the text colour on a solid accent fill (the confirm dialog's
+  primary button, the highlighted dock target), for light brand colours such as yellow — in both
+  schemes. Defaults as before: `#090b11`, and `#ffffff` on the primary button in light mode.
+- **Per-skin fonts** through `--ndd-skin-font-family`: `vscode` uses VS Code's workbench font,
+  `macos` San Francisco, `chrome` Google's UI fonts, `slate` Fluent's Segoe UI stack, `nord` a
+  humanist sans (Avenir Next) and `tokyo` a monospace (JetBrains Mono); `obsidian` keeps the
+  library stack. All are system font stacks — the library still loads no fonts — and your own
+  `--ndd-font-family` replaces them all, portalled chrome included.
+- **`--ndd-font-family` is declared on `:root`**, as `var(--ndd-skin-font-family, 'Outfit',
+  'Inter', system-ui, -apple-system, sans-serif)`, and every chrome rule reads it without a
+  fallback of its own. Before, it was declared nowhere and five rules each carried their own
+  default stack (the context menu fell back to `-apple-system`, a window title to `'Outfit',
+  sans-serif`).
+- Manual: **Brand your app** — the brand variables, a per-scheme brand colour, loading your own
+  font, following a UI framework's theme (Angular Material 3, Bootstrap, Tailwind, MUI,
+  shadcn/ui), where to put a logo (a custom `headerAction` entry on `<ndd-sidebar>`), and how to
+  keep a custom skin brandable.
+
+### Changed
+
+- **Browser minimum**: CSS `color-mix()` — Chrome / Edge 111, Safari 16.2, Firefox 113 (all
+  2023). In an older browser the tinted hover and active highlights lose their colour; layout and
+  behaviour are unaffected.
+- **The default skin's font** is VS Code's workbench stack (`-apple-system, BlinkMacSystemFont,
+  'Segoe WPC', 'Segoe UI', …`) instead of `'Outfit', 'Inter', …`, which is now the fallback for
+  skins that set no font (`obsidian`, and custom skins). If you loaded Outfit for the library,
+  set `--ndd-font-family` to it. In `tokyo`, `nord`, `macos`, `chrome` and `slate` the font changes
+  too — and panel content inherits it, so in `tokyo` your panels turn monospace unless they set a
+  font of their own.
+- **Every tint of the accent is derived from it** (`color-mix()` of `--ndd-accent-color`) instead
+  of a hand-copied `rgba()`. With the built-in skins and no brand set, the look is unchanged
+  except for the fixes below.
+- `vscode` light mode has an accent of its own, `#0066cc` — the blue its light-mode tokens
+  already used. The primary button, the taskbar's peek handle and the other accent uses, which
+  were cyan on a light background, are that blue now. A custom skin that sets no accent gets it
+  in light mode too.
+- **Set the accent with `--ndd-brand-accent`, not `--ndd-accent-color`.** Every skin and the light
+  scheme declare `--ndd-accent-color` with a selector that also matches the workspace element, so
+  a `:root` override of it is replaced inside the workspace — now in `vscode` light mode as well,
+  where 1.0.0 had no light accent to replace it with.
+
+### Fixed
+
+- **Overriding `--ndd-accent-color` on `:root` had no effect in 6 of the 7 skins**: each skin
+  redeclared it on the workspace element. `--ndd-brand-accent`, which every skin reads first, is
+  the supported way to rebrand.
+- **Changing the accent left the old colour behind**: 142 hover, active and glow colours were
+  copies of a skin's accent written as fixed `rgba()` values. They follow the accent now.
+- **Skins showed colours that weren't theirs**: the default cyan (and `#0066cc` in light mode)
+  left in other skins — the taskbar hover glow, the dock preview and corner-snap highlights, the
+  floating-widget drop zones, the light-mode focused-tab indicator and taskbar text, the
+  `--ndd-sidebar-card-*` and `--ndd-sidebar-btn-front-*` tokens — now show each skin's own
+  accent. `slate` and `tokyo` drew their active states in a blue that wasn't their accent, and
+  `obsidian`'s panel toolbar in a violet; they use their accent now. `obsidian`'s dark-mode white
+  glows no longer show in light mode, where its accent is black.
+
+### Tests
+
+- **M16 browser gate** (`scripts/gates/browser/m16.mjs`, real Chrome, both schedulers): with no
+  brand set, the computed colours of every library element, its pseudo-elements, 8 hover states
+  and every token (inside the workspace, in the toolbar outside it, and on `<body>`), in all
+  7 skins × dark/light with the chrome opened, match a 1.0.0 baseline — except exactly the fixes
+  above; with a brand set, no trace of any original accent remains; a light brand with a dark
+  on-accent colour is readable on the primary button in dark and light; each skin's font reaches every piece of
+  chrome, and a brand font set on `:root` wins in every skin, portalled chrome included. Its
+  `--control` run (a skin that redeclares its accent and its font) is rejected.
+- `stylesheet.spec.ts`, ported from rdd 7.2.0's branding contract: every `--ndd-accent-color`
+  reads `--ndd-brand-accent` first, nothing in the library declares a `--ndd-brand-*` variable,
+  no accent colour is written as a literal outside its one declaration, only `:root` declares
+  `--ndd-font-family`, and text on accent fills reads `--ndd-brand-on-accent`.
+- M16 rules (`scripts/gates/m16.mjs`): the release files, ADR 0014, the manual's skin-font table
+  against the stylesheet, the browser minimum in the READMEs and chapter 1, and PARITY.md.
+- The playground takes `?cs=light`, `?ba=` / `?bon=` (brand variables before bootstrap) and
+  `?anim=0`, and exposes `NddConfirm` to the gates.
+- **The release gate (M15, which CI runs) no longer pins version 1.0.0**: the package version
+  must equal `VERSION` and have its own CHANGELOG entry, so it passes on 1.1.0 and every later
+  release (ADR 0015).
+
+### Docs
+
+- Theming chapter: **Brand your app**, **Skin fonts**, brandable custom skins (the demo's `mono`
+  skin now reads `--ndd-brand-accent` too), and the token reference (branding and font tables;
+  tints listed as "the accent at N%").
+- The browser minimum in the README and chapter 1; a Branding item in the README's features;
+  the rdd 7.2.0 names in the migration chapter; ADR 0014; ADR 0015 (the release gate follows
+  the current version); PARITY.md.
+
 ## [1.0.0] — 2026-09-24
 
 **Parity: vue-dockable-desktop 1.1.1, react-dockable-desktop 6.3.1.** The first release: a native
@@ -89,5 +189,6 @@ The full list, each pinned by a test or a gate, is [docs/PARITY.md §4](docs/PAR
   which ng-packagr declares for every Angular library (the bundle itself imports only
   `@angular/core` and `@angular/common`), and no dependency on `@angular/cdk` or `@angular/aria`.
 
-[Unreleased]: https://github.com/felipecarrillo100/angular-dockable-desktop/compare/v1.0.0...HEAD
+[Unreleased]: https://github.com/felipecarrillo100/angular-dockable-desktop/compare/v1.1.0...HEAD
+[1.1.0]: https://github.com/felipecarrillo100/angular-dockable-desktop/compare/v1.0.0...v1.1.0
 [1.0.0]: https://github.com/felipecarrillo100/angular-dockable-desktop/releases/tag/v1.0.0

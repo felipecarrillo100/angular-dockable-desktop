@@ -1,5 +1,6 @@
 import { ApplicationRef, Component, inject, signal } from '@angular/core';
 import {
+  NddConfirm,
   NddContextMenu,
   NddDesktop,
   NddModals,
@@ -29,6 +30,8 @@ const params = new URLSearchParams(location.search);
  * `?chrome` wraps the desktop in the application chrome M9 added — a primary sidebar on the
  * left, a secondary on the right and a toolbar — bound through real `[( )]` bindings, so the
  * gate can read and write the same signals an application would.
+ *
+ * `?skin=NAME` picks the skin; `?anim=0` turns the library's transitions off.
  */
 @Component({
   selector: 'pg-root',
@@ -57,12 +60,12 @@ const params = new URLSearchParams(location.search);
           </ng-template>
           <div class="pg-row">
             <ndd-toolbar position="left" [items]="mergedItems()" [(visible)]="toolbarVisible" />
-            <ndd-desktop class="pg-desktop" [skin]="skin" />
+            <ndd-desktop class="pg-desktop" [skin]="skin" [animations]="animations" />
           </div>
         </ndd-secondary-sidebar>
       </ndd-sidebar>
     } @else {
-      <ndd-desktop class="pg-desktop" [skin]="skin" />
+      <ndd-desktop class="pg-desktop" [skin]="skin" [animations]="animations" />
     }
     <ndd-context-menu />
     <ndd-side-panels />
@@ -73,6 +76,7 @@ const params = new URLSearchParams(location.search);
 export class App {
   protected readonly skin = params.get('skin') ?? 'vscode';
   protected readonly chrome = params.has('chrome');
+  protected readonly animations = params.get('anim') !== '0';
   private readonly workspace = inject(Workspace);
 
   protected readonly primaryTabs: SidebarTab[] = [
@@ -117,7 +121,7 @@ export class App {
       appRef: inject(ApplicationRef),
       modals: injectModals(),
       toast,
-      components: { editor: EditorPanel, hostile: HostilePanel },
+      components: { editor: EditorPanel, hostile: HostilePanel, confirm: NddConfirm },
       locale: pgLocale,
       chrome: this.chrome
         ? {

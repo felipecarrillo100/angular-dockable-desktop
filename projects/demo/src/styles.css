@@ -132,7 +132,9 @@ body { font-family: system-ui, -apple-system, 'Segoe UI', sans-serif; }
       element, so the pair matches there as well as on the root — a custom skin gets dark/light
       for free, exactly like a built-in.
    3. Tokens only, no element rules. Recolouring the whole workspace needs nothing else; the
-      built-ins' structural flourishes (macOS's blur, the accent bars) are the tier above. */
+      built-ins' structural flourishes (macOS's blur, the accent bars) are the tier above.
+   4. Brandable, as the built-ins are (1.1.0): the accent reads an application's
+      --ndd-brand-accent first, and its glow is a color-mix() of the accent, not a copied rgba(). */
 
 [data-ndd-skin="mono"] {
   --ndd-bg-primary: #0b0b0b;
@@ -145,8 +147,8 @@ body { font-family: system-ui, -apple-system, 'Segoe UI', sans-serif; }
   --ndd-text-secondary: #9a9a9a;
   --ndd-text-tab-active: #ffffff;
   --ndd-text-tab-inactive: #8a8a8a;
-  --ndd-accent-color: #e5e5e5;
-  --ndd-accent-glow: rgba(229, 229, 229, 0.18);
+  --ndd-accent-color: var(--ndd-brand-accent, #e5e5e5);
+  --ndd-accent-glow: color-mix(in srgb, var(--ndd-accent-color) 18%, transparent);
   --ndd-border-color: rgba(255, 255, 255, 0.1);
   --ndd-border-panel: rgba(255, 255, 255, 0.1);
   --ndd-window-bg: rgba(20, 20, 20, 0.92);
@@ -172,8 +174,8 @@ body { font-family: system-ui, -apple-system, 'Segoe UI', sans-serif; }
   --ndd-text-secondary: #5f5f5f;
   --ndd-text-tab-active: #000000;
   --ndd-text-tab-inactive: #6b6b6b;
-  --ndd-accent-color: #171717;
-  --ndd-accent-glow: rgba(23, 23, 23, 0.12);
+  --ndd-accent-color: var(--ndd-brand-accent, #171717);
+  --ndd-accent-glow: color-mix(in srgb, var(--ndd-accent-color) 12%, transparent);
   --ndd-border-color: rgba(0, 0, 0, 0.12);
   --ndd-border-panel: rgba(0, 0, 0, 0.12);
   --ndd-window-bg: rgba(255, 255, 255, 0.95);
