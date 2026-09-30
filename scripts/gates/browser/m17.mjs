@@ -24,7 +24,7 @@ import { existsSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs';
 import { dirname, join } from 'node:path';
 import { runBrowserGate } from '../lib/browser.mjs';
 import { ROOT, STYLES } from '../lib/config.mjs';
-import { SKINS, colours, diff, hoverSnapshots, intended, isRgb, lines, openBase, openOverlays, rgbOf, snapshot, tokens } from '../lib/branding-scenes.mjs';
+import { SKINS, FROSTED, colours, diff, hoverSnapshots, intended, isRgb, lines, openBase, openOverlays, rgbOf, snapshot, tokens } from '../lib/branding-scenes.mjs';
 
 const WRITE = process.argv.includes('--write-baseline');
 const FIXTURE = join(ROOT, 'scripts/gates/browser/fixtures/m17-radius-baseline.json');
@@ -50,7 +50,8 @@ const PALETTE = [...css.matchAll(/var\(--ndd--b-[\w-]+, (#[0-9a-fA-F]{6}|rgb\((\
 // ── corners ─────────────────────────────────────────────────────────────────
 
 /** Every ndd- element's four corners, keyed by a DOM path; elements with no rounded corner are left out. */
-const radii = page => page.evaluate(corners => {
+const radii = page => page.evaluate(([corners, frostedSrc]) => {
+  const frosted = new RegExp(frostedSrc);
   const out = {};
   const seg = el => {
     const parent = el.parentElement;
@@ -65,11 +66,13 @@ const radii = page => page.evaluate(corners => {
       if (pseudo && (cs.content === 'none' || cs.content === 'normal')) continue;
       const r = corners.map(c => cs.getPropertyValue(c));
       if (r.every(v => v === '0px')) continue;
+      // A frosted container's ::before (1.3.0) takes border-radius: inherit — its corners are its element's.
+      if (pseudo === '::before' && frosted.test(path(el).split('>').pop() ?? '')) continue;
       out[path(el) + pseudo] = r;
     }
   }
   return out;
-}, CORNERS);
+}, [CORNERS, FROSTED.source]);
 
 const round = v => v === '50%' || v === '999px';
 const px = v => (/^-?[\d.]+px$/.test(v) ? parseFloat(v) : NaN);

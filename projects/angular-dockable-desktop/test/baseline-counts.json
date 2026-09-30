@@ -6,7 +6,7 @@
   "layout-tree.spec.ts": 40,
   "serializable.spec.ts": 12,
   "stretch.spec.ts": 12,
-  "stylesheet.spec.ts": 19,
+  "stylesheet.spec.ts": 21,
   "round-trip.spec.ts": 26,
   "registry.spec.ts": 12,
   "event-bus.spec.ts": 11,
@@ -32,5 +32,6 @@
   "diagnostics.spec.ts": 14,
   "contributions.spec.ts": 21,
   "i18n.spec.ts": 26,
-  "style-hookups.spec.ts": 17
+  "style-hookups.spec.ts": 17,
+  "field-report.spec.ts": 6
 }

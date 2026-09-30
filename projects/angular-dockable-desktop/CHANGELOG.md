@@ -6,7 +6,7 @@ All notable changes to this project are documented in this file. The format is b
 
 Every release states which vue-dockable-desktop and react-dockable-desktop releases it
 corresponds to, as a **Parity** line. The three libraries version independently; the
-feature-by-feature map is [docs/PARITY.md](docs/PARITY.md).
+feature-by-feature map is [docs/PARITY.md](https://github.com/felipecarrillo100/angular-dockable-desktop/blob/main/docs/PARITY.md).
 
 ## [Unreleased]
 
@@ -72,7 +72,7 @@ sidebar and toasts, translated titles, and a quieter restore.
 **Parity: vue-dockable-desktop 1.1.1, react-dockable-desktop 6.3.1, plus react-dockable-desktop
 7.2.0 and 7.3.0's skin branding** (vue-dockable-desktop 1.4.0 made the same port). Branding, part
 two: your own surfaces and corner shape on any built-in skin. See
-[Your surfaces](docs/manual/10-theming.md#your-surfaces) and [Corners](docs/manual/10-theming.md#corners).
+[Your surfaces](https://github.com/felipecarrillo100/angular-dockable-desktop/blob/main/docs/manual/10-theming.md#your-surfaces) and [Corners](https://github.com/felipecarrillo100/angular-dockable-desktop/blob/main/docs/manual/10-theming.md#corners).
 
 ### Added
 
@@ -129,7 +129,7 @@ two: your own surfaces and corner shape on any built-in skin. See
 **Parity: vue-dockable-desktop 1.1.1, react-dockable-desktop 6.3.1, plus react-dockable-desktop
 7.2.0's skin branding.** Put your company's colour and font on any built-in skin with a few CSS
 variables — no skin of your own needed. See
-[Brand your app](docs/manual/10-theming.md#brand-your-app).
+[Brand your app](https://github.com/felipecarrillo100/angular-dockable-desktop/blob/main/docs/manual/10-theming.md#brand-your-app).
 
 ### Added
 
@@ -295,7 +295,7 @@ does differently (N1–N17), most of them back-portable. Among them:
 - the tab close button is not a nested control; Delete closes a focused tab (N4);
 - server rendering works (N12); `ndd-fill-viewport` works on the desktop itself (N11).
 
-The full list, each pinned by a test or a gate, is [docs/PARITY.md §4](docs/PARITY.md).
+The full list, each pinned by a test or a gate, is [docs/PARITY.md §4](https://github.com/felipecarrillo100/angular-dockable-desktop/blob/main/docs/PARITY.md).
 
 ### Dependencies
 

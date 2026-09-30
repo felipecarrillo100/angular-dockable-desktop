@@ -485,6 +485,22 @@ Disables the library's own transitions only — tab hovers, dock previews, drawe
 toast entry. Your application's animations are untouched. The setting is mirrored onto `<html>`
 as the `ndd-no-animations` class, so menus and toasts rendered into `document.body` match.
 
+The same happens on its own when the user has asked the system for less motion
+(`prefers-reduced-motion: reduce`, 1.3.0) — whatever `[animations]` says, and again without
+touching your own transitions.
+
+## Frosted glass and your own overlays
+
+Several skins draw floating windows, drawers, overlay widgets, frosted panel toolbars and (in
+`macos`) docked panels as frosted glass. Since 1.3.0 the frost is drawn on each container's
+`::before`, never on the container itself: a `backdrop-filter` makes its element the containing
+block for `position: fixed` content, so a dropdown or overlay of yours inside a frosted window
+used to be positioned against the window rather than the viewport — in some skins and not others.
+Now `position: fixed` inside any library container means the viewport, in every skin.
+
+If you write a skin of your own that frosts a container hosting content, do the same: put the
+`backdrop-filter` (and the background it tints) on `::before`.
+
 ## Stacking against your own overlays
 
 If your application's dialogs and the workspace fight over `z-index`, move the library's whole

@@ -173,7 +173,35 @@ export async function hoverSnapshots(page) {
 }
 
 /** `key prop` → "old -> new" for every colour that differs; keys missing on either side count too. */
-export function diff(base, snap) {
+/**
+ * The containers whose frost (and, where it saturates, background) moved onto their own ::before
+ * in 1.3.0, so a consumer's position: fixed content inside them keeps the viewport. See M18.
+ */
+export const FROSTED = /\.ndd-(floating-window|side-panel|panel-float|workspace-panel|panel-toolbar)(\.|:|$)/;
+
+/**
+ * A snapshot taken before 1.3.0 painted a frosted container's background on the element; from
+ * 1.3.0 it is on the element's ::before. Folds that ::before back onto its element — only where
+ * the baseline has no such pseudo-element — so the two compare as what is drawn, not where.
+ */
+export function foldFrost(snap, base) {
+  const out = { ...snap };
+  for (const key of Object.keys(snap)) {
+    if (!key.endsWith('::before') || base[key]) continue;
+    const el = key.slice(0, -'::before'.length);
+    if (!FROSTED.test(el.split('>').pop() ?? '') || !out[el]) continue;
+    const bg = snap[key]['background-color'];
+    // A pseudo that only frosts (a plain blur leaves the background on the element) paints nothing to fold.
+    if (bg && !/^rgba\(0, 0, 0, 0\)$|^transparent$/.test(bg)) {
+      out[el] = { ...out[el], 'background-color': bg, 'background-image': snap[key]['background-image'] ?? out[el]['background-image'] };
+    }
+    delete out[key];
+  }
+  return out;
+}
+
+export function diff(base, now) {
+  const snap = foldFrost(now, base);
   const out = new Map();
   for (const key of new Set([...Object.keys(base), ...Object.keys(snap)])) {
     if (!base[key] || !snap[key]) { out.set(key, base[key] ? 'gone' : 'new'); continue; }

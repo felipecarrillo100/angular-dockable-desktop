@@ -35,6 +35,7 @@ import { startPointerDrag } from '../core/drag-resize';
 import type { SidebarContext, SidebarRailEntry, SidebarTab, SidebarTabContext } from '../core/sidebar-types';
 import { isActionButton, isCustomEntry, isTabEntry, toRailArray } from '../core/sidebar-types';
 import { NddIconView } from '../common/icon';
+import { Workspace } from '../workspace/workspace';
 
 
 /** The strip's fixed width. The outer box animates between this and zero. */
@@ -121,6 +122,13 @@ const RIGHT: readonly Piece[] = ['main', 'resizer', 'drawer', 'rail'];
  */
 @Directive()
 abstract class NddSidebarBase {
+  /**
+   * A sidebar is usually an ancestor of the desktop, so the workspace's own dir never reached it:
+   * setDirection('rtl') mirrored the desktop beside an unmirrored rail (1.3.0). It follows the
+   * workspace into RTL; otherwise (or with no workspace) it inherits the page's direction, as before.
+   */
+  private readonly dirSource = inject(Workspace, { optional: true }) as Workspace<never> | null;
+  readonly workspaceDir = computed(() => (this.dirSource?.state().dir === 'rtl' ? 'rtl' : null));
   readonly tabs = input.required<readonly SidebarTab[]>();
   /** Entries above the tabs, in their own area. A single entry or an array. */
   readonly headerAction = input<SidebarRailEntry | readonly SidebarRailEntry[] | null | undefined>(undefined);
@@ -492,7 +500,7 @@ const TEMPLATE = `
   selector: 'ndd-sidebar',
   imports: [NgTemplateOutlet, NgComponentOutlet, NddIconView],
   providers: [{ provide: SIDEBAR, useFactory: () => inject(NddSidebar).context }],
-  host: { class: 'ndd-sidebar-layout', '[attr.data-ndd-sidebar]': 'side()' },
+  host: { class: 'ndd-sidebar-layout', '[attr.data-ndd-sidebar]': 'side()', '[attr.dir]': 'workspaceDir()' },
   template: TEMPLATE,
 })
 export class NddSidebar extends NddSidebarBase {
@@ -512,7 +520,7 @@ export class NddSidebar extends NddSidebarBase {
   selector: 'ndd-secondary-sidebar',
   imports: [NgTemplateOutlet, NgComponentOutlet, NddIconView],
   providers: [{ provide: SIDEBAR, useFactory: () => inject(NddSecondarySidebar).context }],
-  host: { class: 'ndd-sidebar-layout', '[attr.data-ndd-sidebar]': 'side()' },
+  host: { class: 'ndd-sidebar-layout', '[attr.data-ndd-sidebar]': 'side()', '[attr.dir]': 'workspaceDir()' },
   template: TEMPLATE,
 })
 export class NddSecondarySidebar extends NddSidebarBase {

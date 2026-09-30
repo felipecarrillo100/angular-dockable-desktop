@@ -901,17 +901,66 @@ body.ndd-resizing-col-active * {
   background: var(--ndd-scrollbar-thumb-hover);
 }
 
+/* Frosted glass sits on a ::before, never on the container itself (7.4.0). A backdrop-filter
+   makes its element the containing block for position: fixed descendants, so a consumer's fixed
+   dropdown inside a frosted window, drawer, panel or panel toolbar was positioned against the container — and
+   which containers were frosted depended on the skin. The pseudo-element is not an ancestor of the
+   content, so the content keeps the viewport. Where the frost saturates, the container's background
+   moves to the same pseudo, after the filter, as it was on the element: saturate() does not commute
+   with the tint (a plain blur does, so the overlay widget keeps its own background).
+   isolation keeps the z-index: -1 pseudo inside the container, below its content. */
+.ndd-floating-window,
+.ndd-side-panel,
+.ndd-panel-float,
+.ndd-panel-toolbar[data-variant="frosted"],
+[data-ndd-skin="macos"] .ndd-workspace-panel {
+  isolation: isolate;
+}
+.ndd-floating-window::before,
+.ndd-side-panel::before,
+.ndd-panel-float::before,
+.ndd-panel-toolbar[data-variant="frosted"]::before,
+[data-ndd-skin="macos"] .ndd-workspace-panel::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  border-radius: inherit;
+  pointer-events: none;
+}
+.ndd-floating-window::before { background-color: var(--ndd-window-bg); }
+.ndd-side-panel::before { background: var(--ndd-side-panel-bg); }
+[data-ndd-skin="macos"] .ndd-workspace-panel::before { background-color: var(--ndd-bg-panel); }
+/* The background ran under the container's 1px border too: so does the pseudo (a maximized
+   window has no border; a frosted panel toolbar has one on its inner edge). */
+.ndd-floating-window::before,
+[data-ndd-skin="macos"] .ndd-workspace-panel::before {
+  inset: -1px;
+}
+.ndd-panel-toolbar--top[data-variant="frosted"]::before { bottom: -1px; }
+.ndd-panel-toolbar--bottom[data-variant="frosted"]::before { top: -1px; }
+.ndd-panel-toolbar--left[data-variant="frosted"]::before { right: -1px; }
+.ndd-panel-toolbar--right[data-variant="frosted"]::before { left: -1px; }
+.ndd-floating-window.ndd-maximized::before {
+  inset: 0;
+}
+/* The docked panel's own background is on its ::before only in macOS, the skin that frosts it. */
+[data-ndd-skin="macos"] .ndd-workspace-panel {
+  background-color: transparent;
+}
+
 .ndd-floating-window {
   display: flex;
   flex-direction: column;
   border-radius: calc(8px * var(--ndd-radius-scale, 1));
   border: 1px solid var(--ndd-window-border);
   box-shadow: var(--ndd-window-shadow), inset 0 1px 0 rgba(255, 255, 255, 0.05);
-  backdrop-filter: blur(16px) saturate(180%);
-  -webkit-backdrop-filter: blur(16px) saturate(180%);
-  background-color: var(--ndd-window-bg);
   overflow: hidden;
   transition: box-shadow 0.2s, border-color 0.2s;
+}
+.ndd-floating-window::before {
+  backdrop-filter: blur(16px) saturate(180%);
+  -webkit-backdrop-filter: blur(16px) saturate(180%);
 }
 
 .ndd-floating-window.ndd-window-focused {
@@ -1405,9 +1454,11 @@ body.ndd-dragging-active {
 /* macOS structural adjustments */
 [data-ndd-skin="macos"] .ndd-floating-window {
   border-radius: calc(12px * var(--ndd-radius-scale, 1));
+  border-color: var(--ndd-window-border);
+}
+[data-ndd-skin="macos"] .ndd-floating-window::before {
   backdrop-filter: blur(20px) saturate(180%);
   -webkit-backdrop-filter: blur(20px) saturate(180%);
-  border-color: var(--ndd-window-border);
 }
 [data-ndd-skin="macos"] .ndd-floating-window-titlebar {
   border-top-left-radius: calc(12px * var(--ndd-radius-scale, 1));
@@ -1415,6 +1466,8 @@ body.ndd-dragging-active {
 }
 [data-ndd-skin="macos"] .ndd-workspace-panel {
   border-radius: calc(8px * var(--ndd-radius-scale, 1));
+}
+[data-ndd-skin="macos"] .ndd-workspace-panel::before {
   backdrop-filter: blur(12px) saturate(180%);
   -webkit-backdrop-filter: blur(12px) saturate(180%);
 }
@@ -2298,6 +2351,18 @@ html.ndd-no-animations [class*="ndd-"]::after {
   animation: none !important;
 }
 
+/* The same when the user has asked the system for less motion (7.4.0): the library's own
+   transitions and animations stop, whatever `animations` says. The consumer's own are untouched,
+   exactly as above. */
+@media (prefers-reduced-motion: reduce) {
+  [class*="ndd-"],
+  [class*="ndd-"]::before,
+  [class*="ndd-"]::after {
+    transition: none !important;
+    animation: none !important;
+  }
+}
+
 
 
 @keyframes ndd-fade-in {
@@ -2428,7 +2493,6 @@ html.ndd-no-animations [class*="ndd-"]::after {
   top: 0;
   bottom: 0;
   width: 400px;
-  background: var(--ndd-side-panel-bg);
   /* The library owns this container's background, so it owns its foreground too — as
      `.ndd-modal-window`, `.ndd-workspace` and `.ndd-sidebar-content-drawer` all already do. This
      one was missed, so content rendered into a drawer inherited the host page's text colour,
@@ -2438,14 +2502,16 @@ html.ndd-no-animations [class*="ndd-"]::after {
      application that wants a different colour sets it on its own content, or reaches the body
      through `createWorkspace({ classes: { sidePanelBody } })`. */
   color: var(--ndd-text-primary);
-  backdrop-filter: blur(20px) saturate(180%);
-  -webkit-backdrop-filter: blur(20px) saturate(180%);
   border-right: 1px solid var(--ndd-side-panel-border);
   z-index: calc(var(--ndd-z-base, 1000) + 8000);
   box-shadow: 10px 0 30px rgba(0, 0, 0, 0.4);
   transition: transform 0.25s cubic-bezier(0.16, 1, 0.3, 1);
   display: flex;
   flex-direction: column;
+}
+.ndd-side-panel::before {
+  backdrop-filter: blur(20px) saturate(180%);
+  -webkit-backdrop-filter: blur(20px) saturate(180%);
 }
 
 .ndd-side-panel-right {
@@ -3558,7 +3624,7 @@ html.ndd-no-animations [class*="ndd-"]::after {
 }
 
 /* ── Toolbar strip variants ── */
-.ndd-panel-toolbar[data-variant="frosted"] {
+.ndd-panel-toolbar[data-variant="frosted"]::before {
   background: color-mix(in srgb, var(--ndd--b-panel-toolbar-frosted-bg, rgb(15 20 30)) 55%, transparent);
   backdrop-filter: blur(10px) saturate(150%);
   -webkit-backdrop-filter: blur(10px) saturate(150%);
@@ -3566,7 +3632,7 @@ html.ndd-no-animations [class*="ndd-"]::after {
 .ndd-panel-toolbar[data-variant="solid"] {
   background: var(--ndd-bg-tab-bar, #0d0f16);
 }
-[data-color-scheme="light"] .ndd-panel-toolbar[data-variant="frosted"] {
+[data-color-scheme="light"] .ndd-panel-toolbar[data-variant="frosted"]::before {
   background: color-mix(in srgb, var(--ndd--b-panel-toolbar-frosted-bg, rgb(233 236 239)) 72%, transparent);
 }
 .ndd-panel-toolbar--top[data-variant="frosted"],
@@ -3781,8 +3847,10 @@ html.ndd-no-animations [class*="ndd-"]::after {
   background: var(--ndd-panel-float-bg, rgba(22, 24, 34, 0.92));
   border: 1px solid var(--ndd-panel-float-border, rgba(255, 255, 255, 0.1));
   box-shadow: var(--ndd-panel-float-shadow, 0 4px 16px rgba(0, 0, 0, 0.35));
-  backdrop-filter: blur(8px);
   overflow: hidden;
+}
+.ndd-panel-float::before {
+  backdrop-filter: blur(8px);
 }
 
 .ndd-panel-float--active {

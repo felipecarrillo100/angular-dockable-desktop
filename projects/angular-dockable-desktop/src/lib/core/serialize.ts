@@ -27,6 +27,27 @@ export interface ParsedLayout {
  * Pre-`anchor` layouts stored two booleans instead of a corner. Carried over verbatim from
  * rdd, including its quirk that `stickyBottom` alone maps to `'bottom-left'`.
  */
+/** The geometry a newly floated panel gets, and what a saved window's unusable geometry is repaired to. */
+export const DEFAULT_FLOAT_RECT = { x: 300, y: 150, width: 450, height: 350 };
+
+/**
+ * A saved window's x/y/width/height, made finite (1.3.0). JSON has no NaN — one is saved as `null`
+ * — and `1e999` parses as Infinity; either reached the window's style. Each is replaced by the
+ * default a new float gets, and the repair is reported. A string (a CSS length) is kept.
+ */
+function finiteGeometry(floating: FloatingWindow[], repairs: string[]): FloatingWindow[] {
+  return floating.map((fw) => {
+    let out = fw;
+    for (const k of ['x', 'y', 'width', 'height'] as const) {
+      const v = (fw as unknown as Record<string, unknown>)[k];
+      if (typeof v === 'string' || (typeof v === 'number' && Number.isFinite(v))) continue;
+      out = { ...out, [k]: DEFAULT_FLOAT_RECT[k] };
+      repairs.push(`floating window "${fw.id}" had ${k} = ${String(v)}`);
+    }
+    return out;
+  });
+}
+
 function migrateFloating(floating: unknown[]): FloatingWindow[] {
   return floating.map((raw) => {
     const fw = raw as Record<string, unknown>;
@@ -60,8 +81,16 @@ export function parseLayoutPayload(
   if (!p['gridRoot'] || !Array.isArray(p['floating']) || !Array.isArray(p['minimized']) || !p['panels'])
     return null;
 
-  const floating = migrateFloating(p['floating']);
+  const geometryRepairs: string[] = [];
+  const floating = finiteGeometry(migrateFloating(p['floating']), geometryRepairs);
   const panels = p['panels'] as Record<string, PanelInfo>;
+  if (geometryRepairs.length > 0) {
+    if (typeof ngDevMode === 'undefined' || ngDevMode) onWarn?.(
+      `Repaired the saved layout on load: ${geometryRepairs.join('; ')}. Each is replaced by the ` +
+        `default a new floating window gets (${JSON.stringify(DEFAULT_FLOAT_RECT)}); saving again ` +
+        `from this session stores the corrected layout.`,
+    );
+  }
 
   // Repair before anything reads the tree: `activePanelId` resolution below asks which panels
   // are visible, and a layout that lists a panel twice — or lists none of a docked one — has

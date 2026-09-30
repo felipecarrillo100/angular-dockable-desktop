@@ -145,7 +145,9 @@ await runBrowserGate(control ? 'M9-control' : 'M9', {}, async (page, { fail, ope
   for (const { name, pageDir, wsDir, beside } of [
     { name: 'ltr', pageDir: 'ltr', wsDir: 'ltr', beside: 'after' },
     { name: 'rtl', pageDir: 'rtl', wsDir: 'rtl', beside: 'before' },
-    { name: 'rtl-desktop-only', pageDir: 'ltr', wsDir: 'rtl', beside: 'after' },
+    // Since 1.3.0 (ADR 0017, owner decision) setDirection('rtl') mirrors the sidebar and everything
+    // inside it — the playground's toolbar is — so an RTL workspace on an LTR page opens it 'before'.
+    { name: 'rtl-desktop-only', pageDir: 'ltr', wsDir: 'rtl', beside: 'before' },
   ]) {
     await page.evaluate(([p, w]) => { document.documentElement.dir = p; window.__pg.ws.setDirection(w); }, [pageDir, wsDir]);
     await page.waitForTimeout(300);

@@ -9,6 +9,11 @@
       "input": "src/styles",
       "glob": "styles.css",
       "output": "."
+    },
+    {
+      "input": ".",
+      "glob": "CHANGELOG.md",
+      "output": "."
     }
   ]
 }

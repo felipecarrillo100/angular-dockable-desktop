@@ -47,7 +47,7 @@ import {
   updateSizesAtPath,
 } from '../core/layout-tree';
 import type { ActiveTargetScope } from '../core/layout-tree';
-import { LAYOUT_VERSION, parseInitialState } from '../core/serialize';
+import { DEFAULT_FLOAT_RECT, LAYOUT_VERSION, parseInitialState } from '../core/serialize';
 import { isSerializable } from '../core/serializable';
 import { PanelRegistry } from '../core/registry';
 import type { PanelDefaultOptions, PanelLoader } from '../core/registry';
@@ -152,7 +152,7 @@ interface RequestCloseOptions {
 const clampRatio = (n: number | undefined, fallback: number): number =>
   Math.min(0.9, Math.max(0.1, n ?? fallback));
 
-const DEFAULT_RECT = { x: 300, y: 150, width: 450, height: 350 };
+const DEFAULT_RECT = DEFAULT_FLOAT_RECT;
 
 // Dev-only code is guarded inline with `typeof ngDevMode === 'undefined' || ngDevMode`: the CLI
 // defines `ngDevMode` as false in production, so the guard folds to `false` and the branch — message
@@ -237,7 +237,7 @@ export class Workspace<TEvents extends Record<string, unknown> = Record<string, 
       windowBody: config.classes?.windowBody ?? '',
     };
 
-    const initial = parseInitialState(config.initialState, (typeof ngDevMode === 'undefined' || ngDevMode) ? m => this.warn(m) : undefined);
+    const initial = this.withTitles(parseInitialState(config.initialState, (typeof ngDevMode === 'undefined' || ngDevMode) ? m => this.warn(m) : undefined));
     this._state = signal<WorkspaceState>(
       this.publishable({
         gridRoot: initial.gridRoot,
@@ -746,7 +746,9 @@ export class Workspace<TEvents extends Record<string, unknown> = Record<string, 
       const dynamic = provider?.();
       const hasDynamic = provider !== undefined && dynamic !== undefined;
       const ok = hasDynamic ? isSerializable(dynamic) : info.serializable;
-      if (ok) included[id] = hasDynamic ? { ...info, props: dynamic as Record<string, unknown>, serializable: true } : info;
+      // A function title (1.3.0) can't be saved; the restored panel takes its registered default.
+      const saved = typeof info.title === 'function' ? ((({ title: _t, ...rest }) => rest)(info) as PanelInfo) : info;
+      if (ok) included[id] = hasDynamic ? { ...saved, props: dynamic as Record<string, unknown>, serializable: true } : saved;
       else excluded.push(id);
     }
     // Excluded panels are pruned from the snapshot's tree/floating/minimized too, so a restore
@@ -770,7 +772,7 @@ export class Workspace<TEvents extends Record<string, unknown> = Record<string, 
       ...(activePanelId !== null ? { activePanelId } : {}),
       gridRoot,
       floating,
-      minimized,
+      minimized: minimized.map(m => (typeof m.title === 'function' ? { id: m.id, component: m.component } : m)) as SerializedLayout['minimized'],
       panels: included,
     };
     return JSON.stringify(payload);
@@ -782,7 +784,7 @@ export class Workspace<TEvents extends Record<string, unknown> = Record<string, 
       const payload = JSON.parse(json);
       const result = parseInitialState(JSON.stringify(payload), (typeof ngDevMode === 'undefined' || ngDevMode) ? m => this.warn(m) : undefined);
       if (!payload || typeof payload !== 'object' || !payload.gridRoot) return false;
-      parsed = result;
+      parsed = this.withTitles(result);
     } catch {
       if (typeof ngDevMode === 'undefined' || ngDevMode) this.warn('loadLayout received invalid JSON; the current layout is unchanged.');
       return false;
@@ -886,10 +888,24 @@ export class Workspace<TEvents extends Record<string, unknown> = Record<string, 
 
   // ── i18n ───────────────────────────────────────────────────────────────────
 
+  /**
+   * A panel saved without a title — it had a function title, which a layout can't hold — takes
+   * its registered default title, as a newly opened one would, or its id.
+   */
+  private withTitles<T extends { panels: Record<string, PanelInfo>; minimized: { id: string; title: PanelInfo['title']; component: string }[] }>(parsed: T): T {
+    const panels: Record<string, PanelInfo> = {};
+    for (const [id, info] of Object.entries(parsed.panels)) {
+      panels[id] = info.title ? info : { ...info, title: this.registry.get(info.component)?.defaultOptions?.title || id };
+    }
+    const minimized = parsed.minimized.map(m => (m.title ? m : { ...m, title: panels[m.id]?.title || m.id }));
+    return { ...parsed, panels, minimized };
+  }
+
   /** Resolve a label through the configured formatter. */
   format(label: Label | undefined): string {
     if (label === undefined || label === null) return '';
     if (typeof label === 'string') return label;
+    if (typeof label === 'function') return label();
     if (this.config.formatMessage) return this.config.formatMessage(label);
     let text = label.defaultMessage ?? label.id;
     for (const [k, v] of Object.entries(label.values ?? {})) text = text.replace(`{${k}}`, String(v));

@@ -221,3 +221,28 @@ describe('surface contract (styles.css)', () => {
     expect(defs.filter(d => d[1] !== '--ndd--b-base' && !d[2]!.includes('var(--ndd--b-base)')).map(d => d[1])).toEqual([]);
   });
 });
+
+// ── The field-report fixes (1.3.0) ──────────────────────────────────────────
+// Ported from react-dockable-desktop 7.4.0 `StylesheetContract.test.ts`, "consumer content
+// contract". The rendered result is gated by scripts/gates/browser/m18.mjs.
+
+describe('consumer content contract (styles.css)', () => {
+  const CONTENT_HOSTS = /\.ndd-(floating-window|side-panel|workspace-panel|panel-float|panel-toolbar)(\.[\w-]+|\[[^\]]+\])*$/;
+
+  it('no container that hosts consumer content carries a backdrop-filter or filter itself (only its ::before)', () => {
+    const offending: string[] = [];
+    for (const m of rules.matchAll(/([^{}]+)\{([^{}]*)\}/g)) {
+      const selectors = m[1]!.split(',').map(s => s.replace(/\s+/g, ' ').trim());
+      if (!selectors.some(s => CONTENT_HOSTS.test(s))) continue;
+      if (/(^|[;\s])(-webkit-)?(backdrop-)?filter\s*:\s*(?!none)/.test(m[2]!)) offending.push(selectors.join(', '));
+    }
+    expect(offending).toEqual([]);
+  });
+
+  it('honours prefers-reduced-motion for the library elements', () => {
+    const block = rules.match(/@media\s*\(prefers-reduced-motion:\s*reduce\)\s*\{([\s\S]*?)\}\s*\}/)?.[1] ?? '';
+    expect(block).toMatch(/\[class\*="ndd-"\]/);
+    expect(block).toMatch(/transition:\s*none\s*!important/);
+    expect(block).toMatch(/animation:\s*none\s*!important/);
+  });
+});

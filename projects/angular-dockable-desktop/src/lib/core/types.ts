@@ -20,8 +20,12 @@ export interface MessageDescriptor {
 /** Resolves a {@link MessageDescriptor} to a flat string. */
 export type MessageFormatter = (msg: MessageDescriptor) => string;
 
-/** A label that may be plain text or localisable. */
-export type Label = string | MessageDescriptor;
+/**
+ * A label that may be plain text, localisable, or (1.3.0) a function returning the text — called
+ * each time the label is rendered, so it follows whatever signal it reads (the app's locale, for
+ * one). A function title is not saved in a layout: a restored panel takes its registered default.
+ */
+export type Label = string | MessageDescriptor | (() => string);
 
 /** Orientation of a split. */
 export type SplitOrientation = 'horizontal' | 'vertical';

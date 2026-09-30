@@ -23,6 +23,7 @@ import {
 } from '@angular/core';
 import { NddIconView } from '../common/icon';
 import { NddPortal } from '../common/portal';
+import { Workspace } from '../workspace/workspace';
 import { removeToast, startExit, toastQueue } from './toast';
 import type { ToastAdapter, ToastPosition, ToastRecord, ToastType } from './toast';
 
@@ -259,6 +260,7 @@ export class NddToastItem {
         class="ndd-toast-container"
         [class]="'ndd-toast-container--' + position() + (newestOnTop() ? ' ndd-toast-container--newest-top' : ' ndd-toast-container--newest-bottom')"
         [style.width.px]="width()"
+        [attr.dir]="workspaceDir()"
         role="region"
         aria-label="Notifications"
         aria-live="polite"
@@ -281,6 +283,9 @@ export class NddToastItem {
   `,
 })
 export class NddToasts {
+  /** Toasts render into <body>: they follow the workspace into RTL (1.3.0), and otherwise inherit the page's direction, as before. */
+  private readonly dirSource = inject(Workspace, { optional: true }) as Workspace<never> | null;
+  readonly workspaceDir = computed(() => (this.dirSource?.state().dir === 'rtl' ? 'rtl' : null));
   readonly position = input<ToastPosition>('top-right');
   /** How many show at once. The rest wait. */
   readonly maxVisible = input(3);

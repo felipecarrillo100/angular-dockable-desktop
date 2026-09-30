@@ -79,6 +79,20 @@ Every template's context is typed through `ngTemplateContextGuard`.
 `injectSidebarTab()` / `injectToolbar()` / `injectContextMenu()` / `injectMerged*()`; lazy panels
 through `registerLazy`; server-side rendering and hydration (§4.2 N12).
 
+### Field-report fixes (1.3.0, from rdd 7.4.0)
+
+| rdd 7.4.0 | vdd 1.5.0 | ndd 1.3.0 |
+|---|---|---|
+| frost (and, where it saturates, its background) on a `::before` of the content containers | the same | the same — one transform for all three, prefix aside |
+| `prefers-reduced-motion` stops the library's motion | the same | the same |
+| `setDirection('rtl')` reaches the sidebar and toasts | `<VddSidebar>`, `<VddToasts>` | `<ndd-sidebar>`, `<ndd-secondary-sidebar>`, `<ndd-toasts>` |
+| title `() => string` | `Label` gains `() => string` | `Label` gains `() => string` |
+| non-finite saved geometry repaired on load | `core/serialize.ts` | `core/serialize.ts` |
+| `data-rdd-*` identity attributes | already `data-vdd-*` | already `data-ndd-*` |
+| CHANGELOG in the package | already | copied into the library project by `sync-package-readme.mjs` |
+| `frost.browser.ts`, `motion.browser.ts`, `direction.browser.ts` | M17 browser | `scripts/gates/browser/m18.mjs` |
+| — | reactivity notes (`markRaw`, `shallowRef`) | a `Directionality` recipe for Angular Material / CDK users |
+
 ### Brand surfaces and corners (1.2.0, from rdd 7.3.0)
 
 | rdd 7.3.0 | vdd 1.4.0 | ndd 1.2.0 |
