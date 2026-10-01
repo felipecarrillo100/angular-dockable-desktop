@@ -33,5 +33,7 @@
   "contributions.spec.ts": 21,
   "i18n.spec.ts": 26,
   "style-hookups.spec.ts": 17,
-  "field-report.spec.ts": 6
+  "field-report.spec.ts": 6,
+  "review-fixes.spec.ts": 8,
+  "drag-blur.spec.ts": 5
 }

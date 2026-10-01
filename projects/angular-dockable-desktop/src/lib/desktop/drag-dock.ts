@@ -217,6 +217,7 @@ export class DragDock {
       win.removeEventListener('pointermove', onMove);
       win.removeEventListener('pointerup', onUp);
       win.removeEventListener('pointercancel', onCancel);
+      win.removeEventListener('blur', onCancel);
     };
     const onUp = (e: PointerEvent) => {
       teardown();
@@ -231,6 +232,10 @@ export class DragDock {
       win.addEventListener('pointermove', onMove);
       win.addEventListener('pointerup', onUp);
       win.addEventListener('pointercancel', onCancel);
+      // The window losing focus (an alt-tab, an iframe taking it) ends the drag, as a
+      // pointercancel would (1.3.1): the listeners, the armed target and the body class all go,
+      // so the next click can't drop the panel into the zone it was over.
+      win.addEventListener('blur', onCancel);
     });
   }
 
@@ -285,6 +290,7 @@ export class DragDock {
         el.removeEventListener('pointermove', onMove);
         el.removeEventListener('pointerup', onEnd);
         el.removeEventListener('pointercancel', onCancel);
+        this.doc.defaultView?.removeEventListener('blur', onCancel);
       };
       const onEnd = (e: PointerEvent) => {
         detach();
@@ -302,6 +308,8 @@ export class DragDock {
         el.addEventListener('pointermove', onMove);
         el.addEventListener('pointerup', onEnd);
         el.addEventListener('pointercancel', onCancel);
+        // The window losing focus ends the drag, as a pointercancel would (1.3.1).
+        this.doc.defaultView?.addEventListener('blur', onCancel);
       });
     }, LONG_PRESS_MS);
     this.zone.runOutsideAngular(() => {

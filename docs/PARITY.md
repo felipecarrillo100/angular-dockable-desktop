@@ -79,6 +79,18 @@ Every template's context is typed through `ngTemplateContextGuard`.
 `injectSidebarTab()` / `injectToolbar()` / `injectContextMenu()` / `injectMerged*()`; lazy panels
 through `registerLazy`; server-side rendering and hydration (§4.2 N12).
 
+### Review fixes (1.3.1, from rdd 7.4.1)
+
+| rdd 7.4.1 | ndd 1.3.1 |
+|---|---|
+| default formatter replaces every `{key}`; one shared copy | `formatLabel()`, which `Workspace.format()` now calls |
+| window blur ends a tab drag and a floating-window drag | `DragDock` (mouse and touch), `<ndd-floating-window>` title bar |
+| repair drops leaf ids missing from `panels`; mismatched or non-finite split sizes become even | `repairLayoutTree` (`core/layout-tree.ts`) |
+| a throwing subscriber is logged, delivery continues | `EventBus` (`core/event-bus.ts`) |
+| z counter seeded from restored windows | already: constructor and `loadLayout()` |
+| toolbar search aborts and clears its debounce on unmount | already: `DestroyRef` in `toolbar-search.ts` |
+| `Patch741.test.ts`, `DragBlur.test.tsx` | `review-fixes.spec.ts`, `drag-blur.spec.ts` |
+
 ### Field-report fixes (1.3.0, from rdd 7.4.0)
 
 | rdd 7.4.0 | vdd 1.5.0 | ndd 1.3.0 |

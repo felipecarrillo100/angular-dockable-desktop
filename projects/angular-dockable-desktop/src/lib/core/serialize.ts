@@ -98,10 +98,10 @@ export function parseLayoutPayload(
   const repaired = repairLayoutTree(p['gridRoot'] as LayoutNode, panels);
   if (repaired.repairs.length > 0) {
     if (typeof ngDevMode === 'undefined' || ngDevMode) onWarn?.(
-      `Repaired the saved layout on load: ${repaired.repairs.join('; ')}. Layouts written ` +
-        `before this version could contain it — dropping a lone docked panel onto its own group ` +
-        `left the panel in no group — and the repair runs every time the layout is read, so ` +
-        `saving again from this session stores the corrected layout.`,
+      `Repaired the saved layout on load: ${repaired.repairs.join('; ')}. (Layouts written ` +
+        `by earlier versions could list a panel twice or in no group — dropping a lone docked ` +
+        `panel onto its own group did it.) The repair runs every time the layout is read, so saving again from this ` +
+        `session stores the corrected layout.`,
     );
   }
   const gridRoot = repaired.gridRoot;

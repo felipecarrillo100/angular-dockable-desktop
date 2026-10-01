@@ -55,7 +55,7 @@ import { EventBus } from '../core/event-bus';
 import type { BuiltInEvents } from '../core/event-bus';
 import { menuPosition } from '../core/context-menu';
 import type { ContextMenuItem, ShowContextMenuOptions } from '../core/context-menu';
-import { defaultMessages } from '../core/messages';
+import { defaultMessages, formatLabel } from '../core/messages';
 import { createToolbarState } from '../core/toolbar-state';
 import type { ToolbarState } from '../core/toolbar-state';
 import { createOverlays } from '../core/overlays';
@@ -901,15 +901,9 @@ export class Workspace<TEvents extends Record<string, unknown> = Record<string, 
     return { ...parsed, panels, minimized };
   }
 
-  /** Resolve a label through the configured formatter. */
+  /** Resolve a label through the configured formatter. One copy with `formatLabel`, so they can't drift (1.3.1). */
   format(label: Label | undefined): string {
-    if (label === undefined || label === null) return '';
-    if (typeof label === 'string') return label;
-    if (typeof label === 'function') return label();
-    if (this.config.formatMessage) return this.config.formatMessage(label);
-    let text = label.defaultMessage ?? label.id;
-    for (const [k, v] of Object.entries(label.values ?? {})) text = text.replace(`{${k}}`, String(v));
-    return text;
+    return formatLabel(label, this.config.formatMessage);
   }
 
   /** Drop every listener and guard. Called automatically when a provided workspace's injector is destroyed. */

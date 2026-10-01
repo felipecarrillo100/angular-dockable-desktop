@@ -10,6 +10,42 @@ feature-by-feature map is [docs/PARITY.md](docs/PARITY.md).
 
 ## [Unreleased]
 
+## [1.3.1] — 2026-10-01
+
+**Parity: react-dockable-desktop 7.4.1 fixes** (vue-dockable-desktop 1.5.1 made the same port).
+From a review of 7.4.0. No API changes.
+
+### Fixed
+
+- **A message's placeholder was filled only once**: in `'{n} of {n}'` the second `{n}` stayed as
+  written. The default formatter (used when you configure no `formatMessage`) replaces every
+  occurrence now, in `formatLabel()` and the workspace's `format()` alike — one copy, which the
+  workspace calls.
+- **A drag survived the browser window losing focus**: after an alt-tab mid-drag, the armed drop
+  target, the drop zones and `ndd-dragging-active` stayed, and the next click anywhere docked the
+  panel into the zone it had been over. The window losing focus now ends the drag as a
+  `pointercancel` does — a tab drag (mouse or touch) and a floating window dragged by its title
+  bar alike.
+- **Layout repair** also drops a group's panel id that the layout's `panels` doesn't have
+  (re-deriving the group's active tab), and gives a split whose sizes don't match its children,
+  or aren't finite positive numbers, even sizes — before, a child got `flex-basis: NaN%`. Each is
+  reported in the load warning, as the other repairs are; a layout this version saved has neither.
+- **A throwing event subscriber stopped delivery to the others**, and the error escaped into the
+  action that published — `loadLayout()` stopped before `layout:changed`. Each subscriber's error
+  is now logged (`[angular-dockable-desktop] A subscriber to "<event>" threw:`) and delivery
+  continues.
+
+rdd 7.4.1's other two fixes were already in place: a restored window's stacking order (the z
+counter is raised to the restored windows' in the constructor and in `loadLayout()`), and the
+toolbar search aborting its search and clearing its debounce when destroyed.
+
+### Tests
+
+- `review-fixes.spec.ts` (placeholders, layout repair, the event bus) and `drag-blur.spec.ts`
+  (window blur during a mouse, touch and floating-window drag, with uninterrupted drags as
+  controls), ported from rdd 7.4.1's `Patch741.test.ts` and `DragBlur.test.tsx`. Each was seen
+  failing before its fix and again with the fix removed.
+
 ## [1.3.0] — 2026-09-30
 
 **Parity: vue-dockable-desktop 1.1.1, react-dockable-desktop 6.3.1, plus react-dockable-desktop
@@ -303,7 +339,8 @@ The full list, each pinned by a test or a gate, is [docs/PARITY.md §4](docs/PAR
   which ng-packagr declares for every Angular library (the bundle itself imports only
   `@angular/core` and `@angular/common`), and no dependency on `@angular/cdk` or `@angular/aria`.
 
-[Unreleased]: https://github.com/felipecarrillo100/angular-dockable-desktop/compare/v1.3.0...HEAD
+[Unreleased]: https://github.com/felipecarrillo100/angular-dockable-desktop/compare/v1.3.1...HEAD
+[1.3.1]: https://github.com/felipecarrillo100/angular-dockable-desktop/compare/v1.3.0...v1.3.1
 [1.3.0]: https://github.com/felipecarrillo100/angular-dockable-desktop/compare/v1.2.0...v1.3.0
 [1.2.0]: https://github.com/felipecarrillo100/angular-dockable-desktop/compare/v1.1.0...v1.2.0
 [1.1.0]: https://github.com/felipecarrillo100/angular-dockable-desktop/compare/v1.0.0...v1.1.0

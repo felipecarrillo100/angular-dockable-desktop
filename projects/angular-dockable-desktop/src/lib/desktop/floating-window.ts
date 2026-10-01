@@ -234,10 +234,25 @@ export class NddFloatingWindow {
     const start = { x: el?.offsetLeft ?? 0, y: el?.offsetTop ?? 0 };
     const originX = event.clientX;
     const originY = event.clientY;
+    const bar = event.currentTarget as HTMLElement;
+    const pointerId = event.pointerId;
     let moved = false;
+    // The window losing focus ends the drag without docking (1.3.1): the armed target stayed,
+    // and the next click docked the window into it. Disarming first means the synthetic
+    // pointercancel's onEnd finds nothing to dock into, and lets startPointerDrag remove its own
+    // listeners and classes.
+    const onBlur = () => {
+      this.drag.cancel();
+      try {
+        bar.releasePointerCapture(pointerId);
+      } catch {
+        /* capture already gone */
+      }
+      bar.dispatchEvent(new PointerEvent('pointercancel', { pointerId }));
+    };
     startPointerDrag({
-      element: event.currentTarget as HTMLElement,
-      pointerId: event.pointerId,
+      element: bar,
+      pointerId,
       startClientX: event.clientX,
       startClientY: event.clientY,
       captureStart: () => start,
@@ -257,6 +272,7 @@ export class NddFloatingWindow {
         this.drag.trackPointer(originX + dx, originY + dy);
       },
       onEnd: () => {
+        window.removeEventListener('blur', onBlur);
         if (!moved) return;
         const armed = this.drag.zoneTarget() ?? this.drag.edge() ?? this.drag.corner() ?? this.drag.tab();
         // Released over nothing: the window simply stays where the drag left it.
@@ -264,6 +280,7 @@ export class NddFloatingWindow {
         else this.drag.cancel();
       },
     });
+    window.addEventListener('blur', onBlur);
   }
 
   protected onHandlePointerDown(dir: ResizeDir, event: PointerEvent): void {

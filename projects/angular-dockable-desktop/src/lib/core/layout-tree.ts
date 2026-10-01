@@ -237,6 +237,12 @@ export function isLoneOccupant(node: LayoutNode, leafId: string, panelId: string
   return leaf !== null && leaf.panels.length === 1 && leaf.panels[0] === panelId;
 }
 
+/** Whether a branch's sizes are one finite positive number per child. */
+const sizesOk = (sizes: unknown, n: number): sizes is number[] =>
+  Array.isArray(sizes) &&
+  sizes.length === n &&
+  sizes.every((v) => typeof v === 'number' && Number.isFinite(v) && v > 0);
+
 /**
  * Heal a tree that lists a panel twice, or lists none of a docked panel.
  *
@@ -246,6 +252,9 @@ export function isLoneOccupant(node: LayoutNode, leafId: string, panelId: string
  * read means a layout stored by an affected version loads clean with nothing asked of the
  * application. It changes only what is read; `saveLayout()`'s output is untouched, which is
  * what keeps the format compatible (docs/decisions/0008-layout-json-compatibility.md).
+ *
+ * Since 1.3.1 it also drops a leaf panel id the layout's `panels` doesn't have, and gives a
+ * branch whose sizes don't match its children, or aren't finite positive numbers, even sizes.
  *
  * `repairs` is empty and the input object is returned unchanged when there is nothing wrong,
  * so a healthy layout costs one walk and no allocation.
@@ -260,6 +269,10 @@ export function repairLayoutTree(
   const walk = (node: LayoutNode): LayoutNode | null => {
     if (node.type === 'leaf') {
       const kept = node.panels.filter((id) => {
+        if (!panels[id]) {
+          repairs.push(`group "${node.id}" listed panel "${id}", which the layout doesn't have`);
+          return false;
+        }
         if (seen.has(id)) {
           repairs.push(`panel "${id}" was listed in more than one group`);
           return false;
@@ -279,17 +292,22 @@ export function repairLayoutTree(
     const children = node.children.map(walk).filter((c): c is LayoutNode => c !== null);
     // Identity, not count: a child can survive the walk and still have been repaired inside.
     // Comparing lengths alone returned the original branch and threw those repairs away.
-    if (
-      children.length === node.children.length &&
-      children.every((c, i) => c === node.children[i])
-    ) {
-      return node;
-    }
+    const unchanged =
+      children.length === node.children.length && children.every((c, i) => c === node.children[i]);
+    if (unchanged && sizesOk(node.sizes, children.length)) return node;
     if (children.length === 0) return null;
     if (children.length === 1) return children[0]!;
-    const sizes = node.sizes.slice(0, children.length);
-    const sum = sizes.reduce((a, b) => a + b, 0) || 1;
-    return { ...node, children, sizes: sizes.map((s) => s / sum) };
+    // Sizes that don't match the children, or aren't finite positive numbers, would give a
+    // child `flex-basis: NaN%` (1.3.1): such a branch gets even sizes.
+    const even = () => children.map(() => 1 / children.length);
+    if (unchanged) {
+      repairs.push(`a split had sizes ${JSON.stringify(node.sizes)} for ${children.length} children`);
+      return { ...node, sizes: even() };
+    }
+    const kept = Array.isArray(node.sizes) ? node.sizes.slice(0, children.length) : [];
+    if (!sizesOk(kept, children.length)) return { ...node, children, sizes: even() };
+    const sum = kept.reduce((a, b) => a + b, 0);
+    return { ...node, children, sizes: kept.map((s) => s / sum) };
   };
 
   let root = walk(gridRoot) ?? emptyRoot();

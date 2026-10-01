@@ -1,6 +1,6 @@
 {
   "name": "angular-dockable-desktop",
-  "version": "1.3.0",
+  "version": "1.3.1",
   "description": "A dockable layout engine and window manager for Angular: split docking, tab groups, floating windows, and zero-unmount panels that keep their live state across every layout change.",
   "license": "MIT",
   "keywords": [

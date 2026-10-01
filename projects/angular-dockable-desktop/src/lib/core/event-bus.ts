@@ -82,7 +82,15 @@ export class EventBus<TEvents extends Record<string, unknown> = Record<string, u
     if (!set) return;
     // Iterate a copy: a listener that unsubscribes itself (or another) during dispatch must
     // not change the set being walked.
-    for (const listener of Array.from(set)) listener(data);
+    // One listener that throws must not stop delivery to the rest (1.3.1), nor the action that
+    // published — loadLayout, a close — halfway through.
+    for (const listener of Array.from(set)) {
+      try {
+        listener(data);
+      } catch (e) {
+        console.error(`[angular-dockable-desktop] A subscriber to "${event}" threw:`, e);
+      }
+    }
   }
 
   /** Listener count for an event — for tests and diagnostics. */
