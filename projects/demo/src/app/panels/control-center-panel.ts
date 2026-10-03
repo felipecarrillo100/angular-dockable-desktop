@@ -14,7 +14,7 @@ const STEPS: [string, string][] = [
   ['drawer', 'Open a side drawer, then press Escape'],
   ['save', 'Save the layout, reload the page, restore it'],
 ];
-const KINDS = ['editor', 'markdownEditor', 'mainMap', 'leafletMap', 'layers', 'tools', 'table', 'terminal', 'preview', 'help', 'timeControl', 'overview', 'dirtyForm', 'dirtyEditor', 'rtl'];
+const KINDS = ['editor', 'markdownEditor', 'mainMap', 'leafletMap', 'layers', 'tools', 'table', 'terminal', 'preview', 'help', 'timeControl', 'overview', 'dirtyForm', 'dirtyEditor', 'rtl', 'toolbarButtons'];
 const EVENTS = ['panel:opened', 'panel:closed', 'panel:minimized', 'panel:restored', 'panel:activated', 'layout:changed'] as const;
 const EDGES = ['left', 'right', 'top', 'bottom'] as const;
 const LAYOUT_KEY = 'ndd-demo-layout';

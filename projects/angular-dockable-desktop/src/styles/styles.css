@@ -110,9 +110,26 @@
   --ndd-panel-toolbar-fg: rgba(255, 255, 255, 0.65);
   --ndd-panel-toolbar-fg-hover: rgba(255, 255, 255, 0.95);
   --ndd-panel-toolbar-btn-hover-bg: var(--ndd-toolbar-btn-hover-bg, rgba(255, 255, 255, 0.08));
-  --ndd-panel-toolbar-btn-active-bg: var(--ndd-toolbar-btn-radio-active-bg, rgba(56, 189, 248, 0.14));
-  --ndd-panel-toolbar-btn-active-color: var(--ndd-tab-icon-active, #38bdf8);
+  /* "On" is a solid accent chip with a white icon, the same in every buttonVariant: the toolbar
+     floats over panel content the library can't see, so a tint can't be relied on to show. In dark
+     the accent is deepened (65 % accent, 35 % black) so the white icon and the chip both clear 3:1
+     for bright accents; the light scheme uses the plain accent. */
+  --ndd-panel-toolbar-btn-active-bg: color-mix(in srgb, var(--ndd-accent-color) 65%, #000000);
+  --ndd-panel-toolbar-btn-active-color: var(--ndd-brand-on-accent, #ffffff);
+  /* buttonVariant="soft": each button gets its own near-opaque chip (the floating-widget surface)
+     with a hairline edge, so it reads over light, dark or busy content without any shadow. */
+  --ndd-panel-toolbar-btn-bg: var(--ndd-panel-float-bg);
+  --ndd-panel-toolbar-btn-bg-hover: color-mix(in srgb, var(--ndd-panel-float-bg), var(--ndd-panel-toolbar-fg-hover) 14%);
+  --ndd-panel-toolbar-btn-border: 1px solid var(--ndd-panel-float-border);
   --ndd-panel-toolbar-separator-color: var(--ndd-toolbar-separator-color, rgba(255, 255, 255, 0.09));
+  /* Icon sizes. The library sizes the icon inside its own buttons, whatever icon library the app
+     uses: icon fonts follow font-size, SVG icons follow width/height. Apps pass no size. */
+  --ndd-panel-toolbar-icon-size: 20px;
+  --ndd-chrome-icon-size: 22px;
+  /* Workspace toolbar toggle "on": it sits on known chrome next to radio buttons, so a tint plus an
+     accent edge and an accent icon (--ndd-toolbar-btn-toggle-active-bg is set per scheme and skin). */
+  --ndd-toolbar-btn-toggle-active-color: var(--ndd-tab-icon-active);
+  --ndd-toolbar-btn-toggle-active-border: var(--ndd-tab-icon-active);
   /* ── Panel Overlay — Floating Window ── */
   --ndd-panel-float-bg: color-mix(in srgb, var(--ndd--b-panel-float-bg, rgb(22 24 34)) 92%, transparent);
   --ndd-panel-float-border: rgba(255, 255, 255, 0.1);
@@ -158,7 +175,7 @@
   --ndd-sidebar-drawer-header-bg: rgba(0, 0, 0, 0.12);
   --ndd-toolbar-btn-hover-bg: rgba(255, 255, 255, 0.06);
   --ndd-toolbar-btn-radio-active-bg: color-mix(in srgb, var(--ndd-accent-color) 14%, transparent);
-  --ndd-toolbar-btn-toggle-active-bg: color-mix(in srgb, var(--ndd-accent-color) 8%, transparent);
+  --ndd-toolbar-btn-toggle-active-bg: color-mix(in srgb, var(--ndd-accent-color) 22%, transparent);
   --ndd-toolbar-separator-color: rgba(255, 255, 255, 0.09);
   /* Sidebar active-tab design tokens */
   --ndd-tab-btn-active-shadow: none;
@@ -1316,7 +1333,7 @@ body.ndd-dragging-active {
   --ndd-sidebar-drawer-header-bg: rgba(0, 0, 0, 0.04);
   --ndd-toolbar-btn-hover-bg: rgba(0, 0, 0, 0.05);
   --ndd-toolbar-btn-radio-active-bg: color-mix(in srgb, var(--ndd-accent-color) 10%, transparent);
-  --ndd-toolbar-btn-toggle-active-bg: color-mix(in srgb, var(--ndd-accent-color) 6%, transparent);
+  --ndd-toolbar-btn-toggle-active-bg: color-mix(in srgb, var(--ndd-accent-color) 16%, transparent);
   --ndd-toolbar-separator-color: rgba(0, 0, 0, 0.1);
   /* Light skin window overrides */
   --ndd-window-bg: color-mix(in srgb, var(--ndd--b-window-bg, rgb(243 244 246)) calc(var(--ndd-window-opacity, 0.9) * 100%), transparent);
@@ -1383,6 +1400,7 @@ body.ndd-dragging-active {
   --ndd-panel-toolbar-fg: rgba(0, 0, 0, 0.55);
   --ndd-panel-toolbar-fg-hover: rgba(0, 0, 0, 0.85);
   --ndd-panel-toolbar-btn-hover-bg: rgba(0, 0, 0, 0.08);
+  --ndd-panel-toolbar-btn-active-bg: var(--ndd-accent-color);
   --ndd-panel-toolbar-separator-color: rgba(0, 0, 0, 0.1);
   /* ── Panel Overlay — Floating Window (light) ── */
   --ndd-panel-float-bg: rgba(255, 255, 255, 0.96);
@@ -1579,7 +1597,7 @@ body.ndd-dragging-active {
   --ndd-panel-text: var(--ndd--b-panel-text, #e8eaed);
   --ndd-tab-icon-active: var(--ndd-accent-color);
   --ndd-toolbar-btn-radio-active-bg: color-mix(in srgb, var(--ndd-accent-color) 14%, transparent);
-  --ndd-toolbar-btn-toggle-active-bg: color-mix(in srgb, var(--ndd-accent-color) 8%, transparent);
+  --ndd-toolbar-btn-toggle-active-bg: color-mix(in srgb, var(--ndd-accent-color) 22%, transparent);
 }
 
 [data-ndd-skin="chrome"][data-color-scheme="light"] {
@@ -1604,7 +1622,7 @@ body.ndd-dragging-active {
   --ndd-close-btn-active-color: var(--ndd--b-close-btn-active-color, #1f1f1f);
   --ndd-tab-icon-active: var(--ndd-accent-color);
   --ndd-toolbar-btn-radio-active-bg: color-mix(in srgb, var(--ndd-accent-color) 12%, transparent);
-  --ndd-toolbar-btn-toggle-active-bg: color-mix(in srgb, var(--ndd-accent-color) 7%, transparent);
+  --ndd-toolbar-btn-toggle-active-bg: color-mix(in srgb, var(--ndd-accent-color) 16%, transparent);
 }
 
 /* Chrome tab angled geometry shapes */
@@ -1666,7 +1684,7 @@ body.ndd-dragging-active {
   --ndd-close-btn-active-color: var(--ndd--b-close-btn-active-color, #0f172a);
   --ndd-tab-icon-active: var(--ndd-accent-color);
   --ndd-toolbar-btn-radio-active-bg: color-mix(in srgb, var(--ndd-accent-color) 10%, transparent);
-  --ndd-toolbar-btn-toggle-active-bg: color-mix(in srgb, var(--ndd-accent-color) 6%, transparent);
+  --ndd-toolbar-btn-toggle-active-bg: color-mix(in srgb, var(--ndd-accent-color) 16%, transparent);
 }
 
 [data-ndd-skin="slate"] .ndd-workspace-tab.ndd-active::before {
@@ -1702,7 +1720,7 @@ body.ndd-dragging-active {
   --ndd-panel-text: var(--ndd--b-panel-text, #eceff4);
   --ndd-tab-icon-active: var(--ndd-accent-color);
   --ndd-toolbar-btn-radio-active-bg: color-mix(in srgb, var(--ndd-accent-color) 14%, transparent);
-  --ndd-toolbar-btn-toggle-active-bg: color-mix(in srgb, var(--ndd-accent-color) 8%, transparent);
+  --ndd-toolbar-btn-toggle-active-bg: color-mix(in srgb, var(--ndd-accent-color) 22%, transparent);
 }
 
 [data-ndd-skin="nord"][data-color-scheme="light"] {
@@ -1729,7 +1747,7 @@ body.ndd-dragging-active {
   --ndd-panel-title-color: var(--ndd-accent-color);
   --ndd-tab-icon-active: var(--ndd-accent-color);
   --ndd-toolbar-btn-radio-active-bg: color-mix(in srgb, var(--ndd-accent-color) 12%, transparent);
-  --ndd-toolbar-btn-toggle-active-bg: color-mix(in srgb, var(--ndd-accent-color) 7%, transparent);
+  --ndd-toolbar-btn-toggle-active-bg: color-mix(in srgb, var(--ndd-accent-color) 16%, transparent);
 }
 
 /* --------------------------------------------------------------------------
@@ -1759,7 +1777,7 @@ body.ndd-dragging-active {
   --ndd-panel-text: var(--ndd--b-panel-text, #ffffff);
   --ndd-tab-icon-active: var(--ndd-accent-color);
   --ndd-toolbar-btn-radio-active-bg: color-mix(in srgb, var(--ndd-accent-color) 10%, transparent);
-  --ndd-toolbar-btn-toggle-active-bg: color-mix(in srgb, var(--ndd-accent-color) 6%, transparent);
+  --ndd-toolbar-btn-toggle-active-bg: color-mix(in srgb, var(--ndd-accent-color) 22%, transparent);
 }
 
 [data-ndd-skin="obsidian"][data-color-scheme="light"] {
@@ -1787,7 +1805,7 @@ body.ndd-dragging-active {
   --ndd-panel-title-color: var(--ndd-accent-color);
   --ndd-tab-icon-active: var(--ndd-accent-color);
   --ndd-toolbar-btn-radio-active-bg: color-mix(in srgb, var(--ndd-accent-color) 10%, transparent);
-  --ndd-toolbar-btn-toggle-active-bg: color-mix(in srgb, var(--ndd-accent-color) 6%, transparent);
+  --ndd-toolbar-btn-toggle-active-bg: color-mix(in srgb, var(--ndd-accent-color) 16%, transparent);
 }
 
 /* Obsidian custom borderless panel elevations */
@@ -1833,7 +1851,7 @@ body.ndd-dragging-active {
   --ndd-panel-text: var(--ndd--b-panel-text, #c0caf5);
   --ndd-tab-icon-active: var(--ndd-accent-color);
   --ndd-toolbar-btn-radio-active-bg: color-mix(in srgb, var(--ndd-accent-color) 14%, transparent);
-  --ndd-toolbar-btn-toggle-active-bg: color-mix(in srgb, var(--ndd-accent-color) 8%, transparent);
+  --ndd-toolbar-btn-toggle-active-bg: color-mix(in srgb, var(--ndd-accent-color) 22%, transparent);
 }
 
 [data-ndd-skin="tokyo"][data-color-scheme="light"] {
@@ -1861,7 +1879,7 @@ body.ndd-dragging-active {
   --ndd-panel-title-color: var(--ndd-accent-color);
   --ndd-tab-icon-active: var(--ndd-accent-color);
   --ndd-toolbar-btn-radio-active-bg: color-mix(in srgb, var(--ndd-accent-color) 12%, transparent);
-  --ndd-toolbar-btn-toggle-active-bg: color-mix(in srgb, var(--ndd-accent-color) 7%, transparent);
+  --ndd-toolbar-btn-toggle-active-bg: color-mix(in srgb, var(--ndd-accent-color) 16%, transparent);
 }
 
 /* ==========================================================================
@@ -2297,7 +2315,16 @@ body.ndd-dragging-active {
   position: relative;
   transition: color 0.15s ease, background-color 0.15s ease, transform 0.15s ease;
   cursor: pointer;
-  outline: none !important;
+  font-size: var(--ndd-chrome-icon-size, 22px);
+  line-height: 1;
+}
+
+/* Icons in rail buttons: SVG icons follow the chrome icon size whatever their own width/height
+   attributes say; icon fonts follow the font-size above. An inline style size still wins. */
+.ndd-sidebar-tab-btn svg {
+  width: var(--ndd-chrome-icon-size, 22px);
+  height: var(--ndd-chrome-icon-size, 22px);
+  flex-shrink: 0;
 }
 
 /* Micro-interactions & hover tactile feedback for inactive buttons */
@@ -3110,9 +3137,16 @@ html.ndd-no-animations [class*="ndd-"]::after {
   color: var(--ndd-tab-icon-inactive);
   cursor: pointer;
   flex-shrink: 0;
-  outline: none !important;
   position: relative;
   transition: color 0.15s ease, background-color 0.15s ease;
+  font-size: var(--ndd-chrome-icon-size, 22px);
+  line-height: 1;
+}
+
+.ndd-toolbar-btn svg {
+  width: var(--ndd-chrome-icon-size, 22px);
+  height: var(--ndd-chrome-icon-size, 22px);
+  flex-shrink: 0;
 }
 
 .ndd-toolbar-btn:hover:not(:disabled) {
@@ -3139,10 +3173,11 @@ html.ndd-no-animations [class*="ndd-"]::after {
 .ndd-toolbar-strip.ndd-top    .ndd-toolbar-btn-radio.ndd-active { border-bottom: var(--ndd-toolbar-accent-bar-width, 3px) solid var(--ndd-tab-icon-active); border-radius: calc(6px * var(--ndd-radius-scale, 1)) calc(6px * var(--ndd-radius-scale, 1)) 0 0; }
 .ndd-toolbar-strip.ndd-bottom .ndd-toolbar-btn-radio.ndd-active { border-top:    var(--ndd-toolbar-accent-bar-width, 3px) solid var(--ndd-tab-icon-active); border-radius: 0 0 calc(6px * var(--ndd-radius-scale, 1)) calc(6px * var(--ndd-radius-scale, 1)); }
 
-/* Toggle active — lighter tint, no directional border */
+/* Toggle active — accent tint, accent edge and accent icon; no directional bar (that marks radios) */
 .ndd-toolbar-btn-toggle.ndd-active {
-  color: var(--ndd-tab-icon-active);
+  color: var(--ndd-toolbar-btn-toggle-active-color);
   background-color: var(--ndd-toolbar-btn-toggle-active-bg);
+  border-color: var(--ndd-toolbar-btn-toggle-active-border);
 }
 
 /* Group button — corner triangle indicator shows a sub-tool family */
@@ -3515,32 +3550,12 @@ html.ndd-no-animations [class*="ndd-"]::after {
    PANEL OVERLAY — Per-skin token overrides
    ========================================================================== */
 
-[data-ndd-skin="vscode"] {
+[data-ndd-skin="vscode"]:not([data-color-scheme="light"]) {
   --ndd-panel-toolbar-btn-hover-bg: rgba(255, 255, 255, 0.12);
 }
 
-[data-ndd-skin="macos"] {
+[data-ndd-skin="macos"]:not([data-color-scheme="light"]) {
   --ndd-panel-toolbar-btn-hover-bg: rgba(255, 255, 255, 0.18);
-}
-
-[data-ndd-skin="slate"] {
-  --ndd-panel-toolbar-btn-active-color: var(--ndd-accent-color);
-  --ndd-panel-toolbar-btn-active-bg: color-mix(in srgb, var(--ndd-accent-color) 15%, transparent);
-}
-
-[data-ndd-skin="nord"] {
-  --ndd-panel-toolbar-btn-active-color: var(--ndd-accent-color);
-  --ndd-panel-toolbar-btn-active-bg: color-mix(in srgb, var(--ndd-accent-color) 15%, transparent);
-}
-
-[data-ndd-skin="obsidian"] {
-  --ndd-panel-toolbar-btn-active-color: var(--ndd-accent-color);
-  --ndd-panel-toolbar-btn-active-bg: color-mix(in srgb, var(--ndd-accent-color) 15%, transparent);
-}
-
-[data-ndd-skin="tokyo"] {
-  --ndd-panel-toolbar-btn-active-color: var(--ndd-accent-color);
-  --ndd-panel-toolbar-btn-active-bg: color-mix(in srgb, var(--ndd-accent-color) 15%, transparent);
 }
 
 /* ==========================================================================
@@ -3597,6 +3612,14 @@ html.ndd-no-animations [class*="ndd-"]::after {
   cursor: pointer;
   padding: 0;
   transition: background 0.12s ease, color 0.12s ease, transform 0.1s ease, border-color 0.12s ease;
+  font-size: var(--ndd-panel-toolbar-icon-size, 20px);
+  line-height: 1;
+}
+
+.ndd-panel-toolbar-btn svg {
+  width: var(--ndd-panel-toolbar-icon-size, 20px);
+  height: var(--ndd-panel-toolbar-icon-size, 20px);
+  flex-shrink: 0;
 }
 
 .ndd-panel-toolbar-btn:hover:not(:disabled) {
@@ -3607,15 +3630,6 @@ html.ndd-no-animations [class*="ndd-"]::after {
 
 .ndd-panel-toolbar-btn:active:not(:disabled) {
   transform: scale(0.94);
-}
-
-.ndd-panel-toolbar-btn--active {
-  background: var(--ndd-panel-toolbar-btn-active-bg, rgba(56, 189, 248, 0.14));
-  color: var(--ndd-panel-toolbar-btn-active-color, #38bdf8);
-}
-
-.ndd-panel-toolbar-btn--active:hover:not(:disabled) {
-  background: var(--ndd-panel-toolbar-btn-active-bg, rgba(56, 189, 248, 0.22));
 }
 
 .ndd-panel-toolbar-btn:disabled {
@@ -3654,22 +3668,15 @@ html.ndd-no-animations [class*="ndd-"]::after {
 
 /* ── Button variants — toolbar-level default ── */
 
-/* soft */
+/* soft — a chip per button: near-opaque surface plus hairline edge, readable over any content */
 .ndd-panel-toolbar[data-btn-variant="soft"] .ndd-panel-toolbar-btn,
 .ndd-panel-toolbar-btn[data-variant="soft"] {
-  background: rgba(255, 255, 255, 0.06);
+  background: var(--ndd-panel-toolbar-btn-bg);
+  border: var(--ndd-panel-toolbar-btn-border);
 }
 .ndd-panel-toolbar[data-btn-variant="soft"] .ndd-panel-toolbar-btn:hover:not(:disabled),
 .ndd-panel-toolbar-btn[data-variant="soft"]:hover:not(:disabled) {
-  background: rgba(255, 255, 255, 0.15);
-}
-[data-color-scheme="light"] .ndd-panel-toolbar[data-btn-variant="soft"] .ndd-panel-toolbar-btn,
-[data-color-scheme="light"] .ndd-panel-toolbar-btn[data-variant="soft"] {
-  background: rgba(0, 0, 0, 0.04);
-}
-[data-color-scheme="light"] .ndd-panel-toolbar[data-btn-variant="soft"] .ndd-panel-toolbar-btn:hover:not(:disabled),
-[data-color-scheme="light"] .ndd-panel-toolbar-btn[data-variant="soft"]:hover:not(:disabled) {
-  background: rgba(0, 0, 0, 0.08);
+  background: var(--ndd-panel-toolbar-btn-bg-hover);
 }
 
 /* outlined */
@@ -3691,15 +3698,37 @@ html.ndd-no-animations [class*="ndd-"]::after {
 /* filled */
 .ndd-panel-toolbar[data-btn-variant="filled"] .ndd-panel-toolbar-btn,
 .ndd-panel-toolbar-btn[data-variant="filled"] {
-  background: var(--ndd-panel-toolbar-btn-active-bg, rgba(56, 189, 248, 0.2));
-  color: var(--ndd-panel-toolbar-btn-active-color, #38bdf8);
-  border: 1px solid var(--ndd-panel-toolbar-btn-active-color, #38bdf8);
+  background: color-mix(in srgb, var(--ndd-accent-color) 20%, transparent);
+  color: var(--ndd-accent-color);
+  border: 1px solid var(--ndd-accent-color);
 }
 .ndd-panel-toolbar[data-btn-variant="filled"] .ndd-panel-toolbar-btn:hover:not(:disabled),
 .ndd-panel-toolbar-btn[data-variant="filled"]:hover:not(:disabled) {
-  background: var(--ndd-panel-toolbar-btn-active-color, #38bdf8);
-  color: #000;
+  background: color-mix(in srgb, var(--ndd-accent-color) 32%, transparent);
+}
+
+/* ── "On" state (NddToolbarToggle active) ──
+   Declared after the variants, at a specificity that beats them, so "on" looks the same in every
+   buttonVariant: solid accent chip, white icon. A skin or app restyles it with the two tokens. */
+.ndd-panel-toolbar .ndd-panel-toolbar-btn.ndd-panel-toolbar-btn--active,
+.ndd-panel-toolbar-btn.ndd-panel-toolbar-btn--active {
+  background: var(--ndd-panel-toolbar-btn-active-bg);
+  color: var(--ndd-panel-toolbar-btn-active-color);
   border-color: transparent;
+}
+.ndd-panel-toolbar .ndd-panel-toolbar-btn.ndd-panel-toolbar-btn--active:hover:not(:disabled),
+.ndd-panel-toolbar-btn.ndd-panel-toolbar-btn--active:hover:not(:disabled) {
+  background: color-mix(in srgb, var(--ndd-panel-toolbar-btn-active-bg) 86%, var(--ndd-panel-toolbar-btn-active-color));
+  color: var(--ndd-panel-toolbar-btn-active-color);
+  border-color: transparent;
+}
+
+/* Keyboard focus ring on toolbar and rail buttons (shown for keyboard focus only). */
+.ndd-toolbar-btn:focus-visible,
+.ndd-sidebar-tab-btn:focus-visible,
+.ndd-panel-toolbar-btn:focus-visible {
+  outline: var(--ndd-focus-ring, 2px solid var(--ndd-accent-color));
+  outline-offset: -2px;
 }
 
 /* ── Separator ── */

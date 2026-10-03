@@ -10,6 +10,74 @@ feature-by-feature map is [docs/PARITY.md](docs/PARITY.md).
 
 ## [Unreleased]
 
+## [1.4.0] — 2026-10-04
+
+**Parity: react-dockable-desktop 7.5.0** (vue-dockable-desktop 1.6.0 made the same port).
+Toolbar buttons: the library sizes the icon inside its own buttons, and a toggle that is on can be
+told from one that is off at a glance, on chrome and over panel content alike. No inputs were added
+or removed; everything new is a CSS custom property.
+
+### Added
+
+- **Icon size tokens.** `--ndd-panel-toolbar-icon-size` (`20px`) sizes icons in
+  `<ndd-panel-toolbar>` buttons and toggles; `--ndd-chrome-icon-size` (`22px`) sizes them in the
+  workspace toolbar and the sidebar rail. Icon fonts follow the button's `font-size`; SVG icons,
+  inline or inside an icon component or `<ndd-icon>`, follow the token's width and height, even
+  when the SVG has its own `width`/`height` attributes.
+- **`soft` chip tokens**: `--ndd-panel-toolbar-btn-bg`, `--ndd-panel-toolbar-btn-bg-hover`,
+  `--ndd-panel-toolbar-btn-border`.
+- **Workspace toolbar toggle tokens**: `--ndd-toolbar-btn-toggle-active-color` and
+  `--ndd-toolbar-btn-toggle-active-border`.
+
+### Changed
+
+- **Panel toolbar "on" state** is a solid chip with a white icon, the same in every
+  `buttonVariant`: in dark the accent mixed 65% with black, in light the plain accent. The icon is
+  `--ndd-brand-on-accent` when a brand sets it. It clears WCAG's 3:1 non-text contrast. Before, it
+  was a 14–15% accent tint.
+- **`buttonVariant="soft"`** is a near-opaque chip with a hairline edge, readable over panel
+  content. Before, it was a 6% (dark) / 4% (light) wash.
+- **Workspace toolbar toggle "on"**: the accent tint goes from 6–8% to 22% (dark) / 16% (light),
+  with a 1px accent edge and the accent icon.
+- **Icons in toolbar and rail buttons are larger by default**: 20px in panel toolbars, 22px in
+  the workspace toolbar and rail.
+
+### Fixed
+
+- **Keyboard focus was invisible on toolbar and rail buttons**: `.ndd-toolbar-btn` and
+  `.ndd-sidebar-tab-btn` removed the outline with nothing in its place. They, and panel toolbar
+  buttons, show a focus ring for keyboard focus now (`--ndd-focus-ring`, default a 2px accent
+  outline), as rdd does.
+- **`filled` toggles looked the same on and off**; it now rests on an accent tint with an accent
+  edge, and "on" is the solid chip.
+- **vscode and macos painted a white hover tint in light mode** on panel toolbar buttons; it now
+  applies in dark only.
+- **`buttonSize` was documented as the icon size.** It sets the button size.
+- The theming chapter no longer claims a coarse-pointer rule enlarges panel toolbar buttons, and
+  `NddIcon`'s documentation says where a class string goes (a `<span>` inside `<ndd-icon>`).
+
+### Upgrading
+
+- Remove per-icon sizes inside toolbar and rail buttons: set `--ndd-panel-toolbar-icon-size` /
+  `--ndd-chrome-icon-size` instead. An inline `style` size, and a wrapper with its own fixed size
+  such as `mat-icon`, still win; give those `width: 1em; height: 1em` (and `font-size: inherit`).
+- If you added shadows to keep toolbar icons readable over panel content, remove them and use
+  `buttonVariant="soft"` or a `frosted`/`solid` toolbar.
+- To restyle "on", set `--ndd-panel-toolbar-btn-active-bg` and `--ndd-panel-toolbar-btn-active-color`
+  (recipes in the panel overlay chapter).
+
+### Documentation
+
+- Panel overlay chapter: "Styling toolbar buttons" (what the library owns, icon sizes, variants,
+  the "on" tokens, recipes); corrected `buttonSize`.
+- Theming chapter: new icon and toggle tokens; panel toolbar defaults updated.
+
+### Demo
+
+- The demo's mask icons follow the icon size inside library buttons (`width/height: 1em`), and a
+  "Toolbar Buttons" panel shows every `buttonVariant` in every state over light, dark and busy
+  content, with icon-size sliders.
+
 ## [1.3.1] — 2026-10-01
 
 **Parity: react-dockable-desktop 7.4.1 fixes** (vue-dockable-desktop 1.5.1 made the same port).

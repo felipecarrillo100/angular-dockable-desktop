@@ -79,6 +79,18 @@ Every template's context is typed through `ngTemplateContextGuard`.
 `injectSidebarTab()` / `injectToolbar()` / `injectContextMenu()` / `injectMerged*()`; lazy panels
 through `registerLazy`; server-side rendering and hydration (§4.2 N12).
 
+### Toolbar buttons (1.4.0, from rdd 7.5.0)
+
+| rdd 7.5.0 | ndd 1.4.0 |
+|---|---|
+| `--rdd-panel-toolbar-icon-size`, `--rdd-chrome-icon-size` | `--ndd-…` tokens; descendant `svg` rule, so icons inside `<ndd-icon>` are reached too |
+| panel "on": accent 65% + black (dark) / accent (light), on-accent icon | same tokens, same values |
+| `soft` chip tokens; `filled` on ≠ off | same |
+| workspace toggle: 22% / 16% tint, accent edge and icon | same |
+| global `:focus-visible` ring | ndd had none on toolbar/rail buttons: added on the three button classes |
+| "Styling toolbar buttons" (panel overlay guide) | same section in `docs/manual/07-panel-overlay.md` |
+| demo Toolbar Buttons panel | `projects/demo` Toolbar Buttons panel |
+
 ### Review fixes (1.3.1, from rdd 7.4.1)
 
 | rdd 7.4.1 | ndd 1.3.1 |

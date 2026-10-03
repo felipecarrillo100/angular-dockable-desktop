@@ -12,6 +12,7 @@ import { LayerTreePanel } from './app/panels/layer-tree-panel';
 import { OverviewMapPanel } from './app/panels/overview-map-panel';
 import { PreviewPanel } from './app/panels/preview-panel';
 import { RtlShowcasePanel } from './app/panels/rtl-showcase-panel';
+import { ToolbarButtonsPanel } from './app/panels/toolbar-buttons-panel';
 import { TablePanel } from './app/panels/table-panel';
 import { TerminalPanel } from './app/panels/terminal-panel';
 import { TimeControlPanel } from './app/panels/time-control-panel';
@@ -54,6 +55,7 @@ bootstrapApplication(App, {
         dirtyForm: { component: DirtyFormPanel, defaultOptions: { title: 'Intercept Form', icon: ICONS.warning, initialTarget: 'floating' } },
         dirtyEditor: { component: DirtyEditorPanel, defaultOptions: { title: 'Notes', icon: ICONS.pencil } },
         rtl: { component: RtlShowcasePanel, defaultOptions: { title: 'RTL', icon: ICONS.rtl } },
+        toolbarButtons: { component: ToolbarButtonsPanel, defaultOptions: { title: 'Toolbar Buttons', icon: ICONS.tools } },
       },
     }),
   ],

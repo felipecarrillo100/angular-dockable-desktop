@@ -112,7 +112,7 @@ export class NddPanelToolbar {
   readonly variant = input<ToolbarVariant>('transparent');
   /** Inherited by this toolbar's buttons unless they override it. */
   readonly buttonVariant = input<ButtonVariant>('ghost');
-  /** Icon button size in pixels. Left to the stylesheet when unset. */
+  /** Button size in pixels (sets `--ndd-panel-toolbar-btn-size`). The icon inside follows `--ndd-panel-toolbar-icon-size`. Left to the stylesheet when unset. */
   readonly buttonSize = input<number | undefined>(undefined);
 
   private readonly store = injectPanelOverlay();

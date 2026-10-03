@@ -712,13 +712,21 @@ A skin sets its own font as `--ndd-skin-font-family` — declared by each built-
 |---|---|---|
 | `--ndd-panel-toolbar-padding` | `8px` | Padding inside a panel toolbar strip. |
 | `--ndd-panel-toolbar-gap` | `4px` | Gap between its buttons. |
-| `--ndd-panel-toolbar-btn-size` | `32px` | Button hit size (a coarse-pointer media rule enlarges it). |
+| `--ndd-panel-toolbar-btn-size` | `32px` | Button hit size. |
 | `--ndd-panel-toolbar-btn-radius` | `6px` | Button corner radius. |
 | `--ndd-panel-toolbar-fg` | `rgba(255, 255, 255, 0.65)` | Button glyph at rest. |
 | `--ndd-panel-toolbar-fg-hover` | `rgba(255, 255, 255, 0.95)` | Button glyph on hover. |
 | `--ndd-panel-toolbar-btn-hover-bg` | `var(--ndd-toolbar-btn-hover-bg, rgba(255, 255, 255, 0.08))` | Button background on hover. |
-| `--ndd-panel-toolbar-btn-active-bg` | `var(--ndd-toolbar-btn-radio-active-bg, rgba(56, 189, 248, 0.14))` | Background of a toggled or selected button. |
-| `--ndd-panel-toolbar-btn-active-color` | `var(--ndd-tab-icon-active, #38bdf8)` | Glyph of a toggled or selected button. |
+| `--ndd-panel-toolbar-icon-size` | `20px` | Icon inside a panel toolbar button: icon fonts follow it as `font-size`, SVG icons as width and height. |
+| `--ndd-panel-toolbar-btn-active-bg` | `color-mix(in srgb, var(--ndd-accent-color) 65%, #000000)`; light: `var(--ndd-accent-color)` | Background of a toggled-on button, the same in every `buttonVariant`. |
+| `--ndd-panel-toolbar-btn-active-color` | `var(--ndd-brand-on-accent, #ffffff)` | Icon of a toggled-on button. |
+| `--ndd-panel-toolbar-btn-bg` | `var(--ndd-panel-float-bg)` | `soft` button chip. |
+| `--ndd-panel-toolbar-btn-bg-hover` | the chip, 14% toward the hover glyph colour | `soft` button chip on hover. |
+| `--ndd-panel-toolbar-btn-border` | `1px solid var(--ndd-panel-float-border)` | `soft` button chip edge. |
+| `--ndd-chrome-icon-size` | `22px` | Icon inside workspace toolbar buttons and sidebar rail buttons. |
+| `--ndd-toolbar-btn-toggle-active-bg` | `color-mix(in srgb, var(--ndd-accent-color) 22%, transparent)`; light: `16%` | Background of a toggled-on workspace toolbar toggle. |
+| `--ndd-toolbar-btn-toggle-active-color` | `var(--ndd-tab-icon-active)` | Its icon. |
+| `--ndd-toolbar-btn-toggle-active-border` | `var(--ndd-tab-icon-active)` | Its 1px edge. |
 | `--ndd-panel-toolbar-separator-color` | `var(--ndd-toolbar-separator-color, rgba(255, 255, 255, 0.09))` | Separator inside a panel toolbar. |
 
 ### Panel overlay — floating widgets
