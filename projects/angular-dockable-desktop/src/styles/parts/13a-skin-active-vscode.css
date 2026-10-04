@@ -1,0 +1,18 @@
+/* ==========================================================================
+   PER-SKIN ACTIVE TAB & TOOLBAR DESIGN LANGUAGE
+   ========================================================================== */
+
+/* --------------------------------------------------------------------------
+   vscode — Accent Bar (2 px bar, fully transparent fill — faithful to VS Code)
+   -------------------------------------------------------------------------- */
+[data-ndd-skin="vscode"] {
+  --ndd-tab-btn-active-bg: transparent;
+  --ndd-tab-accent-bar-width: 2px;
+  --ndd-toolbar-btn-radio-active-bg: transparent;
+  --ndd-toolbar-accent-bar-width: 2px;
+}
+[data-ndd-skin="vscode"] .ndd-sidebar-tab-btn.ndd-active {
+  border-top: 1px solid transparent !important;
+  border-bottom: 1px solid transparent !important;
+}
+

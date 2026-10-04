@@ -1,0 +1,113 @@
+/* ==========================================================================
+   Structure for zero-unmount persistence
+   ==========================================================================
+   The persistence port and its slots. These carry no cosmetics — they exist so
+   panel DOM can be moved between hosts without Angular observing it. See
+   docs/decisions/0002-zero-unmount-via-host-element.md. */
+
+/*
+ * Structure the React library carried as inline JSX styles.
+ *
+ * rdd set `display:flex`, `flexDirection:column`, `height:100%` and friends inline on its
+ * workspace, grid and panel elements. Ported here as CSS instead: the percentage-height
+ * chain has to be unbroken from the workspace down to a leaf's body, or every descendant
+ * collapses — a split divider in a row ends up 0px tall and cannot be grabbed at all, which
+ * is exactly what the M4 browser gate caught.
+ */
+.ndd-workspace {
+  display: flex;
+  flex-direction: column;
+  position: relative;
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+  /* Dragging a tab or a divider must not select text across the workspace. Panel *content*
+     is exempt below, so a panel can still contain selectable text. */
+  user-select: none;
+}
+
+.ndd-panel-content {
+  user-select: text;
+}
+
+.ndd-workspace-panel {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+  position: relative;
+}
+
+.ndd-panel-body {
+  flex-grow: 1;
+  min-height: 0;
+  position: relative;
+  overflow: hidden;
+}
+
+.ndd-workspace-viewport {
+  flex-grow: 1;
+  width: 100%;
+  position: relative;
+  overflow: hidden;
+}
+
+
+/* The off-screen store a panel waits in while minimised, or before its first host. */
+.ndd-panel-store {
+  display: none !important;
+}
+
+/* A host: the box a panel's element is moved into. */
+.ndd-panel-slot {
+  width: 100%;
+  height: 100%;
+  position: relative;
+  overflow: hidden;
+}
+
+/* The element that is moved. One per panel, for the panel's whole lifetime. */
+.ndd-panel-mount,
+.ndd-panel-content {
+  width: 100%;
+  height: 100%;
+}
+
+.ndd-workspace-branch {
+  width: 100%;
+  height: 100%;
+}
+
+/* A floating window is a flex column: title bar, then a body that takes the rest. rdd set
+   this inline; see the note above. */
+.ndd-floating-window {
+  display: flex;
+  flex-direction: column;
+}
+
+/* The letter tile shown for a panel that opts out of a live preview. */
+.ndd-taskbar-item-preview-letter {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  height: 100%;
+  font-size: 2rem;
+  font-weight: 600;
+  color: var(--ndd-panel-title-color, var(--ndd-panel-text));
+  background: color-mix(in srgb, var(--ndd--b-placeholder-bg, rgb(108 117 125)) 15%, transparent);
+  border: 1px dashed var(--ndd-taskbar-item-border);
+  user-select: none;
+}
+
+.ndd-floating-window-body {
+  flex-grow: 1;
+  min-height: 0;
+  width: 100%;
+  overflow: hidden;
+  position: relative;
+  /* A new stacking context, so panel content cannot escape its own window. */
+  isolation: isolate;
+}
+

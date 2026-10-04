@@ -1,0 +1,125 @@
+/* Side Drawer Panels */
+/* position: fixed (not absolute) is deliberate: it anchors the panel to the
+   viewport directly, matching .ndd-modal-overlay's own position: fixed. A
+   position: absolute panel resolves its containing block against whatever
+   position: relative/absolute ancestor the consumer happens to have between
+   it and the document (per the documented "mount as a sibling of
+   WindowManager" pattern) — and while off-screen mid-slide-in (a pure
+   transform, not a visibility change), it then contributes real scrollable
+   overflow to THAT ancestor, which the browser auto-scrolls on focus and then
+   continuously re-clamps in lockstep with the animation, visibly dragging the
+   ancestor's entire content (the whole workspace) left/right and back over
+   the whole animation — not window/document, so no amount of watching
+   window.scrollX/scrollY (an earlier fix here, since reverted) can catch or
+   correct it. position: fixed removes the panel from that ancestor's overflow
+   calculation entirely, the same way it already does for modals. */
+.ndd-side-panel {
+  position: fixed;
+  top: 0;
+  bottom: 0;
+  width: 400px;
+  /* The library owns this container's background, so it owns its foreground too — as
+     `.ndd-modal-window`, `.ndd-workspace` and `.ndd-sidebar-content-drawer` all already do. This
+     one was missed, so content rendered into a drawer inherited the host page's text colour,
+     which on a dark panel is the user agent's black: measured at 1.18:1 in the demo's own Panel
+     manager, while the library's own title beside it sat at 16.31:1. rdd has the same omission;
+     its demo hides it by importing Bootstrap, and ours deliberately does not (ADR 0007). An
+     application that wants a different colour sets it on its own content, or reaches the body
+     through `createWorkspace({ classes: { sidePanelBody } })`. */
+  color: var(--ndd-text-primary);
+  border-right: 1px solid var(--ndd-side-panel-border);
+  z-index: calc(var(--ndd-z-base, 1000) + 8000);
+  box-shadow: 10px 0 30px rgba(0, 0, 0, 0.4);
+  transition: transform 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+  display: flex;
+  flex-direction: column;
+}
+.ndd-side-panel::before {
+  backdrop-filter: blur(20px) saturate(180%);
+  -webkit-backdrop-filter: blur(20px) saturate(180%);
+}
+
+.ndd-side-panel-right {
+  right: 0;
+  border-right: none;
+  border-left: 1px solid var(--ndd-side-panel-border);
+  box-shadow: -10px 0 30px rgba(0, 0, 0, 0.4);
+}
+
+.ndd-side-panel-left {
+  left: 0;
+}
+
+.ndd-side-panel-window {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  width: 100%;
+}
+
+.ndd-side-panel-header {
+  display: flex;
+  align-items: center;
+  padding: 12px 20px;
+  border-bottom: 1px solid var(--ndd-side-panel-header-border);
+  background-color: var(--ndd-side-panel-header-bg);
+  min-height: 44px;
+}
+
+.ndd-side-panel-icon {
+  margin-right: 10px;
+  font-size: 1.1rem;
+  display: flex;
+  align-items: center;
+}
+
+.ndd-side-panel-title {
+  font-size: 0.95rem;
+  font-weight: 600;
+  margin: 0;
+  flex-grow: 1;
+  color: var(--ndd-text-primary);
+}
+
+.ndd-side-panel-close-button {
+  background: transparent;
+  border: none;
+  color: var(--ndd-text-secondary);
+  cursor: pointer;
+  padding: 4px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: calc(4px * var(--ndd-radius-scale, 1));
+  transition: all 0.15s ease;
+}
+
+.ndd-side-panel-close-button:hover {
+  background-color: rgba(255, 255, 255, 0.08);
+  color: var(--ndd-side-panel-close-hover-color);
+}
+
+.ndd-side-panel-body {
+  flex-grow: 1;
+  overflow-y: auto;
+  padding: 0;
+}
+
+.ndd-side-panel-left.ndd-side-panel-visible {
+  animation: ndd-slide-in-left 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.ndd-side-panel-right.ndd-side-panel-visible {
+  animation: ndd-slide-in-right 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+@keyframes ndd-slide-in-left {
+  from { transform: translateX(-100%); }
+  to { transform: translateX(0); }
+}
+
+@keyframes ndd-slide-in-right {
+  from { transform: translateX(100%); }
+  to { transform: translateX(0); }
+}
+

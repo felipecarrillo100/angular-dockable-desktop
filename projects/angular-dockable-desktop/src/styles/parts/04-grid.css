@@ -1,0 +1,66 @@
+/* Drag resizer split bars */
+.ndd-resizer-bar {
+  background-color: var(--ndd-border-panel, rgba(255, 255, 255, 0.08)) !important;
+  transition: background-color 0.15s ease, transform 0.15s ease !important;
+  position: relative;
+  z-index: 21;
+}
+
+/* Invisible 8px hit-box overlay to make grabbing easy */
+.ndd-resizer-bar::before {
+  content: '';
+  position: absolute;
+  z-index: 22;
+}
+
+/* Grab hit-box for columns (cursor: col-resize) */
+.ndd-resizer-bar[style*="cursor: col-resize"]::before {
+  top: 0;
+  bottom: 0;
+  left: -3px;
+  width: 8px;
+  height: 100%;
+}
+
+/* Grab hit-box for rows (cursor: row-resize) — extends upward only (into safe content area),
+   never downward into the tab bar of the panel below */
+.ndd-resizer-bar[style*="cursor: row-resize"]::before {
+  left: 0;
+  right: 0;
+  top: -8px;
+  height: 9px;
+  width: 100%;
+}
+
+/* Highlight state (on hover or active drag) */
+.ndd-resizer-bar:hover,
+.ndd-resizer-bar.ndd-active {
+  background-color: color-mix(in srgb, var(--ndd-accent-color) 35%, transparent) !important;
+  box-shadow: none !important;
+  z-index: 25 !important;
+}
+
+.ndd-resizer-bar[style*="cursor: col-resize"]:hover,
+.ndd-resizer-bar[style*="cursor: col-resize"].ndd-active {
+  transform: scaleX(2);
+}
+
+.ndd-resizer-bar[style*="cursor: row-resize"]:hover,
+.ndd-resizer-bar[style*="cursor: row-resize"].ndd-active {
+  transform: scaleY(2);
+}
+
+/* Global body cursor overrides during active resize drag to prevent cursor flickering */
+body.ndd-resizing-active {
+  -webkit-user-select: none !important;
+  user-select: none !important;
+}
+body.ndd-resizing-row-active,
+body.ndd-resizing-row-active * {
+  cursor: row-resize !important;
+}
+body.ndd-resizing-col-active,
+body.ndd-resizing-col-active * {
+  cursor: col-resize !important;
+}
+

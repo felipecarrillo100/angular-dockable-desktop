@@ -1,0 +1,319 @@
+/* ==========================================================================
+   PANEL OVERLAY — Per-skin token overrides
+   ========================================================================== */
+
+[data-ndd-skin="vscode"]:not([data-color-scheme="light"]) {
+  --ndd-panel-toolbar-btn-hover-bg: rgba(255, 255, 255, 0.12);
+}
+
+[data-ndd-skin="macos"]:not([data-color-scheme="light"]) {
+  --ndd-panel-toolbar-btn-hover-bg: rgba(255, 255, 255, 0.18);
+}
+
+/* ==========================================================================
+   PANEL OVERLAY — PanelToolbar + PanelFloatingWindow
+   ========================================================================== */
+
+/* ── Root container ── */
+.ndd-panel-overlay-root {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+}
+
+/* ── Toolbar container ── */
+.ndd-panel-toolbar {
+  position: absolute;
+  z-index: 5;
+  pointer-events: none;
+  display: flex;
+  align-items: center;
+  gap: var(--ndd-panel-toolbar-gap, 4px);
+  padding: var(--ndd-panel-toolbar-padding, 8px);
+  box-sizing: border-box;
+}
+
+.ndd-panel-toolbar--top,
+.ndd-panel-toolbar--bottom {
+  flex-direction: row;
+}
+
+.ndd-panel-toolbar--left,
+.ndd-panel-toolbar--right {
+  flex-direction: column;
+}
+
+/* Restore pointer-events on every direct child */
+.ndd-panel-toolbar > * {
+  pointer-events: auto;
+}
+
+/* ── Toolbar button (shared by ToolbarButton + ToolbarToggle) ── */
+.ndd-panel-toolbar-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: var(--ndd-panel-toolbar-btn-size, 32px);
+  height: var(--ndd-panel-toolbar-btn-size, 32px);
+  flex-shrink: 0;
+  border-radius: calc(var(--ndd-panel-toolbar-btn-radius, 6px) * var(--ndd-radius-scale, 1));
+  border: none;
+  background: transparent;
+  color: var(--ndd-panel-toolbar-fg, rgba(255, 255, 255, 0.65));
+  cursor: pointer;
+  padding: 0;
+  transition: background 0.12s ease, color 0.12s ease, transform 0.1s ease, border-color 0.12s ease;
+  font-size: var(--ndd-panel-toolbar-icon-size, 20px);
+  line-height: 1;
+}
+
+.ndd-panel-toolbar-btn svg {
+  width: var(--ndd-panel-toolbar-icon-size, 20px);
+  height: var(--ndd-panel-toolbar-icon-size, 20px);
+  flex-shrink: 0;
+}
+
+.ndd-panel-toolbar-btn:hover:not(:disabled) {
+  background: var(--ndd-panel-toolbar-btn-hover-bg, rgba(255, 255, 255, 0.15));
+  color: var(--ndd-panel-toolbar-fg-hover, rgba(255, 255, 255, 0.95));
+  transform: scale(1.07);
+}
+
+.ndd-panel-toolbar-btn:active:not(:disabled) {
+  transform: scale(0.94);
+}
+
+.ndd-panel-toolbar-btn:disabled {
+  opacity: 0.38;
+  cursor: not-allowed;
+}
+
+/* ── Toolbar strip variants ── */
+.ndd-panel-toolbar[data-variant="frosted"]::before {
+  background: color-mix(in srgb, var(--ndd--b-panel-toolbar-frosted-bg, rgb(15 20 30)) 55%, transparent);
+  backdrop-filter: blur(10px) saturate(150%);
+  -webkit-backdrop-filter: blur(10px) saturate(150%);
+}
+.ndd-panel-toolbar[data-variant="solid"] {
+  background: var(--ndd-bg-tab-bar, #0d0f16);
+}
+[data-color-scheme="light"] .ndd-panel-toolbar[data-variant="frosted"]::before {
+  background: color-mix(in srgb, var(--ndd--b-panel-toolbar-frosted-bg, rgb(233 236 239)) 72%, transparent);
+}
+.ndd-panel-toolbar--top[data-variant="frosted"],
+.ndd-panel-toolbar--top[data-variant="solid"] {
+  border-bottom: 1px solid var(--ndd-panel-toolbar-separator-color, rgba(255, 255, 255, 0.09));
+}
+.ndd-panel-toolbar--bottom[data-variant="frosted"],
+.ndd-panel-toolbar--bottom[data-variant="solid"] {
+  border-top: 1px solid var(--ndd-panel-toolbar-separator-color, rgba(255, 255, 255, 0.09));
+}
+.ndd-panel-toolbar--left[data-variant="frosted"],
+.ndd-panel-toolbar--left[data-variant="solid"] {
+  border-right: 1px solid var(--ndd-panel-toolbar-separator-color, rgba(255, 255, 255, 0.09));
+}
+.ndd-panel-toolbar--right[data-variant="frosted"],
+.ndd-panel-toolbar--right[data-variant="solid"] {
+  border-left: 1px solid var(--ndd-panel-toolbar-separator-color, rgba(255, 255, 255, 0.09));
+}
+
+/* ── Button variants — toolbar-level default ── */
+
+/* soft — a chip per button: near-opaque surface plus hairline edge, readable over any content */
+.ndd-panel-toolbar[data-btn-variant="soft"] .ndd-panel-toolbar-btn,
+.ndd-panel-toolbar-btn[data-variant="soft"] {
+  background: var(--ndd-panel-toolbar-btn-bg);
+  border: var(--ndd-panel-toolbar-btn-border);
+}
+.ndd-panel-toolbar[data-btn-variant="soft"] .ndd-panel-toolbar-btn:hover:not(:disabled),
+.ndd-panel-toolbar-btn[data-variant="soft"]:hover:not(:disabled) {
+  background: var(--ndd-panel-toolbar-btn-bg-hover);
+}
+
+/* outlined */
+.ndd-panel-toolbar[data-btn-variant="outlined"] .ndd-panel-toolbar-btn,
+.ndd-panel-toolbar-btn[data-variant="outlined"] {
+  border: 1px solid var(--ndd-panel-toolbar-separator-color, rgba(255, 255, 255, 0.18));
+}
+.ndd-panel-toolbar[data-btn-variant="outlined"] .ndd-panel-toolbar-btn:hover:not(:disabled),
+.ndd-panel-toolbar-btn[data-variant="outlined"]:hover:not(:disabled) {
+  background: rgba(255, 255, 255, 0.12);
+  border-color: rgba(255, 255, 255, 0.38);
+}
+[data-color-scheme="light"] .ndd-panel-toolbar[data-btn-variant="outlined"] .ndd-panel-toolbar-btn:hover:not(:disabled),
+[data-color-scheme="light"] .ndd-panel-toolbar-btn[data-variant="outlined"]:hover:not(:disabled) {
+  background: rgba(0, 0, 0, 0.06);
+  border-color: rgba(0, 0, 0, 0.25);
+}
+
+/* filled */
+.ndd-panel-toolbar[data-btn-variant="filled"] .ndd-panel-toolbar-btn,
+.ndd-panel-toolbar-btn[data-variant="filled"] {
+  background: color-mix(in srgb, var(--ndd-accent-color) 20%, transparent);
+  color: var(--ndd-accent-color);
+  border: 1px solid var(--ndd-accent-color);
+}
+.ndd-panel-toolbar[data-btn-variant="filled"] .ndd-panel-toolbar-btn:hover:not(:disabled),
+.ndd-panel-toolbar-btn[data-variant="filled"]:hover:not(:disabled) {
+  background: color-mix(in srgb, var(--ndd-accent-color) 32%, transparent);
+}
+
+/* ── "On" state (NddToolbarToggle active) ──
+   Declared after the variants, at a specificity that beats them, so "on" looks the same in every
+   buttonVariant: solid accent chip, white icon. A skin or app restyles it with the two tokens. */
+.ndd-panel-toolbar .ndd-panel-toolbar-btn.ndd-panel-toolbar-btn--active,
+.ndd-panel-toolbar-btn.ndd-panel-toolbar-btn--active {
+  background: var(--ndd-panel-toolbar-btn-active-bg);
+  color: var(--ndd-panel-toolbar-btn-active-color);
+  border-color: transparent;
+}
+.ndd-panel-toolbar .ndd-panel-toolbar-btn.ndd-panel-toolbar-btn--active:hover:not(:disabled),
+.ndd-panel-toolbar-btn.ndd-panel-toolbar-btn--active:hover:not(:disabled) {
+  background: color-mix(in srgb, var(--ndd-panel-toolbar-btn-active-bg) 86%, var(--ndd-panel-toolbar-btn-active-color));
+  color: var(--ndd-panel-toolbar-btn-active-color);
+  border-color: transparent;
+}
+
+/* Keyboard focus ring on toolbar and rail buttons (shown for keyboard focus only). */
+.ndd-toolbar-btn:focus-visible,
+.ndd-sidebar-tab-btn:focus-visible,
+.ndd-panel-toolbar-btn:focus-visible {
+  outline: var(--ndd-focus-ring, 2px solid var(--ndd-accent-color));
+  outline-offset: -2px;
+}
+
+/* ── Separator ── */
+.ndd-panel-toolbar__sep {
+  flex-shrink: 0;
+  background: var(--ndd-panel-toolbar-separator-color, rgba(255, 255, 255, 0.09));
+  align-self: center;
+}
+
+.ndd-panel-toolbar--top .ndd-panel-toolbar__sep,
+.ndd-panel-toolbar--bottom .ndd-panel-toolbar__sep {
+  width: 1px;
+  height: 18px;
+}
+
+.ndd-panel-toolbar--left .ndd-panel-toolbar__sep,
+.ndd-panel-toolbar--right .ndd-panel-toolbar__sep {
+  height: 1px;
+  width: 18px;
+}
+
+/* ── Spacer — pushes subsequent items to the opposite end ── */
+.ndd-panel-toolbar__spacer {
+  flex: 1;
+  pointer-events: none;
+}
+
+/* ── ToolbarItem wrapper (restores pointer-events for custom controls) ── */
+.ndd-panel-toolbar__item {
+  display: inline-flex;
+  align-items: center;
+  pointer-events: auto;
+}
+
+/* ── ToolbarCenter — absolutely centered, independent of left/right widths ── */
+.ndd-panel-toolbar__center {
+  position: absolute;
+  display: flex;
+  align-items: center;
+  gap: var(--ndd-panel-toolbar-gap, 4px);
+  pointer-events: none;
+}
+.ndd-panel-toolbar__center > * {
+  pointer-events: auto;
+}
+/* Horizontal toolbars: center horizontally */
+.ndd-panel-toolbar--top .ndd-panel-toolbar__center,
+.ndd-panel-toolbar--bottom .ndd-panel-toolbar__center {
+  flex-direction: row;
+  top: 0;
+  bottom: 0;
+  left: 50%;
+  transform: translateX(-50%);
+}
+/* Vertical toolbars: center vertically */
+.ndd-panel-toolbar--left .ndd-panel-toolbar__center,
+.ndd-panel-toolbar--right .ndd-panel-toolbar__center {
+  flex-direction: column;
+  left: 0;
+  right: 0;
+  top: 50%;
+  transform: translateY(-50%);
+}
+
+/* ── ToolbarSearchInput ── */
+.ndd-panel-toolbar-search {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.ndd-panel-toolbar-search__input {
+  height: var(--ndd-panel-toolbar-btn-size, 28px);
+  width: 200px;
+  border: 1px solid var(--ndd-panel-toolbar-separator-color, rgba(255, 255, 255, 0.15));
+  border-radius: calc(var(--ndd-panel-toolbar-btn-radius, 6px) * var(--ndd-radius-scale, 1));
+  background: rgba(0, 0, 0, 0.18);
+  color: inherit;
+  padding: 0 8px;
+  font-size: 12px;
+  outline: none;
+  box-sizing: border-box;
+}
+
+.ndd-panel-toolbar-search__input::placeholder {
+  opacity: 0.45;
+}
+
+.ndd-panel-toolbar-search__input:focus {
+  border-color: var(--ndd-panel-toolbar-btn-active-color, #38bdf8);
+}
+
+.ndd-panel-toolbar-search__dropdown {
+  /* Shifts with --ndd-z-base like every other chrome overlay; above the context menu
+     (+8500/+8501) since it's opened from a toolbar that can sit under one. */
+  z-index: calc(var(--ndd-z-base, 1000) + 8502);
+  background: var(--ndd-panel-float-bg, rgba(22, 24, 34, 0.95));
+  border: 1px solid var(--ndd-panel-float-border, rgba(255, 255, 255, 0.1));
+  border-radius: calc(var(--ndd-panel-float-radius, 8px) * var(--ndd-radius-scale, 1));
+  box-shadow: var(--ndd-panel-float-shadow-active, 0 8px 28px rgba(0, 0, 0, 0.55));
+  overflow: hidden;
+  max-height: 300px;
+  overflow-y: auto;
+}
+
+.ndd-panel-toolbar-search__group {
+  padding: 6px 12px 2px;
+  font-size: 10px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  opacity: 0.45;
+}
+
+.ndd-panel-toolbar-search__item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  padding: 7px 12px;
+  border: none;
+  background: transparent;
+  color: inherit;
+  text-align: start;
+  cursor: pointer;
+  font-size: 12px;
+}
+
+.ndd-panel-toolbar-search__item:hover {
+  background: var(--ndd-panel-toolbar-btn-hover-bg, rgba(255, 255, 255, 0.08));
+}
+
+.ndd-panel-toolbar-search__item-icon { flex-shrink: 0; opacity: 0.7; }
+.ndd-panel-toolbar-search__item-label { flex: 1; }
+.ndd-panel-toolbar-search__item-desc { opacity: 0.45; font-size: 11px; }
+

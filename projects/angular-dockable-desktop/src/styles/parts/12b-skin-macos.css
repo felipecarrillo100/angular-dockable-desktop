@@ -1,0 +1,153 @@
+/* --------------------------------------------------------------------------
+   SKIN 2: macOS / Glassmorphic Preset
+   -------------------------------------------------------------------------- */
+[data-ndd-skin="macos"] {
+  --ndd-skin-font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Text', 'Helvetica Neue', Helvetica, Arial, sans-serif; /* San Francisco */
+  --ndd-bg-workspace: var(--ndd--b-bg-workspace, #1a1a24);
+  --ndd-bg-panel: color-mix(in srgb, var(--ndd--b-bg-panel, rgb(30 30 40)) 45%, transparent);
+  --ndd-bg-tab-bar: color-mix(in srgb, var(--ndd--b-bg-tab-bar, rgb(18 18 24)) 30%, transparent);
+  --ndd-window-bg: color-mix(in srgb, var(--ndd--b-window-bg, rgb(25 25 35)) calc(var(--ndd-window-opacity, 0.7) * 100%), transparent);
+  --ndd-window-border: rgba(255, 255, 255, 0.1);
+  --ndd-window-header-bg: rgba(0, 0, 0, 0.15);
+  --ndd-accent-color: var(--ndd-brand-accent, #38bdf8);
+  --ndd-accent-glow: color-mix(in srgb, var(--ndd-accent-color) 25%, transparent);
+  --ndd-border-panel: rgba(255, 255, 255, 0.08);
+  --ndd-bg-tab-inactive: transparent;
+  --ndd-text-tab-inactive: var(--ndd--b-text-tab-inactive, #94a3b8);
+  --ndd-text-tab-active: var(--ndd--b-text-tab-active, #ffffff);
+  --ndd-window-shadow: 0 16px 40px rgba(0, 0, 0, 0.4);
+  --ndd-window-shadow-focused: 0 24px 50px color-mix(in srgb, var(--ndd-accent-color) 15%, transparent);
+  --ndd-panel-card-bg: rgba(255, 255, 255, 0.03);
+  --ndd-panel-card-border: rgba(255, 255, 255, 0.08);
+}
+
+[data-ndd-skin="macos"][data-color-scheme="light"] {
+  --ndd-bg-primary: var(--ndd--b-bg-primary, #f3f4f6);
+  --ndd-bg-workspace: var(--ndd--b-bg-workspace, #e5e7eb);
+  --ndd-bg-panel: rgba(255, 255, 255, 0.7);
+  --ndd-bg-tab-bar: color-mix(in srgb, var(--ndd--b-bg-tab-bar, rgb(229 231 235)) 50%, transparent);
+  --ndd-window-bg: color-mix(in srgb, var(--ndd--b-window-bg, rgb(255 255 255)) calc(var(--ndd-window-opacity, 0.85) * 100%), transparent);
+  --ndd-window-border: rgba(0, 0, 0, 0.12);
+  --ndd-window-header-bg: color-mix(in srgb, var(--ndd--b-window-header-bg, rgb(243 244 246)) 50%, transparent);
+  --ndd-accent-color: var(--ndd-brand-accent, #0066cc);
+  --ndd-accent-glow: color-mix(in srgb, var(--ndd-accent-color) 15%, transparent);
+  --ndd-border-panel: rgba(0, 0, 0, 0.1);
+  --ndd-bg-tab-inactive: transparent;
+  --ndd-text-tab-inactive: var(--ndd--b-text-tab-inactive, #4b5563);
+  --ndd-text-tab-active: var(--ndd--b-text-tab-active, #111827);
+  --ndd-window-text: var(--ndd--b-window-text, #111827);
+  --ndd-window-shadow: 0 10px 30px rgba(0, 0, 0, 0.08);
+  --ndd-window-shadow-focused: 0 16px 36px color-mix(in srgb, var(--ndd-accent-color) 18%, transparent);
+  --ndd-panel-card-bg: rgba(0, 0, 0, 0.04);
+  --ndd-panel-card-border: rgba(0, 0, 0, 0.08);
+  --ndd-panel-text: var(--ndd--b-panel-text, #111827);
+  --ndd-panel-title-color: var(--ndd-accent-color);
+  --ndd-close-btn-color: var(--ndd--b-close-btn-color, #4b5563);
+  --ndd-close-btn-active-color: var(--ndd--b-close-btn-active-color, #111827);
+}
+
+/* macOS structural adjustments */
+[data-ndd-skin="macos"] .ndd-floating-window {
+  border-radius: calc(12px * var(--ndd-radius-scale, 1));
+  border-color: var(--ndd-window-border);
+}
+[data-ndd-skin="macos"] .ndd-floating-window::before {
+  backdrop-filter: blur(20px) saturate(180%);
+  -webkit-backdrop-filter: blur(20px) saturate(180%);
+}
+[data-ndd-skin="macos"] .ndd-floating-window-titlebar {
+  border-top-left-radius: calc(12px * var(--ndd-radius-scale, 1));
+  border-top-right-radius: calc(12px * var(--ndd-radius-scale, 1));
+}
+[data-ndd-skin="macos"] .ndd-workspace-panel {
+  border-radius: calc(8px * var(--ndd-radius-scale, 1));
+}
+[data-ndd-skin="macos"] .ndd-workspace-panel::before {
+  backdrop-filter: blur(12px) saturate(180%);
+  -webkit-backdrop-filter: blur(12px) saturate(180%);
+}
+[data-ndd-skin="macos"] .ndd-workspace-tab {
+  border-radius: calc(6px * var(--ndd-radius-scale, 1)) !important;
+  margin: 4px 4px 4px 4px !important;
+  height: 28px !important;
+  border: 1px solid var(--ndd-border-panel) !important;
+}
+[data-ndd-skin="macos"] .ndd-workspace-tab.ndd-active {
+  background-color: var(--ndd-bg-workspace) !important;
+}
+[data-ndd-skin="macos"] .ndd-workspace-tab.ndd-active::before {
+  display: none !important; /* Hide VS Code top line */
+}
+
+/* macOS Circle dots controls styling */
+[data-ndd-skin="macos"] .ndd-custom-tab-btn {
+  border-radius: 50% !important;
+  width: 12px !important;
+  height: 12px !important;
+  background: var(--ndd-custom-btn-bg) !important;
+  border: none !important;
+  color: transparent !important;
+  font-size: 0 !important;
+  overflow: hidden;
+  margin: 0 2px;
+}
+[data-ndd-skin="macos"] .ndd-floating-window-titlebar {
+  flex-direction: row-reverse !important;
+  position: relative !important;
+}
+[data-ndd-skin="macos"] .ndd-floating-window-titlebar .ndd-floating-window-title {
+  pointer-events: none !important;
+  margin: 0 !important;
+  margin-inline-start: 0.5rem !important;
+  flex: 1 !important;
+  min-width: 0 !important;
+  justify-content: flex-end !important;
+}
+[data-ndd-skin="macos"] .ndd-floating-window-titlebar .ndd-floating-window-title > * {
+  pointer-events: auto;
+}
+[data-ndd-skin="macos"] .ndd-floating-window-titlebar .ndd-titlebar-actions {
+  flex-direction: row-reverse !important;
+}
+[data-ndd-skin="macos"] .ndd-custom-tab-btn svg {
+  display: none !important;
+}
+[data-ndd-skin="macos"] .ndd-btn-close-tab {
+  background-color: #ff5f56 !important; /* Red (Close) */
+}
+[data-ndd-skin="macos"] .ndd-btn-minimize-tab {
+  background-color: #ffbd2e !important; /* Yellow (Minimize) */
+}
+[data-ndd-skin="macos"] .ndd-btn-maximize-tab {
+  background-color: #27c93f !important; /* Green (Maximize) */
+}
+
+/* Panel Icon Styling and Alignment */
+.ndd-workspace-tab-icon,
+.ndd-window-title-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  vertical-align: middle;
+  line-height: 1;
+  margin-inline-end: 4px !important; /* Forces the gap between the icon and the text title */
+}
+
+.ndd-workspace-tab-icon svg,
+.ndd-workspace-tab-icon img,
+.ndd-window-title-icon svg,
+.ndd-window-title-icon img {
+  width: 14px !important;
+  height: 14px !important;
+  max-width: 14px !important;
+  max-height: 14px !important;
+  object-fit: contain;
+  display: block;
+}
+
+[data-ndd-skin="macos"] .ndd-custom-tab-btn:hover {
+  filter: brightness(0.85);
+  transform: none !important;
+}
+

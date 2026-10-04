@@ -1,0 +1,211 @@
+/* ==========================================================================
+   FRAMEWORK-AGNOSTIC UTILITY CLASSES
+   (replaces Bootstrap utility class dependencies)
+   ========================================================================== */
+
+/* Text truncation (equivalent to Bootstrap .ndd-text-truncate) */
+.ndd-text-truncate {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* Floating window titlebar button group */
+.ndd-titlebar-actions {
+  display: flex;
+  align-items: center;
+}
+
+
+/* Tab header custom actions slot */
+.ndd-tab-header-actions {
+  margin-inline-start: auto;
+  display: flex;
+  align-items: center;
+  margin-inline-end: 0.25rem;
+  gap: var(--ndd-header-button-gap, 4px);
+}
+
+/* Panel body (tab content area / floating window content area) */
+.ndd-panel-body {
+  flex-grow: 1;
+  width: 100%;
+  height: 100%;
+}
+
+/* Empty workspace section placeholder text */
+.ndd-empty-leaf-placeholder {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: monospace;
+  font-size: 0.875rem;
+  color: var(--ndd-text-secondary, #94a3b8);
+}
+
+
+/* Unregistered component error panel */
+.ndd-unregistered-panel {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  background: transparent;
+  color: #dc3545;
+  font-family: monospace;
+  padding: 1rem;
+  text-align: center;
+  box-sizing: border-box;
+}
+
+/* Taskbar scrollable items row */
+.ndd-taskbar-items-container {
+  display: flex;
+  flex-direction: row;
+  gap: 0.5rem;
+  overflow-x: auto;
+  align-items: center;
+  margin: 0 0.5rem;
+  padding: 2px 4px;
+  scrollbar-width: none;
+  scroll-snap-type: x mandatory;
+  max-width: 800px;
+}
+
+.ndd-taskbar-items-container::-webkit-scrollbar {
+  display: none;
+}
+
+/* Tooltip header row (title + close button) */
+.ndd-tooltip-header-row {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+  gap: 0.75rem;
+  padding: 0 0.25rem;
+}
+
+/* Drag ghost tab preview (floating label while dragging) */
+.ndd-drag-ghost-tab {
+  position: fixed;
+  background: rgba(0, 0, 0, 0.8);
+  border: 1px solid var(--ndd-accent-color, #38bdf8);
+  border-left: 3px solid var(--ndd-accent-color, #38bdf8);
+  border-radius: calc(4px * var(--ndd-radius-scale, 1));
+  color: var(--ndd-accent-color, #38bdf8);
+  font-family: monospace;
+  padding: 0.375rem 1rem;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.75rem;
+  white-space: nowrap;
+  pointer-events: none;
+}
+
+/* ConfirmationForm component styles */
+.ndd-confirmation-form-body {
+  padding: 0.75rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.ndd-confirmation-alert {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin: 0;
+  padding: 0.625rem;
+  font-size: 0.875rem;
+  border-radius: calc(0.375rem * var(--ndd-radius-scale, 1));
+}
+
+.ndd-confirmation-alert-danger {
+  background: rgba(220, 53, 69, 0.15);
+  border: 1px solid rgba(220, 53, 69, 0.3);
+  color: #f87171;
+}
+
+.ndd-confirmation-alert-info {
+  background: rgba(13, 202, 240, 0.15);
+  border: 1px solid rgba(13, 202, 240, 0.3);
+  color: #67e8f9;
+}
+
+.ndd-confirmation-alert-warning {
+  background: rgba(255, 193, 7, 0.15);
+  border: 1px solid rgba(255, 193, 7, 0.3);
+  color: #fbbf24;
+}
+
+.ndd-confirmation-alert-success {
+  background: rgba(25, 135, 84, 0.15);
+  border: 1px solid rgba(25, 135, 84, 0.3);
+  color: #4ade80;
+}
+
+/* The message body. rdd set these three values inline on the JSX, together with an <hr>
+   that existed only to draw a separator — so a consumer could restyle neither (D12). The
+   separator is this element's own border-bottom, which is one element instead of two and
+   leaves the spacing to the flex gap above. */
+.ndd-confirmation-message {
+  font-size: 0.9rem;
+  line-height: 1.5;
+  color: inherit;
+  padding-bottom: 0.5rem;
+  border-bottom: 1px solid var(--ndd-sidebar-border, rgba(255, 255, 255, 0.08));
+}
+
+.ndd-confirmation-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 0.5rem;
+}
+
+/* Sidebar drawer header */
+.ndd-sidebar-drawer-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  border-bottom: 1px solid var(--ndd-sidebar-border, rgba(255, 255, 255, 0.08));
+  padding: 0 0.75rem;
+  flex-shrink: 0;
+  background: var(--ndd-sidebar-drawer-header-bg);
+  min-height: 38px;
+}
+
+/* Optional close button (showCloseButton) — an extra way to collapse the sidebar besides
+   clicking the active tab's own icon again. */
+.ndd-sidebar-drawer-close-button {
+  background: transparent;
+  border: none;
+  color: var(--ndd-sidebar-text-muted, var(--ndd-text-secondary));
+  cursor: pointer;
+  padding: 4px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: calc(4px * var(--ndd-radius-scale, 1));
+  transition: all 0.15s ease;
+  flex-shrink: 0;
+}
+
+.ndd-sidebar-drawer-close-button:hover {
+  background-color: var(--ndd-sidebar-btn-hover-bg);
+  color: var(--ndd-sidebar-text-title);
+}
+
+/* Sidebar drawer content body */
+.ndd-sidebar-drawer-body {
+  flex-grow: 1;
+  overflow: auto;
+}
+

@@ -1,0 +1,109 @@
+/* Frosted glass sits on a ::before, never on the container itself (7.4.0). A backdrop-filter
+   makes its element the containing block for position: fixed descendants, so a consumer's fixed
+   dropdown inside a frosted window, drawer, panel or panel toolbar was positioned against the container — and
+   which containers were frosted depended on the skin. The pseudo-element is not an ancestor of the
+   content, so the content keeps the viewport. Where the frost saturates, the container's background
+   moves to the same pseudo, after the filter, as it was on the element: saturate() does not commute
+   with the tint (a plain blur does, so the overlay widget keeps its own background).
+   isolation keeps the z-index: -1 pseudo inside the container, below its content. */
+.ndd-floating-window,
+.ndd-side-panel,
+.ndd-panel-float,
+.ndd-panel-toolbar[data-variant="frosted"],
+[data-ndd-skin="macos"] .ndd-workspace-panel {
+  isolation: isolate;
+}
+.ndd-floating-window::before,
+.ndd-side-panel::before,
+.ndd-panel-float::before,
+.ndd-panel-toolbar[data-variant="frosted"]::before,
+[data-ndd-skin="macos"] .ndd-workspace-panel::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  border-radius: inherit;
+  pointer-events: none;
+}
+.ndd-floating-window::before { background-color: var(--ndd-window-bg); }
+.ndd-side-panel::before { background: var(--ndd-side-panel-bg); }
+[data-ndd-skin="macos"] .ndd-workspace-panel::before { background-color: var(--ndd-bg-panel); }
+/* The background ran under the container's 1px border too: so does the pseudo (a maximized
+   window has no border; a frosted panel toolbar has one on its inner edge). */
+.ndd-floating-window::before,
+[data-ndd-skin="macos"] .ndd-workspace-panel::before {
+  inset: -1px;
+}
+.ndd-panel-toolbar--top[data-variant="frosted"]::before { bottom: -1px; }
+.ndd-panel-toolbar--bottom[data-variant="frosted"]::before { top: -1px; }
+.ndd-panel-toolbar--left[data-variant="frosted"]::before { right: -1px; }
+.ndd-panel-toolbar--right[data-variant="frosted"]::before { left: -1px; }
+.ndd-floating-window.ndd-maximized::before {
+  inset: 0;
+}
+/* The docked panel's own background is on its ::before only in macOS, the skin that frosts it. */
+[data-ndd-skin="macos"] .ndd-workspace-panel {
+  background-color: transparent;
+}
+
+.ndd-floating-window {
+  display: flex;
+  flex-direction: column;
+  border-radius: calc(8px * var(--ndd-radius-scale, 1));
+  border: 1px solid var(--ndd-window-border);
+  box-shadow: var(--ndd-window-shadow), inset 0 1px 0 rgba(255, 255, 255, 0.05);
+  overflow: hidden;
+  transition: box-shadow 0.2s, border-color 0.2s;
+}
+.ndd-floating-window::before {
+  backdrop-filter: blur(16px) saturate(180%);
+  -webkit-backdrop-filter: blur(16px) saturate(180%);
+}
+
+.ndd-floating-window.ndd-window-focused {
+  box-shadow: var(--ndd-window-shadow-focused), inset 0 1px 0 rgba(255, 255, 255, 0.08);
+  border-color: var(--ndd-window-border-focused);
+}
+
+/* Dim only titlebar when window is unfocused to keep panel content opaque */
+.ndd-floating-window:not(.ndd-window-focused) .ndd-floating-window-titlebar {
+  opacity: 0.65;
+  transition: opacity 0.2s ease;
+}
+
+/* The class the component actually renders is `ndd-maximized`. rdd's equivalent rule said
+   `.maximized`, so it never matched and a maximized window kept its rounded corners, border
+   and drop shadow while filling the whole workspace. See docs/PARITY.md, divergence D9. */
+.ndd-floating-window.ndd-maximized {
+  border-radius: 0;
+  border: none;
+  box-shadow: none;
+}
+
+
+.ndd-floating-window-titlebar {
+  padding: 8px 14px;
+  background-color: var(--ndd-window-header-bg);
+  border-bottom: 1px solid var(--ndd-window-border);
+  min-height: 38px;
+  display: flex;
+  flex-direction: row;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.ndd-floating-window-title {
+  font-family: var(--ndd-font-family);
+  font-size: 0.78rem;
+  font-weight: 600;
+  color: var(--ndd-window-text);
+  letter-spacing: 0.02em;
+  display: flex;
+  align-items: center;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  margin-inline-end: 0.5rem;
+}
+
+

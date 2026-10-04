@@ -1,0 +1,72 @@
+/* ==========================================================================
+   Angular port additions
+   ==========================================================================
+   Layout vdd carried inline on the grid (D12: load-bearing layout belongs in the stylesheet,
+   where a consumer can reach it), and the few elements only the Angular port renders. */
+
+.ndd-workspace-branch {
+  display: flex;
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+  position: relative;
+}
+.ndd-workspace-branch.ndd-row { flex-direction: row; }
+.ndd-workspace-branch.ndd-column { flex-direction: column; }
+
+/* One child of a branch. Its flex-grow/flex-basis are the split sizes, set per render. */
+.ndd-branch-child {
+  overflow: hidden;
+  position: relative;
+  min-width: 0;
+  min-height: 0;
+}
+
+.ndd-workspace-branch.ndd-row > .ndd-resizer-bar { cursor: col-resize; width: 1px; height: 100%; z-index: 20; }
+.ndd-workspace-branch.ndd-column > .ndd-resizer-bar { cursor: row-resize; width: 100%; height: 1px; z-index: 20; }
+
+/* An NddIcon rendered from a CSS class list (Bootstrap Icons, Font Awesome, …). */
+.ndd-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  line-height: 1;
+}
+
+/* A lazy panel (`loadComponent`) while its chunk loads. */
+.ndd-panel-loading {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  height: 100%;
+  color: var(--ndd-panel-muted-text, rgba(255, 255, 255, 0.5));
+  font-size: 12px;
+}
+
+/* Structural component hosts: the element exists for Angular, the layout ignores it. */
+ndd-workspace-grid,
+ndd-leaf-group {
+  display: contents;
+}
+
+ndd-drop-zones,
+ndd-edge-zones,
+ndd-drag-ghost {
+  display: contents;
+}
+
+ndd-taskbar,
+ndd-taskbar-preview {
+  display: contents;
+}
+
+/* An inline icon that must sit on its own line box (vdd set display:block inline). */
+.ndd-icon-block { display: block; }
+
+ndd-context-menu { display: contents; }
+
+/* Hosts that *are* the box vdd rendered as a <div>. A custom element defaults to display: inline,
+   and an inline box reports clientWidth 0 — so a widget inside the overlay measured a container of
+   nothing and every resize clamped to the minimum size. Found by the M11 browser gate. */
+.ndd-panel-overlay-root { display: block; }

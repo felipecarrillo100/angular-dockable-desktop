@@ -1,0 +1,9 @@
+/* Cosmetic properties are scoped to the library's own root element only — never
+   the consumer's page, html/body, or their own mount div. */
+.ndd-workspace {
+  background-color: var(--ndd-bg-primary);
+  color: var(--ndd-text-primary);
+  font-family: var(--ndd-font-family);
+  -webkit-font-smoothing: antialiased;
+}
+

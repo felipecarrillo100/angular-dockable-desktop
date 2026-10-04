@@ -1,0 +1,19 @@
+/* --------------------------------------------------------------------------
+   chrome — Tab Shape (sidebar bridge, toolbar accent-tinted)
+   -------------------------------------------------------------------------- */
+[data-ndd-skin="chrome"] {
+  --ndd-tab-btn-active-bg: var(--ndd-sidebar-bg);
+  --ndd-tab-accent-bar-width: 0px;
+  --ndd-toolbar-accent-bar-width: 2px;
+}
+[data-ndd-skin="chrome"] .ndd-sidebar-tabs-strip.ndd-left .ndd-sidebar-tab-btn.ndd-active {
+  border-radius: 0 calc(10px * var(--ndd-radius-scale, 1)) calc(10px * var(--ndd-radius-scale, 1)) 0 !important;
+  border-left: none !important;
+}
+[data-ndd-skin="chrome"] .ndd-sidebar-tabs-strip.ndd-right .ndd-sidebar-tab-btn.ndd-active {
+  border-radius: calc(10px * var(--ndd-radius-scale, 1)) 0 0 calc(10px * var(--ndd-radius-scale, 1)) !important;
+  border-right: none !important;
+  border-top: 1px solid var(--ndd-sidebar-border) !important;
+  border-bottom: 1px solid var(--ndd-sidebar-border) !important;
+}
+

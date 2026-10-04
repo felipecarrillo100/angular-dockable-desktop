@@ -1,0 +1,40 @@
+/* Animations are on by default. `[animations]="false"` on <ndd-desktop> adds
+   `ndd-no-animations` to the workspace root and mirrors it onto <html> (so
+   elements rendered into document.body — context menu, toasts, toolbar flyout — are covered too).
+   Scoped to only the library's own elements ([class*="ndd-"]) via the new
+   unified prefix — this never touches the consumer's own transitions/animations
+   elsewhere on the page, in either state. */
+.ndd-no-animations [class*="ndd-"],
+.ndd-no-animations [class*="ndd-"]::before,
+.ndd-no-animations [class*="ndd-"]::after,
+html.ndd-no-animations [class*="ndd-"],
+html.ndd-no-animations [class*="ndd-"]::before,
+html.ndd-no-animations [class*="ndd-"]::after {
+  transition: none !important;
+  animation: none !important;
+}
+
+/* The same when the user has asked the system for less motion (7.4.0): the library's own
+   transitions and animations stop, whatever `animations` says. The consumer's own are untouched,
+   exactly as above. */
+@media (prefers-reduced-motion: reduce) {
+  [class*="ndd-"],
+  [class*="ndd-"]::before,
+  [class*="ndd-"]::after {
+    transition: none !important;
+    animation: none !important;
+  }
+}
+
+
+
+@keyframes ndd-fade-in {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes ndd-scale-up {
+  from { transform: scale(0.95); opacity: 0; }
+  to { transform: scale(1); opacity: 1; }
+}
+

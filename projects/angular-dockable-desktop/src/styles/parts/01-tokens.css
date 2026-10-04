@@ -1,0 +1,254 @@
+/*
+ * angular-dockable-desktop — the library's only stylesheet.
+ *
+ * Ported from vue-dockable-desktop 1.1.1 (itself ported from react-dockable-desktop 6.2.0 and
+ * completed): every class, custom property and @keyframes name is `ndd-` prefixed, with no
+ * exceptions (ADR 0003), and nothing outside the library's own DOM is styled (ADR 0007).
+ * Import it once, globally — angular.json → "styles": ["angular-dockable-desktop/styles.css"]. rdd's own migration had been left
+ * unfinished — ~35 unprefixed tokens (`--sidebar-*`, `--tab-*`, `--toolbar-*`), four bare
+ * classes, two dead rules and 30 demo-only `.sb-*` rules were still shipping in its published
+ * `styles.css`. vdd resolved all of that; here it is enforced by scripts/gates/css-prefix.mjs.
+ *
+ * Tokens live on `:root` deliberately, not scoped to the workspace element: the context menu,
+ * toasts, toolbar flyouts and the overlay search dropdown all render into `document.body`, and
+ * `<ndd-sidebar>` is normally an *ancestor* of `<ndd-desktop>`. CSS variables only cascade
+ * downward, so scoping them would leave those parts unthemed.
+ *
+ * See docs/decisions/0003-prefix-ndd.md and docs/manual/ (theming).
+ */
+
+:root {
+  --ndd-styles-loaded: 1; /* sentinel — checked at mount to detect missing CSS import */
+  --ndd-z-base: 1000; /* base for floating windows + all chrome overlays; override via provideDockableDesktop({ zIndexBase }) */
+  /* Font of the library's own chrome — tabs, title bars, toolbar, sidebar, menus, toasts, drawers,
+     modals. Neither Outfit nor Inter is loaded by the library: load one yourself, or override this
+     on :root (menus, flyouts and toasts render into <body>, so :root is what reaches everything).
+     A skin picks its own font through --ndd-skin-font-family, never by declaring --ndd-font-family
+     itself: that would override the consumer's :root value on the element carrying data-ndd-skin.
+     This resolves on <html>, which <ndd-desktop> gives data-ndd-skin too. */
+  --ndd-font-family: var(--ndd-skin-font-family, 'Outfit', 'Inter', system-ui, -apple-system, sans-serif);
+  --ndd-bg-primary: var(--ndd--b-bg-primary, #090b11);
+  --ndd-bg-workspace: var(--ndd--b-bg-workspace, #0f111a);
+  --ndd-bg-panel: var(--ndd--b-bg-panel, #141722);
+  --ndd-bg-tab-bar: var(--ndd--b-bg-tab-bar, #0d0f16);
+  --ndd-text-primary: var(--ndd--b-text-primary, #f1f5f9);
+  --ndd-text-secondary: var(--ndd--b-text-secondary, #94a3b8);
+  --ndd-border-color: rgba(255, 255, 255, 0.08);
+  /* Branding: an app sets --ndd-brand-accent / --ndd-brand-on-accent on :root, and every skin reads
+     them first (var(--ndd-brand-accent, <skin colour>)). The library only reads them — declared
+     here or in a skin, they would override the app's value on the element carrying data-ndd-skin.
+     Every tint of the accent is a color-mix() of --ndd-accent-color, never a copied rgba(). */
+  --ndd-accent-color: var(--ndd-brand-accent, #38bdf8); /* Modern Cyan/Sky-blue accent */
+  --ndd-accent-glow: color-mix(in srgb, var(--ndd-accent-color) 15%, transparent);
+  --ndd-header-button-gap: 4px; /* Configurable gap spacing between titlebar action buttons */
+  /* Window skins variables */
+  --ndd-window-bg: color-mix(in srgb, var(--ndd--b-window-bg, rgb(20 22 28)) calc(var(--ndd-window-opacity, 0.85) * 100%), transparent);
+  --ndd-window-border: rgba(255, 255, 255, 0.08);
+  --ndd-window-border-focused: rgba(255, 255, 255, 0.28);
+  --ndd-window-header-bg: rgba(0, 0, 0, 0.25);
+  --ndd-window-text: var(--ndd--b-window-text, #f8f9fa);
+  --ndd-window-shadow: 0 16px 40px rgba(0, 0, 0, 0.4);
+  --ndd-window-shadow-focused: 0 24px 50px rgba(0, 0, 0, 0.55);
+  /* Modal theme variables */
+  --ndd-modal-curtain-bg: color-mix(in srgb, var(--ndd--b-modal-curtain-bg, rgb(9 11 17)) 65%, transparent);
+  --ndd-modal-bg: color-mix(in srgb, var(--ndd--b-modal-bg, rgb(20 23 34)) 95%, transparent);
+  --ndd-modal-border: rgba(255, 255, 255, 0.08);
+  --ndd-modal-header-bg: rgba(0, 0, 0, 0.15);
+  --ndd-modal-header-border: rgba(255, 255, 255, 0.06);
+  --ndd-modal-close-hover-color: var(--ndd--b-modal-close-hover-color, #ffffff);
+  --ndd-side-panel-bg: color-mix(in srgb, var(--ndd--b-side-panel-bg, rgb(20 23 34)) 88%, transparent);
+  --ndd-side-panel-border: rgba(255, 255, 255, 0.08);
+  --ndd-side-panel-header-bg: rgba(0, 0, 0, 0.15);
+  --ndd-side-panel-header-border: rgba(255, 255, 255, 0.06);
+  --ndd-side-panel-close-hover-color: var(--ndd--b-side-panel-close-hover-color, #ffffff);
+  /* Grid/Docked panel theme variables */
+  --ndd-border-panel: rgba(255, 255, 255, 0.08);
+  --ndd-bg-tab-inactive: var(--ndd--b-bg-tab-inactive, #0c0d12);
+  --ndd-text-tab-inactive: var(--ndd--b-text-tab-inactive, #858b99);
+  --ndd-text-tab-active: var(--ndd--b-text-tab-active, #ffffff);
+  /* Tab and control button hover colors */
+  --ndd-bg-tab-hover: var(--ndd--b-bg-tab-hover, #171a22);
+  --ndd-text-tab-hover: var(--ndd--b-text-tab-hover, #e2e8f0);
+  --ndd-close-btn-hover-bg: rgba(255, 255, 255, 0.12);
+  --ndd-close-btn-hover-color: var(--ndd--b-close-btn-hover-color, #ffffff);
+  --ndd-close-btn-color: var(--ndd--b-close-btn-color, #858b99);
+  --ndd-close-btn-active-color: var(--ndd--b-close-btn-active-color, #e2e8f0);
+  /* Tab focus states */
+  --ndd-tab-indicator-focused: var(--ndd-accent-color, #38bdf8);
+  --ndd-tab-indicator-unfocused: rgba(255, 255, 255, 0.3);
+  --ndd-tab-bg-active-focused: var(--ndd-bg-panel);
+  --ndd-tab-bg-active-unfocused: color-mix(in srgb, var(--ndd--b-tab-bg-active-unfocused, rgb(20 23 34)) 55%, transparent);
+  --ndd-tab-text-active-focused: var(--ndd-text-tab-active, #ffffff);
+  --ndd-tab-text-active-unfocused: rgba(255, 255, 255, 0.65);
+  --ndd-resizer-bg: rgba(255, 255, 255, 0.08);
+  --ndd-custom-btn-bg: rgba(255, 255, 255, 0.03);
+  --ndd-custom-btn-border: rgba(255, 255, 255, 0.05);
+  --ndd-custom-btn-hover-bg: rgba(255, 255, 255, 0.12);
+  --ndd-custom-btn-hover-color: var(--ndd--b-custom-btn-hover-color, #ffffff);
+  /* Taskbar theme variables */
+  --ndd-taskbar-bg: rgba(0, 0, 0, 0.75);
+  --ndd-taskbar-border: rgba(255, 255, 255, 0.1);
+  --ndd-taskbar-nav-color: rgba(255, 255, 255, 0.5);
+  --ndd-taskbar-item-bg: color-mix(in srgb, var(--ndd--b-taskbar-item-bg, rgb(15 23 42)) 60%, transparent);
+  --ndd-taskbar-item-hover-bg: color-mix(in srgb, var(--ndd--b-taskbar-item-hover-bg, rgb(15 23 42)) 80%, transparent);
+  --ndd-taskbar-item-border: rgba(255, 255, 255, 0.08);
+  --ndd-taskbar-item-text: var(--ndd-accent-color, #38bdf8);
+  /* Scrollbar theme variables */
+  --ndd-scrollbar-thumb: rgba(255, 255, 255, 0.1);
+  --ndd-scrollbar-thumb-hover: rgba(255, 255, 255, 0.2);
+  --ndd-scrollbar-track: rgba(255, 255, 255, 0.01);
+  /* Mockup Panel inner theme variables */
+  --ndd-panel-card-bg: rgba(0, 0, 0, 0.2);
+  --ndd-panel-card-border: rgba(255, 255, 255, 0.1);
+  --ndd-panel-text: var(--ndd-text-primary);
+  --ndd-panel-title-color: var(--ndd-accent-color, #38bdf8);
+  /* ── Panel Overlay — Toolbar ── */
+  --ndd-panel-toolbar-padding: 8px;
+  --ndd-panel-toolbar-gap: 4px;
+  --ndd-panel-toolbar-btn-size: 32px;
+  --ndd-panel-toolbar-btn-radius: 6px;
+  --ndd-panel-toolbar-fg: rgba(255, 255, 255, 0.65);
+  --ndd-panel-toolbar-fg-hover: rgba(255, 255, 255, 0.95);
+  --ndd-panel-toolbar-btn-hover-bg: var(--ndd-toolbar-btn-hover-bg, rgba(255, 255, 255, 0.08));
+  /* "On" is a solid accent chip with a white icon, the same in every buttonVariant: the toolbar
+     floats over panel content the library can't see, so a tint can't be relied on to show. In dark
+     the accent is deepened (65 % accent, 35 % black) so the white icon and the chip both clear 3:1
+     for bright accents; the light scheme uses the plain accent. */
+  --ndd-panel-toolbar-btn-active-bg: color-mix(in srgb, var(--ndd-accent-color) 65%, #000000);
+  --ndd-panel-toolbar-btn-active-color: var(--ndd-brand-on-accent, #ffffff);
+  /* buttonVariant="soft": each button gets its own near-opaque chip (the floating-widget surface)
+     with a hairline edge, so it reads over light, dark or busy content without any shadow. */
+  --ndd-panel-toolbar-btn-bg: var(--ndd-panel-float-bg);
+  --ndd-panel-toolbar-btn-bg-hover: color-mix(in srgb, var(--ndd-panel-float-bg), var(--ndd-panel-toolbar-fg-hover) 14%);
+  --ndd-panel-toolbar-btn-border: 1px solid var(--ndd-panel-float-border);
+  --ndd-panel-toolbar-separator-color: var(--ndd-toolbar-separator-color, rgba(255, 255, 255, 0.09));
+  /* Icon sizes. The library sizes the icon inside its own buttons, whatever icon library the app
+     uses: icon fonts follow font-size, SVG icons follow width/height. Apps pass no size. */
+  --ndd-panel-toolbar-icon-size: 20px;
+  --ndd-chrome-icon-size: 22px;
+  /* Workspace toolbar toggle "on": it sits on known chrome next to radio buttons, so a tint plus an
+     accent edge and an accent icon (--ndd-toolbar-btn-toggle-active-bg is set per scheme and skin). */
+  --ndd-toolbar-btn-toggle-active-color: var(--ndd-tab-icon-active);
+  --ndd-toolbar-btn-toggle-active-border: var(--ndd-tab-icon-active);
+  /* ── Panel Overlay — Floating Window ── */
+  --ndd-panel-float-bg: color-mix(in srgb, var(--ndd--b-panel-float-bg, rgb(22 24 34)) 92%, transparent);
+  --ndd-panel-float-border: rgba(255, 255, 255, 0.1);
+  --ndd-panel-float-radius: 8px;
+  --ndd-panel-float-shadow: 0 4px 16px rgba(0, 0, 0, 0.35);
+  --ndd-panel-float-shadow-active: 0 8px 28px rgba(0, 0, 0, 0.55);
+  --ndd-panel-float-header-bg: var(--ndd-window-header-bg, rgba(0, 0, 0, 0.25));
+  --ndd-panel-float-header-bg-active: var(--ndd-window-header-bg, rgba(0, 0, 0, 0.25));
+  --ndd-panel-float-title-color: var(--ndd-window-text, #f8f9fa);
+  --ndd-panel-float-title-color-active: var(--ndd-window-text, #f8f9fa);
+  /* ── Sidebar, tab-icon and toolbar-button tokens ──
+     These are the library's *dark* values, and they live here rather than in a
+     `[data-color-scheme="dark"]` block because dark is the base look: an application signals it
+     by **removing** `data-color-scheme`, so a dark-scoped block matches nothing in the normal
+     case. Until 1.1.0 they were scoped that way, which left them undefined exactly when they
+     were needed — and fifteen of them are read with no `var()` fallback, so the declaration was
+     dropped rather than defaulted. The sidebar, its drawer and the workspace toolbar rendered
+     with no background and inherited text in dark mode; the selected rail icon had no colour at
+     all. `[data-color-scheme="light"]` overrides these, which is all a scheme block should ever
+     do, and a gate rule now rejects a token whose only home is such a block. */
+  --ndd-sidebar-bg: var(--ndd--b-sidebar-bg, #1e2024);
+  --ndd-sidebar-tabs-bg: var(--ndd--b-sidebar-tabs-bg, #141619);
+  --ndd-sidebar-border: rgba(255, 255, 255, 0.08);
+  --ndd-sidebar-card-bg: rgba(255, 255, 255, 0.03);
+  --ndd-sidebar-card-border: rgba(255, 255, 255, 0.08);
+  --ndd-sidebar-card-active-bg: color-mix(in srgb, var(--ndd-accent-color) 6%, transparent);
+  --ndd-sidebar-card-active-border: color-mix(in srgb, var(--ndd-accent-color) 30%, transparent);
+  --ndd-sidebar-text-title: var(--ndd--b-sidebar-text-title, #f8f9fa);
+  --ndd-sidebar-text-muted: var(--ndd--b-sidebar-text-muted, #8a90a0);
+  --ndd-sidebar-badge-bg: var(--ndd--b-sidebar-badge-bg, #2d3139);
+  --ndd-sidebar-badge-text: var(--ndd--b-sidebar-badge-text, #b0b5c0);
+  --ndd-sidebar-btn-front-border: var(--ndd-accent-color);
+  --ndd-sidebar-btn-front-text: var(--ndd-accent-color);
+  --ndd-sidebar-btn-front-bg: transparent;
+  --ndd-sidebar-btn-front-hover-bg: color-mix(in srgb, var(--ndd-accent-color) 10%, transparent);
+  --ndd-tab-icon-active: var(--ndd-accent-color);
+  --ndd-tab-icon-inactive: var(--ndd--b-tab-icon-inactive, #9ea4b0);
+  --ndd-tab-btn-active-bg: var(--ndd--b-tab-btn-active-bg, #1e2024); /* Seamless merge look */
+  --ndd-sidebar-btn-hover-bg: rgba(255, 255, 255, 0.05);
+  --ndd-sidebar-card-hover-border: color-mix(in srgb, var(--ndd-accent-color) 25%, transparent);
+  --ndd-sidebar-card-hover-bg: rgba(255, 255, 255, 0.04);
+  --ndd-sidebar-card-active-shadow: color-mix(in srgb, var(--ndd-accent-color) 8%, transparent);
+  --ndd-sidebar-drawer-header-bg: rgba(0, 0, 0, 0.12);
+  --ndd-toolbar-btn-hover-bg: rgba(255, 255, 255, 0.06);
+  --ndd-toolbar-btn-radio-active-bg: color-mix(in srgb, var(--ndd-accent-color) 14%, transparent);
+  --ndd-toolbar-btn-toggle-active-bg: color-mix(in srgb, var(--ndd-accent-color) 22%, transparent);
+  --ndd-toolbar-separator-color: rgba(255, 255, 255, 0.09);
+  /* Sidebar active-tab design tokens */
+  --ndd-tab-btn-active-shadow: none;
+  /* Toolbar active-button design tokens */
+  --ndd-toolbar-btn-active-shadow: none;
+  /* Scheme-independent measurements and off-by-default effects. The values are the ones the
+     `var()` reads already fell back to, so nothing renders differently; declaring them is what
+     makes `:root` a complete inventory for a skin author. */
+  --ndd-tab-accent-bar-width: 3px;
+  --ndd-tab-btn-active-glow: none;
+  --ndd-tab-btn-active-radius: 0px;
+  --ndd-tab-btn-active-width: 100%;
+  --ndd-toolbar-accent-bar-width: 3px;
+  --ndd-toolbar-btn-active-glow: none;
+}
+/* Brand surfaces (7.3.0): each surface a skin declares reads --ndd--b-<token> first. These are
+   mixes of the application's --ndd-brand-surface and --ndd-brand-text. --ndd--b-base is the surface,
+   written as a mix with the text so that it is valid only when *both* are set; every other value is
+   built on it and has no fallback. While either input is unset they are all invalid, and every
+   surface falls back to the skin's own colour. Internal, not API — declared only here, where :root
+   resolves the brand variables. */
+:root {
+  --ndd--b-base: color-mix(in srgb, var(--ndd-brand-surface) 100%, var(--ndd-brand-text));
+  --ndd--b-bg-panel: color-mix(in srgb, var(--ndd--b-base), var(--ndd-brand-text) 6%);
+  --ndd--b-bg-primary: var(--ndd--b-base);
+  --ndd--b-bg-tab-bar: color-mix(in srgb, var(--ndd--b-base), black 10%);
+  --ndd--b-bg-tab-hover: color-mix(in srgb, var(--ndd--b-base), var(--ndd-brand-text) 10%);
+  --ndd--b-bg-tab-inactive: color-mix(in srgb, var(--ndd--b-base), black 10%);
+  --ndd--b-bg-workspace: color-mix(in srgb, var(--ndd--b-base), var(--ndd-brand-text) 3%);
+  --ndd--b-border-panel: color-mix(in srgb, var(--ndd--b-base), var(--ndd-brand-text) 14%);
+  --ndd--b-close-btn-active-color: color-mix(in srgb, var(--ndd-brand-text) 100%, var(--ndd--b-base));
+  --ndd--b-close-btn-color: color-mix(in srgb, var(--ndd-brand-text) 62%, var(--ndd--b-base));
+  --ndd--b-close-btn-hover-color: color-mix(in srgb, var(--ndd-brand-text) 100%, var(--ndd--b-base));
+  --ndd--b-custom-btn-hover-color: color-mix(in srgb, var(--ndd-brand-text) 100%, var(--ndd--b-base));
+  --ndd--b-dock-target-bg: color-mix(in srgb, var(--ndd--b-base), var(--ndd-brand-text) 6%);
+  --ndd--b-dock-target-center-bg: color-mix(in srgb, var(--ndd--b-base), var(--ndd-brand-text) 12%);
+  --ndd--b-modal-bg: color-mix(in srgb, var(--ndd--b-base), var(--ndd-brand-text) 6%);
+  --ndd--b-modal-close-hover-color: color-mix(in srgb, var(--ndd-brand-text) 100%, var(--ndd--b-base));
+  --ndd--b-modal-curtain-bg: color-mix(in srgb, var(--ndd--b-base), black 20%);
+  --ndd--b-panel-card-bg: color-mix(in srgb, var(--ndd--b-base), black 6%);
+  --ndd--b-panel-card-border: color-mix(in srgb, var(--ndd--b-base), var(--ndd-brand-text) 16%);
+  --ndd--b-panel-float-bg: color-mix(in srgb, var(--ndd--b-base), var(--ndd-brand-text) 6%);
+  --ndd--b-panel-text: color-mix(in srgb, var(--ndd-brand-text) 100%, var(--ndd--b-base));
+  --ndd--b-panel-toolbar-frosted-bg: color-mix(in srgb, var(--ndd--b-base), var(--ndd-brand-text) 6%);
+  --ndd--b-placeholder-bg: color-mix(in srgb, var(--ndd-brand-text) 62%, var(--ndd--b-base));
+  --ndd--b-side-panel-bg: color-mix(in srgb, var(--ndd--b-base), var(--ndd-brand-text) 6%);
+  --ndd--b-side-panel-close-hover-color: color-mix(in srgb, var(--ndd-brand-text) 100%, var(--ndd--b-base));
+  --ndd--b-sidebar-badge-bg: color-mix(in srgb, var(--ndd--b-base), var(--ndd-brand-text) 16%);
+  --ndd--b-sidebar-badge-text: color-mix(in srgb, var(--ndd-brand-text) 62%, var(--ndd--b-base));
+  --ndd--b-sidebar-bg: color-mix(in srgb, var(--ndd--b-base), var(--ndd-brand-text) 4%);
+  --ndd--b-sidebar-card-bg: color-mix(in srgb, var(--ndd--b-base), var(--ndd-brand-text) 8%);
+  --ndd--b-sidebar-tabs-bg: color-mix(in srgb, var(--ndd--b-base), black 10%);
+  --ndd--b-sidebar-text-muted: color-mix(in srgb, var(--ndd-brand-text) 62%, var(--ndd--b-base));
+  --ndd--b-sidebar-text-title: color-mix(in srgb, var(--ndd-brand-text) 100%, var(--ndd--b-base));
+  --ndd--b-tab-bg-active-unfocused: color-mix(in srgb, var(--ndd--b-base), var(--ndd-brand-text) 3%);
+  --ndd--b-tab-btn-active-bg: color-mix(in srgb, var(--ndd--b-base), var(--ndd-brand-text) 9%);
+  --ndd--b-tab-icon-inactive: color-mix(in srgb, var(--ndd-brand-text) 62%, var(--ndd--b-base));
+  --ndd--b-tab-text-active-focused: color-mix(in srgb, var(--ndd-brand-text) 100%, var(--ndd--b-base));
+  --ndd--b-tab-text-active-unfocused: color-mix(in srgb, var(--ndd-brand-text) 62%, var(--ndd--b-base));
+  --ndd--b-taskbar-bg: color-mix(in srgb, var(--ndd--b-base), black 10%);
+  --ndd--b-taskbar-item-bg: color-mix(in srgb, var(--ndd--b-base), var(--ndd-brand-text) 6%);
+  --ndd--b-taskbar-item-hover-bg: color-mix(in srgb, var(--ndd--b-base), var(--ndd-brand-text) 12%);
+  --ndd--b-text-primary: color-mix(in srgb, var(--ndd-brand-text) 100%, var(--ndd--b-base));
+  --ndd--b-text-secondary: color-mix(in srgb, var(--ndd-brand-text) 62%, var(--ndd--b-base));
+  --ndd--b-text-tab-active: color-mix(in srgb, var(--ndd-brand-text) 100%, var(--ndd--b-base));
+  --ndd--b-text-tab-hover: color-mix(in srgb, var(--ndd-brand-text) 100%, var(--ndd--b-base));
+  --ndd--b-text-tab-inactive: color-mix(in srgb, var(--ndd-brand-text) 62%, var(--ndd--b-base));
+  --ndd--b-toast-bg: color-mix(in srgb, var(--ndd--b-base), var(--ndd-brand-text) 10%);
+  --ndd--b-window-bg: color-mix(in srgb, var(--ndd--b-base), var(--ndd-brand-text) 6%);
+  --ndd--b-window-border: color-mix(in srgb, var(--ndd--b-base), var(--ndd-brand-text) 14%);
+  --ndd--b-window-border-focused: color-mix(in srgb, var(--ndd--b-base), var(--ndd-brand-text) 30%);
+  --ndd--b-window-header-bg: color-mix(in srgb, var(--ndd--b-base), black 10%);
+  --ndd--b-window-text: color-mix(in srgb, var(--ndd-brand-text) 100%, var(--ndd--b-base));
+}
+
+

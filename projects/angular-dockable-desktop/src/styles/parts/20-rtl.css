@@ -1,0 +1,164 @@
+/* ==========================================
+   RTL (Right-to-Left) Support
+   ========================================== */
+
+[dir="rtl"] .ndd-workspace-tab {
+  border-right: none !important;
+  border-left: 1px solid var(--ndd-border-panel) !important;
+  padding: 0 14px 0 6px !important;
+}
+
+[dir="rtl"] .ndd-workspace-tab.ndd-drag-hover-left {
+  box-shadow: 3px 0 0 0 var(--ndd-accent-color, #38bdf8),
+              10px 0 10px -2px var(--ndd-accent-glow, rgba(56,189,248,0.35));
+}
+[dir="rtl"] .ndd-workspace-tab.ndd-drag-hover-right {
+  box-shadow: -3px 0 0 0 var(--ndd-accent-color, #38bdf8),
+              -10px 0 10px -2px var(--ndd-accent-glow, rgba(56,189,248,0.35));
+}
+
+[dir="rtl"] .ndd-workspace-tab > .ndd-text-truncate {
+  margin-right: 0 !important;
+  margin-left: 12px !important;
+}
+
+[dir="rtl"] .ndd-workspace-tab-icon {
+  margin-right: 0 !important;
+  margin-left: 6px !important;
+}
+
+[dir="rtl"] .ndd-tab-header-actions {
+  margin-left: 0 !important;
+  margin-right: auto !important;
+}
+
+[dir="rtl"] .ndd-close-tab-x {
+  margin-left: 0 !important;
+  margin-right: auto !important;
+}
+
+/* Floating window title bar RTL — inherited direction:rtl on the titlebar flex container
+   moves buttons (last in DOM) to the LEFT and title (first in DOM) to the RIGHT.
+   No explicit row-reverse needed; only prevent the button group from reordering internally. */
+[dir="rtl"] .ndd-titlebar-actions { flex-direction: row; }
+
+/* Side Panels transitions slide-in direction */
+[dir="rtl"] .ndd-side-panel-left {
+  left: auto !important;
+  right: 0 !important;
+  transform: translateX(100%) !important;
+}
+[dir="rtl"] .ndd-side-panel-left.ndd-side-panel-visible {
+  transform: translateX(0) !important;
+  border-right: none !important;
+  border-left: 1px solid var(--ndd-border-panel, #3c3c3c) !important;
+}
+
+[dir="rtl"] .ndd-side-panel-right {
+  right: auto !important;
+  left: 0 !important;
+  transform: translateX(-100%) !important;
+}
+[dir="rtl"] .ndd-side-panel-right.ndd-side-panel-visible {
+  transform: translateX(0) !important;
+  border-left: none !important;
+  border-right: 1px solid var(--ndd-border-panel, #3c3c3c) !important;
+}
+
+/* Minimize Taskbar adjustments */
+[dir="rtl"] .ndd-taskbar-footer-container {
+  flex-direction: row-reverse !important;
+}
+[dir="rtl"] .ndd-taskbar-item-icon {
+  margin-right: 0 !important;
+  margin-left: 4px !important;
+}
+
+/* macOS Skin - RTL floating window titlebar overrides
+   Dots must stay on the LEFT in both LTR and RTL (real macOS behavior).
+   In RTL context flex-direction:row flows items right-to-left, so
+   DOM [title][buttons] → title at RIGHT, buttons at LEFT. */
+[dir="rtl"] [data-ndd-skin="macos"] .ndd-floating-window-titlebar {
+  flex-direction: row !important;
+}
+/* Title: pack icon+text toward the visual right (flex-start = right in RTL) */
+[dir="rtl"] [data-ndd-skin="macos"] .ndd-floating-window-titlebar .ndd-floating-window-title {
+  justify-content: flex-start !important;
+}
+/* Button group: keep dots in correct visual order (Red → Yellow → Green, close at far left).
+   direction:rtl (inherited) + flex-direction:row = right-to-left → DOM first item (more) at right,
+   last item (close) at left. */
+[dir="rtl"] [data-ndd-skin="macos"] .ndd-floating-window-titlebar .ndd-titlebar-actions {
+  flex-direction: row !important;
+}
+
+/* Mirror close-button margins for macOS tabs under RTL */
+[dir="rtl"][data-ndd-skin="macos"] .ndd-close-tab-x {
+  margin-left: 0 !important;
+  margin-right: 2px !important;
+}
+
+/* ── Sidebar strips — separator border, accent indicator, drawer shadow ──
+   direction: rtl (inherited from workspace root) reverses the flex row so
+   `ndd-left` strips move visually to the RIGHT and `ndd-right` strips to the LEFT.
+   All physical border-left/border-right and box-shadow directions must swap. */
+
+[dir="rtl"] .ndd-sidebar-tabs-strip.ndd-left {
+  border-left: 1px solid var(--ndd-sidebar-border) !important;
+  border-right: none !important;
+}
+[dir="rtl"] .ndd-sidebar-tabs-strip.ndd-right {
+  border-right: 1px solid var(--ndd-sidebar-border) !important;
+  border-left: none !important;
+}
+
+[dir="rtl"] .ndd-sidebar-tabs-strip.ndd-left .ndd-sidebar-tab-btn.ndd-active {
+  border-left: none !important;
+  border-right: var(--ndd-tab-accent-bar-width, 3px) solid var(--ndd-tab-icon-active) !important;
+  margin-left: -2px !important;
+  margin-right: 0 !important;
+}
+[dir="rtl"] .ndd-sidebar-tabs-strip.ndd-right .ndd-sidebar-tab-btn.ndd-active {
+  border-right: none !important;
+  border-left: var(--ndd-tab-accent-bar-width, 3px) solid var(--ndd-tab-icon-active) !important;
+  margin-right: -2px !important;
+  margin-left: 0 !important;
+}
+
+[dir="rtl"] .ndd-sidebar-content-drawer.ndd-left {
+  border-left: 1px solid var(--ndd-sidebar-border) !important;
+  border-right: none !important;
+  box-shadow: -4px 0 16px rgba(0, 0, 0, 0.12);
+}
+[dir="rtl"] .ndd-sidebar-content-drawer.ndd-right {
+  border-right: 1px solid var(--ndd-sidebar-border) !important;
+  border-left: none !important;
+  box-shadow: 4px 0 16px rgba(0, 0, 0, 0.12);
+}
+
+/* obsidian & tokyo — flip the inset glow X offset sign */
+[dir="rtl"] [data-ndd-skin="obsidian"] .ndd-sidebar-tabs-strip.ndd-left .ndd-sidebar-tab-btn.ndd-active {
+  box-shadow: var(--ndd-tab-btn-active-shadow), inset -3px 0 8px color-mix(in srgb, var(--ndd-accent-color) 8%, transparent) !important;
+}
+[dir="rtl"] [data-ndd-skin="obsidian"] .ndd-sidebar-tabs-strip.ndd-right .ndd-sidebar-tab-btn.ndd-active {
+  box-shadow: var(--ndd-tab-btn-active-shadow), inset 3px 0 8px color-mix(in srgb, var(--ndd-accent-color) 8%, transparent) !important;
+}
+[dir="rtl"] [data-ndd-skin="tokyo"] .ndd-sidebar-tabs-strip.ndd-left .ndd-sidebar-tab-btn.ndd-active {
+  box-shadow: var(--ndd-tab-btn-active-shadow), inset -3px 0 12px color-mix(in srgb, var(--ndd-accent-color) 18%, transparent) !important;
+}
+[dir="rtl"] [data-ndd-skin="tokyo"] .ndd-sidebar-tabs-strip.ndd-right .ndd-sidebar-tab-btn.ndd-active {
+  box-shadow: var(--ndd-tab-btn-active-shadow), inset 3px 0 12px color-mix(in srgb, var(--ndd-accent-color) 18%, transparent) !important;
+}
+
+/* chrome — swap the capsule border-radius when strips change sides */
+[dir="rtl"] [data-ndd-skin="chrome"] .ndd-sidebar-tabs-strip.ndd-left .ndd-sidebar-tab-btn.ndd-active {
+  border-radius: calc(10px * var(--ndd-radius-scale, 1)) 0 0 calc(10px * var(--ndd-radius-scale, 1)) !important;
+  margin-left: 0 !important;
+  margin-right: 0 !important;
+}
+[dir="rtl"] [data-ndd-skin="chrome"] .ndd-sidebar-tabs-strip.ndd-right .ndd-sidebar-tab-btn.ndd-active {
+  border-radius: 0 calc(10px * var(--ndd-radius-scale, 1)) calc(10px * var(--ndd-radius-scale, 1)) 0 !important;
+  margin-right: 0 !important;
+  margin-left: 0 !important;
+}
+

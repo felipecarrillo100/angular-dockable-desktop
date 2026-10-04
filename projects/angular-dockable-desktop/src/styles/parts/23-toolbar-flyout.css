@@ -1,0 +1,161 @@
+/* ==========================================================================
+   TOOLBAR GROUP FLYOUT
+   ========================================================================== */
+
+.ndd-toolbar-group-flyout {
+  position: fixed;
+  z-index: calc(var(--ndd-z-base, 1000) + 7000);
+  background: var(--ndd-sidebar-bg, var(--ndd-bg-panel));
+  border: 1px solid var(--ndd-sidebar-border);
+  border-radius: calc(8px * var(--ndd-radius-scale, 1));
+  padding: 4px;
+  min-width: 168px;
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.3), 0 2px 8px rgba(0, 0, 0, 0.15);
+  animation: ndd-toolbar-flyout-in 0.12s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+@keyframes ndd-toolbar-flyout-in {
+  from { opacity: 0; transform: scale(0.95); }
+  to   { opacity: 1; transform: scale(1); }
+}
+
+/* Animation origin matches the edge closest to the toolbar button */
+.ndd-toolbar-group-flyout.ndd-left   { transform-origin: top left; }
+.ndd-toolbar-group-flyout.ndd-right  { transform-origin: top right; }
+.ndd-toolbar-group-flyout.ndd-top    { transform-origin: top left; }
+.ndd-toolbar-group-flyout.ndd-bottom { transform-origin: bottom left; }
+/* RTL: physical sides swap, so animation origin flips horizontally */
+[dir="rtl"] .ndd-toolbar-group-flyout.ndd-left   { transform-origin: top right; }
+[dir="rtl"] .ndd-toolbar-group-flyout.ndd-right  { transform-origin: top left; }
+[dir="rtl"] .ndd-toolbar-group-flyout.ndd-top    { transform-origin: top right; }
+[dir="rtl"] .ndd-toolbar-group-flyout.ndd-bottom { transform-origin: bottom right; }
+
+[dir="rtl"] .ndd-toolbar-group-flyout-label {
+  text-align: right;
+}
+
+.ndd-toolbar-group-flyout-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 5px 8px;
+  border: 1px solid transparent;
+  border-radius: calc(6px * var(--ndd-radius-scale, 1));
+  background: transparent;
+  color: var(--ndd-sidebar-text-title, var(--ndd-text-primary));
+  cursor: pointer;
+  width: 100%;
+  text-align: start;
+  font-size: 0.8125rem;
+  font-family: inherit;
+  flex-shrink: 0;
+  transition: background-color 0.1s ease, color 0.1s ease;
+}
+
+.ndd-toolbar-group-flyout-item:hover:not(:disabled) {
+  background-color: var(--ndd-toolbar-btn-hover-bg);
+  color: var(--ndd-sidebar-text-title, var(--ndd-text-primary));
+}
+
+.ndd-toolbar-group-flyout-item:disabled {
+  opacity: 0.35;
+  cursor: not-allowed;
+}
+
+.ndd-toolbar-group-flyout-item.ndd-active {
+  color: var(--ndd-tab-icon-active);
+  background-color: var(--ndd-toolbar-btn-radio-active-bg);
+}
+
+.ndd-toolbar-group-flyout-icon {
+  flex-shrink: 0;
+  width: 16px;
+  height: 16px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+
+.ndd-toolbar-group-flyout-label {
+  flex: 1;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.ndd-toolbar-group-flyout-shortcut {
+  flex-shrink: 0;
+  font-size: 0.6875rem;
+  color: var(--ndd-text-secondary);
+  opacity: 0.7;
+}
+
+.ndd-toolbar-group-flyout-sep {
+  height: 1px;
+  background: var(--ndd-toolbar-separator-color);
+  margin: 3px 4px;
+  flex-shrink: 0;
+}
+
+
+/* Button base — used in ConfirmationForm and similar dialogs */
+.ndd-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-family: monospace;
+  font-weight: 500;
+  cursor: pointer;
+  border-radius: calc(4px * var(--ndd-radius-scale, 1));
+  transition: all 0.15s ease;
+  white-space: nowrap;
+  user-select: none;
+  line-height: 1.2;
+}
+
+.ndd-btn-sm {
+  padding: 0.25rem 0.75rem;
+  font-size: 0.8125rem;
+}
+
+.ndd-btn-outline {
+  background: transparent;
+  border: 1px solid var(--ndd-text-secondary, #6c757d);
+  color: var(--ndd-text-secondary, #6c757d);
+}
+
+.ndd-btn-outline:hover {
+  background: rgba(255, 255, 255, 0.08);
+  border-color: var(--ndd-text-primary, #f1f5f9);
+  color: var(--ndd-text-primary, #f1f5f9);
+}
+
+[data-color-scheme="light"] .ndd-btn-outline {
+  border-color: var(--ndd--b-text-secondary, #6c757d);
+  color: var(--ndd--b-text-secondary, #6c757d);
+}
+
+[data-color-scheme="light"] .ndd-btn-outline:hover {
+  background: rgba(0, 0, 0, 0.05);
+  border-color: var(--ndd--b-text-tab-inactive, #495057);
+  color: var(--ndd--b-text-tab-inactive, #495057);
+}
+
+.ndd-btn-primary {
+  background: var(--ndd-accent-color, #38bdf8);
+  border: 1px solid var(--ndd-accent-color, #38bdf8);
+  color: var(--ndd-brand-on-accent, #090b11);
+}
+
+.ndd-btn-primary:hover {
+  filter: brightness(1.1);
+}
+
+[data-color-scheme="light"] .ndd-btn-primary {
+  color: var(--ndd-brand-on-accent, #ffffff);
+}
+

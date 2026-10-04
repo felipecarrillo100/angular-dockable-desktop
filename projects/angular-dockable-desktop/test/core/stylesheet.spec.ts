@@ -5,10 +5,12 @@
  * `vdd-` → `ndd-`), which includes rdd's `sidePanelPositioning.test.ts` (SP1). jsdom never
  * loads the stylesheet, so a computed-style test would pass no matter which class a component
  * emitted — exactly how rdd shipped four rules that matched nothing. These read the CSS text.
- * Two Angular-port additions at the end.
+ * Two Angular-port additions at the end, and (1.5.1) the check that `styles.css`, generated from
+ * `styles/parts/*.css` by `scripts/build-css.mjs`, was regenerated after an edit.
  */
 import { readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
+import { spawnSync } from 'node:child_process';
 
 const css = readFileSync(
   resolve(process.cwd(), 'projects/angular-dockable-desktop/src/styles/styles.css'),
@@ -244,5 +246,13 @@ describe('consumer content contract (styles.css)', () => {
     expect(block).toMatch(/\[class\*="ndd-"\]/);
     expect(block).toMatch(/transition:\s*none\s*!important/);
     expect(block).toMatch(/animation:\s*none\s*!important/);
+  });
+});
+
+describe('generated stylesheet', () => {
+  it('styles.css is exactly what styles/parts/*.css give (run `npm run css` after an edit)', () => {
+    const run = spawnSync(process.execPath, [resolve(process.cwd(), 'scripts/build-css.mjs'), '--check'], { encoding: 'utf8' });
+    expect(run.stderr.trim()).toBe('');
+    expect(run.status).toBe(0);
   });
 });

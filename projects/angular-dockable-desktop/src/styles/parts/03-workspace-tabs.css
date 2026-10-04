@@ -1,0 +1,162 @@
+/* Workspace Panel Container */
+.ndd-workspace-panel {
+  background-color: var(--ndd-bg-panel);
+  border: 1px solid var(--ndd-border-panel);
+  box-shadow: inset 0 0 20px rgba(0, 0, 0, 0.15);
+  width: 100%;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+}
+
+/* Tab Headers Bar */
+.ndd-workspace-tab-bar {
+  background-color: var(--ndd-bg-tab-bar);
+  border-bottom: 1px solid var(--ndd-border-panel);
+  padding: 0 4px;
+  display: flex;
+  flex-direction: row;
+  justify-content: space-between;
+  align-items: center;
+}
+
+/* Tab Headers Container */
+/* rdd rendered scroll buttons in a tab bar that overflowed (`.rdd-tab-scroll-btn`).
+   vdd's tab bar is a scroll container with no buttons — recorded as divergence D15 — so
+   those rules matched nothing and were removed in M13. The taskbar's own overflow buttons
+   are `.ndd-taskbar-nav-btn`, which are emitted and styled. */
+
+.ndd-tab-headers-container {
+  display: flex;
+  align-items: flex-end;
+  height: 100%;
+  padding-top: 4px;
+  padding-left: 6px;
+  position: relative;
+  z-index: 26; /* above resizer ::before (22) and resizer hover (25) — tabs always win */
+  margin-bottom: -1px;
+  flex-grow: 1;
+  overflow-x: auto;
+}
+
+/* Tab bar scroll arrow buttons — appear when tabs overflow */
+
+
+
+/* Premium Tab styling (VS Code Style) */
+.ndd-workspace-tab {
+  position: relative;
+  background-color: var(--ndd-bg-tab-inactive) !important; /* VS Code dark background for inactive tabs */
+  color: var(--ndd-text-tab-inactive) !important; /* Clear readable gray */
+  border: none !important;
+  border-right: 1px solid var(--ndd-border-panel) !important; /* crisp separator */
+  padding: 0 6px 0 14px !important;
+  font-size: 0.75rem;
+  display: flex;
+  align-items: center;
+  border-radius: 0 !important; /* Square edges */
+  margin-right: 0 !important; /* No gaps between tabs */
+  font-weight: 500;
+  cursor: pointer;
+  user-select: none;
+  height: 35px; /* VS Code standard height */
+  box-sizing: border-box;
+  flex-shrink: 1;
+  min-width: 80px; /* compress before scrolling kicks in */
+  transition: background-color 0.1s ease, color 0.1s ease;
+}
+
+.ndd-workspace-tab > .ndd-text-truncate {
+  margin-right: 12px;
+}
+
+/* Remove original after element separator */
+.ndd-workspace-tab:not(.ndd-active):not(:last-child)::after {
+  display: none !important;
+}
+
+.ndd-workspace-tab:hover {
+  background-color: var(--ndd-bg-tab-hover) !important;
+  color: var(--ndd-text-tab-hover) !important;
+}
+
+/* Active tab (focused) */
+.ndd-workspace-tab.ndd-active.ndd-workspace-tab-active-focused {
+  background-color: var(--ndd-tab-bg-active-focused) !important;
+  color: var(--ndd-tab-text-active-focused) !important;
+  font-weight: 500;
+  border-right: 1px solid var(--ndd-border-panel) !important;
+  z-index: 2;
+}
+
+.ndd-workspace-tab.ndd-active.ndd-workspace-tab-active-focused::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 2px;
+  background-color: var(--ndd-tab-indicator-focused) !important;
+  border-radius: 0 !important;
+  box-shadow: 0 1px 4px var(--ndd-accent-glow);
+}
+
+/* Active tab (unfocused/inactive group) */
+.ndd-workspace-tab.ndd-active.ndd-workspace-tab-active-unfocused {
+  background-color: var(--ndd-tab-bg-active-unfocused) !important;
+  color: var(--ndd-tab-text-active-unfocused) !important;
+  font-weight: 500;
+  border-right: 1px solid var(--ndd-border-panel) !important;
+  z-index: 2;
+}
+
+.ndd-workspace-tab.ndd-active.ndd-workspace-tab-active-unfocused::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 2px;
+  background-color: var(--ndd-tab-indicator-unfocused) !important;
+  border-radius: 0 !important;
+}
+
+.ndd-workspace-tab-inactive {
+  color: var(--ndd-close-btn-color) !important;
+}
+
+.ndd-workspace-tab-inactive:hover {
+  color: var(--ndd-text-tab-hover) !important;
+}
+
+/* Tab close button (VS Code style visibility) */
+.ndd-close-tab-x {
+  opacity: 0; /* hidden by default on inactive tabs, allows hover/active overrides */
+  transition: opacity 0.12s ease, background-color 0.12s ease, color 0.12s ease;
+  margin-left: 8px;
+  border-radius: calc(3px * var(--ndd-radius-scale, 1));
+  color: var(--ndd-close-btn-color) !important;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* Always show close icon on active tab */
+.ndd-workspace-tab.ndd-active .ndd-close-tab-x {
+  opacity: 0.75 !important;
+  color: var(--ndd-close-btn-active-color) !important;
+}
+
+/* Show close icon on hover of any tab */
+.ndd-workspace-tab:hover .ndd-close-tab-x {
+  opacity: 0.75 !important;
+  color: var(--ndd-close-btn-active-color) !important;
+}
+
+/* Hover style on the close icon itself (VS Code dark rounded background) */
+.ndd-close-tab-x:hover {
+  opacity: 1 !important;
+  background-color: var(--ndd-close-btn-hover-bg) !important;
+  color: var(--ndd-close-btn-hover-color) !important;
+}
+

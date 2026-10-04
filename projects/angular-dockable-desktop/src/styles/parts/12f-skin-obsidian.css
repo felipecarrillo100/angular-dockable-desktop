@@ -1,0 +1,73 @@
+/* --------------------------------------------------------------------------
+   SKIN 6: Midnight Obsidian Preset (Vercel Style)
+   -------------------------------------------------------------------------- */
+[data-ndd-skin="obsidian"] {
+  --ndd-bg-workspace: var(--ndd--b-bg-workspace, #000000);
+  --ndd-bg-panel: var(--ndd--b-bg-panel, #0a0a0a);
+  --ndd-bg-tab-bar: var(--ndd--b-bg-tab-bar, #000000);
+  --ndd-window-bg: color-mix(in srgb, var(--ndd--b-window-bg, rgb(10 10 10)) calc(var(--ndd-window-opacity, 1.0) * 100%), transparent);
+  --ndd-window-border: var(--ndd--b-window-border, #1a1a1a);
+  --ndd-window-border-focused: var(--ndd--b-window-border-focused, #333333);
+  --ndd-window-header-bg: var(--ndd--b-window-header-bg, #000000);
+  --ndd-accent-color: var(--ndd-brand-accent, #ffffff);
+  --ndd-accent-glow: color-mix(in srgb, var(--ndd-accent-color) 8%, transparent);
+  --ndd-border-panel: var(--ndd--b-border-panel, #1a1a1a);
+  --ndd-bg-tab-inactive: var(--ndd--b-bg-tab-inactive, #000000);
+  --ndd-text-tab-inactive: var(--ndd--b-text-tab-inactive, #737373);
+  --ndd-text-tab-active: var(--ndd--b-text-tab-active, #ffffff);
+  --ndd-panel-card-bg: var(--ndd--b-panel-card-bg, #030303);
+  --ndd-panel-card-border: var(--ndd--b-panel-card-border, #1a1a1a);
+  --ndd-close-btn-color: var(--ndd--b-close-btn-color, #737373);
+  --ndd-close-btn-active-color: var(--ndd--b-close-btn-active-color, #ffffff);
+  --ndd-scrollbar-thumb: rgba(255, 255, 255, 0.15);
+  --ndd-scrollbar-thumb-hover: rgba(255, 255, 255, 0.35);
+  --ndd-window-text: var(--ndd--b-window-text, #ffffff);
+  --ndd-panel-text: var(--ndd--b-panel-text, #ffffff);
+  --ndd-tab-icon-active: var(--ndd-accent-color);
+  --ndd-toolbar-btn-radio-active-bg: color-mix(in srgb, var(--ndd-accent-color) 10%, transparent);
+  --ndd-toolbar-btn-toggle-active-bg: color-mix(in srgb, var(--ndd-accent-color) 22%, transparent);
+}
+
+[data-ndd-skin="obsidian"][data-color-scheme="light"] {
+  --ndd-bg-workspace: var(--ndd--b-bg-workspace, #ffffff);
+  --ndd-bg-panel: var(--ndd--b-bg-panel, #fafafa);
+  --ndd-bg-tab-bar: var(--ndd--b-bg-tab-bar, #ffffff);
+  --ndd-window-bg: color-mix(in srgb, var(--ndd--b-window-bg, rgb(250 250 250)) calc(var(--ndd-window-opacity, 1.0) * 100%), transparent);
+  --ndd-window-border: var(--ndd--b-window-border, #e5e5e5);
+  --ndd-window-border-focused: var(--ndd--b-window-border-focused, #a3a3a3);
+  --ndd-window-header-bg: var(--ndd--b-window-header-bg, #ffffff);
+  --ndd-accent-color: var(--ndd-brand-accent, #000000);
+  --ndd-accent-glow: color-mix(in srgb, var(--ndd-accent-color) 5%, transparent);
+  --ndd-border-panel: var(--ndd--b-border-panel, #eaeaea);
+  --ndd-bg-tab-inactive: var(--ndd--b-bg-tab-inactive, #ffffff);
+  --ndd-text-tab-inactive: var(--ndd--b-text-tab-inactive, #737373);
+  --ndd-text-tab-active: var(--ndd--b-text-tab-active, #000000);
+  --ndd-panel-card-bg: var(--ndd--b-panel-card-bg, #ffffff);
+  --ndd-panel-card-border: var(--ndd--b-panel-card-border, #e5e5e5);
+  --ndd-close-btn-color: var(--ndd--b-close-btn-color, #737373);
+  --ndd-close-btn-active-color: var(--ndd--b-close-btn-active-color, #000000);
+  --ndd-scrollbar-thumb: rgba(0, 0, 0, 0.1);
+  --ndd-scrollbar-thumb-hover: rgba(0, 0, 0, 0.25);
+  --ndd-window-text: var(--ndd--b-window-text, #000000);
+  --ndd-panel-text: var(--ndd--b-panel-text, #000000);
+  --ndd-panel-title-color: var(--ndd-accent-color);
+  --ndd-tab-icon-active: var(--ndd-accent-color);
+  --ndd-toolbar-btn-radio-active-bg: color-mix(in srgb, var(--ndd-accent-color) 10%, transparent);
+  --ndd-toolbar-btn-toggle-active-bg: color-mix(in srgb, var(--ndd-accent-color) 16%, transparent);
+}
+
+/* Obsidian custom borderless panel elevations */
+[data-ndd-skin="obsidian"] .ndd-floating-window {
+  box-shadow: 0 16px 40px rgba(0, 0, 0, 0.6), 0 0 1px rgba(255, 255, 255, 0.2) !important;
+  border-radius: calc(6px * var(--ndd-radius-scale, 1));
+}
+[data-ndd-skin="obsidian"] .ndd-floating-window.ndd-window-focused {
+  box-shadow: 0 24px 50px color-mix(in srgb, var(--ndd-accent-color) 6%, transparent), 0 0 1px color-mix(in srgb, var(--ndd-accent-color) 40%, transparent) !important;
+}
+[data-ndd-skin="obsidian"][data-color-scheme="light"] .ndd-floating-window {
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.08), 0 0 1px rgba(0, 0, 0, 0.1) !important;
+}
+[data-ndd-skin="obsidian"][data-color-scheme="light"] .ndd-floating-window.ndd-window-focused {
+  box-shadow: 0 16px 40px rgba(0, 0, 0, 0.14), 0 0 1px rgba(0, 0, 0, 0.2) !important;
+}
+

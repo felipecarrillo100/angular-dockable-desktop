@@ -1,0 +1,161 @@
+/* ==========================================================================
+   TOOLBAR STRIP
+   ========================================================================== */
+
+.ndd-toolbar-strip {
+  background-color: var(--ndd-sidebar-tabs-bg);
+  display: flex;
+  align-items: center;
+  flex-shrink: 0;
+  z-index: 5;
+}
+
+.ndd-toolbar-strip.ndd-left,
+.ndd-toolbar-strip.ndd-right {
+  flex-direction: column;
+  width: 48px;
+  height: 100%;
+  padding: 8px 0;
+  gap: 4px;
+  overflow: hidden;
+  transition: width 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.ndd-toolbar-strip.ndd-top,
+.ndd-toolbar-strip.ndd-bottom {
+  flex-direction: row;
+  width: 100%;
+  height: 48px;
+  padding: 0 8px;
+  gap: 4px;
+  overflow: hidden;
+  transition: height 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+@media (pointer: coarse) {
+  .ndd-toolbar-strip.ndd-left, .ndd-toolbar-strip.ndd-right { width: 56px; }
+  .ndd-toolbar-strip.ndd-top, .ndd-toolbar-strip.ndd-bottom { height: 56px; }
+}
+
+.ndd-toolbar-strip.ndd-left  { border-right:  1px solid var(--ndd-sidebar-border); }
+.ndd-toolbar-strip.ndd-right { border-left:   1px solid var(--ndd-sidebar-border); }
+.ndd-toolbar-strip.ndd-top   { border-bottom: 1px solid var(--ndd-sidebar-border); }
+.ndd-toolbar-strip.ndd-bottom{ border-top:    1px solid var(--ndd-sidebar-border); }
+/* Collapsed ([visible]=false): the inline size is 0, and the edge border goes too, or a 1px line
+   is left behind where the strip was (divergence N7). */
+.ndd-toolbar-strip.ndd-toolbar-strip--collapsed { border-width: 0; }
+
+/* Base button */
+.ndd-toolbar-btn {
+  width: 36px;
+  height: 36px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: transparent;
+  border: 1px solid transparent;
+  border-radius: calc(6px * var(--ndd-radius-scale, 1));
+  color: var(--ndd-tab-icon-inactive);
+  cursor: pointer;
+  flex-shrink: 0;
+  position: relative;
+  transition: color 0.15s ease, background-color 0.15s ease;
+  font-size: var(--ndd-chrome-icon-size, 22px);
+  line-height: 1;
+}
+
+.ndd-toolbar-btn svg {
+  width: var(--ndd-chrome-icon-size, 22px);
+  height: var(--ndd-chrome-icon-size, 22px);
+  flex-shrink: 0;
+}
+
+.ndd-toolbar-btn:hover:not(:disabled) {
+  background-color: var(--ndd-toolbar-btn-hover-bg);
+  color: var(--ndd-sidebar-text-title);
+}
+
+.ndd-toolbar-btn:disabled {
+  opacity: 0.35;
+  cursor: not-allowed;
+}
+
+/* Radio active — accent bar on the outer edge */
+.ndd-toolbar-btn-radio.ndd-active {
+  color: var(--ndd-tab-icon-active);
+  background-color: var(--ndd-toolbar-btn-radio-active-bg);
+  box-shadow: var(--ndd-toolbar-btn-active-shadow, none);
+  filter: var(--ndd-toolbar-btn-active-glow, none);
+  transition: color 0.15s ease, background-color 0.15s ease, box-shadow 0.15s ease;
+}
+
+.ndd-toolbar-strip.ndd-left   .ndd-toolbar-btn-radio.ndd-active { border-left:   var(--ndd-toolbar-accent-bar-width, 3px) solid var(--ndd-tab-icon-active); border-radius: 0 calc(6px * var(--ndd-radius-scale, 1)) calc(6px * var(--ndd-radius-scale, 1)) 0; }
+.ndd-toolbar-strip.ndd-right  .ndd-toolbar-btn-radio.ndd-active { border-right:  var(--ndd-toolbar-accent-bar-width, 3px) solid var(--ndd-tab-icon-active); border-radius: calc(6px * var(--ndd-radius-scale, 1)) 0 0 calc(6px * var(--ndd-radius-scale, 1)); }
+.ndd-toolbar-strip.ndd-top    .ndd-toolbar-btn-radio.ndd-active { border-bottom: var(--ndd-toolbar-accent-bar-width, 3px) solid var(--ndd-tab-icon-active); border-radius: calc(6px * var(--ndd-radius-scale, 1)) calc(6px * var(--ndd-radius-scale, 1)) 0 0; }
+.ndd-toolbar-strip.ndd-bottom .ndd-toolbar-btn-radio.ndd-active { border-top:    var(--ndd-toolbar-accent-bar-width, 3px) solid var(--ndd-tab-icon-active); border-radius: 0 0 calc(6px * var(--ndd-radius-scale, 1)) calc(6px * var(--ndd-radius-scale, 1)); }
+
+/* Toggle active — accent tint, accent edge and accent icon; no directional bar (that marks radios) */
+.ndd-toolbar-btn-toggle.ndd-active {
+  color: var(--ndd-toolbar-btn-toggle-active-color);
+  background-color: var(--ndd-toolbar-btn-toggle-active-bg);
+  border-color: var(--ndd-toolbar-btn-toggle-active-border);
+}
+
+/* Group button — corner triangle indicator shows a sub-tool family */
+.ndd-toolbar-btn-group {
+  position: relative;
+}
+
+.ndd-toolbar-btn-group::after {
+  content: '';
+  position: absolute;
+  bottom: 4px;
+  right: 4px;
+  width: 0;
+  height: 0;
+  border: 3.5px solid transparent;
+  border-top-color: currentColor;
+  border-right-color: currentColor;
+  opacity: 0.55;
+}
+
+/* Group active state — same directional accent as radio */
+.ndd-toolbar-btn-group.ndd-active {
+  color: var(--ndd-tab-icon-active);
+  background-color: var(--ndd-toolbar-btn-radio-active-bg);
+  box-shadow: var(--ndd-toolbar-btn-active-shadow, none);
+  filter: var(--ndd-toolbar-btn-active-glow, none);
+  transition: color 0.15s ease, background-color 0.15s ease, box-shadow 0.15s ease;
+}
+
+.ndd-toolbar-strip.ndd-left   .ndd-toolbar-btn-group.ndd-active { border-left:   var(--ndd-toolbar-accent-bar-width, 3px) solid var(--ndd-tab-icon-active); border-radius: 0 calc(6px * var(--ndd-radius-scale, 1)) calc(6px * var(--ndd-radius-scale, 1)) 0; }
+.ndd-toolbar-strip.ndd-right  .ndd-toolbar-btn-group.ndd-active { border-right:  var(--ndd-toolbar-accent-bar-width, 3px) solid var(--ndd-tab-icon-active); border-radius: calc(6px * var(--ndd-radius-scale, 1)) 0 0 calc(6px * var(--ndd-radius-scale, 1)); }
+.ndd-toolbar-strip.ndd-top    .ndd-toolbar-btn-group.ndd-active { border-bottom: var(--ndd-toolbar-accent-bar-width, 3px) solid var(--ndd-tab-icon-active); border-radius: calc(6px * var(--ndd-radius-scale, 1)) calc(6px * var(--ndd-radius-scale, 1)) 0 0; }
+.ndd-toolbar-strip.ndd-bottom .ndd-toolbar-btn-group.ndd-active { border-top:    var(--ndd-toolbar-accent-bar-width, 3px) solid var(--ndd-tab-icon-active); border-radius: 0 0 calc(6px * var(--ndd-radius-scale, 1)) calc(6px * var(--ndd-radius-scale, 1)); }
+
+/* Separators */
+.ndd-toolbar-strip.ndd-left .ndd-toolbar-separator,
+.ndd-toolbar-strip.ndd-right .ndd-toolbar-separator {
+  width: 24px;
+  height: 1px;
+  background-color: var(--ndd-toolbar-separator-color);
+  flex-shrink: 0;
+  margin: 4px 0;
+  align-self: center;
+}
+
+.ndd-toolbar-strip.ndd-top .ndd-toolbar-separator,
+.ndd-toolbar-strip.ndd-bottom .ndd-toolbar-separator {
+  height: 24px;
+  width: 1px;
+  background-color: var(--ndd-toolbar-separator-color);
+  flex-shrink: 0;
+  margin: 0 4px;
+  align-self: center;
+}
+
+/* Touch targets on coarse-pointer devices */
+@media (pointer: coarse) {
+  .ndd-toolbar-btn { width: 44px; height: 44px; }
+}
+

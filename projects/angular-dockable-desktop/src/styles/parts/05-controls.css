@@ -1,0 +1,25 @@
+/* Control buttons inside tabs/windows */
+.ndd-custom-tab-btn {
+  background: var(--ndd-custom-btn-bg);
+  border: 1px solid var(--ndd-custom-btn-border);
+  color: var(--ndd-text-secondary);
+  font-size: 9px;
+  width: 18px;
+  height: 18px;
+  border-radius: calc(4px * var(--ndd-radius-scale, 1));
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.15s cubic-bezier(0.4, 0, 0.2, 1);
+  padding: 0;
+  line-height: 1;
+}
+
+.ndd-custom-tab-btn:hover {
+  background-color: var(--ndd-custom-btn-hover-bg);
+  color: var(--ndd-custom-btn-hover-color);
+  border-color: var(--ndd-custom-btn-border);
+  transform: scale(1.05);
+}
+

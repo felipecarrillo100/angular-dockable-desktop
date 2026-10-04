@@ -1,0 +1,103 @@
+/* ── Toast ── */
+
+/* Color tokens — match confirmation-alert-* palette exactly */
+:root {
+  --ndd-toast-info-color:    #67e8f9;
+  --ndd-toast-success-color: #4ade80;
+  --ndd-toast-warning-color: #fbbf24;
+  --ndd-toast-error-color:   #f87171;
+  --ndd-toast-bg: var(--ndd--b-toast-bg, #2a2d32);
+  --ndd-toast-border:        rgba(255, 255, 255, 0.14);
+}
+[data-color-scheme="light"] {
+  --ndd-toast-info-color:    #0369a1;
+  --ndd-toast-success-color: #15803d;
+  --ndd-toast-warning-color: #b45309;
+  --ndd-toast-error-color:   #b91c1c;
+  --ndd-toast-bg: var(--ndd--b-toast-bg, #ffffff);
+  --ndd-toast-border:        rgba(0, 0, 0, 0.14);
+}
+
+/* Position containers */
+.ndd-toast-container {
+  position: fixed; z-index: calc(var(--ndd-z-base, 1000) + 9100);
+  display: flex; gap: 8px; padding: 16px;
+  pointer-events: none;
+  box-sizing: border-box;
+}
+.ndd-toast-container--top-right    { top: var(--ndd-toast-offset-top, 0px); right: 0; flex-direction: column; }
+.ndd-toast-container--top-left     { top: var(--ndd-toast-offset-top, 0px); left:  0; flex-direction: column; }
+.ndd-toast-container--bottom-right { bottom: var(--ndd-toast-offset-bottom, 0px); right: 0; flex-direction: column-reverse; }
+.ndd-toast-container--bottom-left  { bottom: var(--ndd-toast-offset-bottom, 0px); left:  0; flex-direction: column-reverse; }
+/* newestOnTop override inverts the column direction */
+.ndd-toast-container--newest-top.ndd-toast-container--bottom-right,
+.ndd-toast-container--newest-top.ndd-toast-container--bottom-left  { flex-direction: column; }
+.ndd-toast-container--newest-bottom.ndd-toast-container--top-right,
+.ndd-toast-container--newest-bottom.ndd-toast-container--top-left  { flex-direction: column-reverse; }
+
+/* Individual toast — base card */
+.ndd-toast {
+  pointer-events: all; position: relative; overflow: hidden;
+  display: flex; align-items: flex-start; gap: 10px;
+  padding: 20px 14px; border-radius: calc(6px * var(--ndd-radius-scale, 1));
+  background: var(--ndd-toast-bg, #2a2d32);
+  border: 1px solid var(--ndd-toast-border, rgba(255,255,255,0.14)); border-inline-start-width: 3px;
+  box-shadow: 0 8px 24px rgba(0,0,0,.4), 0 2px 8px rgba(0,0,0,.2);
+  color: var(--ndd-sidebar-text-title, #cccccc);
+  font-size: 13.5px; line-height: 1.4; width: 100%;
+  transition: opacity 200ms ease, transform 200ms ease,
+              max-height 300ms ease, padding 300ms ease, margin 300ms ease;
+}
+/* Reserve space for the absolute-positioned close button */
+.ndd-toast:has(.ndd-toast__close) { padding-inline-end: 32px; }
+
+/* Type-specific: solid background, accent inline-start border only */
+.ndd-toast--info    { border-inline-start-color: var(--ndd-toast-info-color); }
+.ndd-toast--success { border-inline-start-color: var(--ndd-toast-success-color); }
+.ndd-toast--warning { border-inline-start-color: var(--ndd-toast-warning-color); }
+.ndd-toast--error   { border-inline-start-color: var(--ndd-toast-error-color); }
+
+/* Entry animation classes toggled by JS on next frame */
+.ndd-toast--entering        { opacity: 0; transform: translateX(110%); }
+.ndd-toast--entering-left   { opacity: 0; transform: translateX(-110%); }
+.ndd-toast--fade-entering   { opacity: 0; transform: translateX(0); }
+.ndd-toast--visible         { opacity: 1; transform: translateX(0); }
+/* Exit: fade out + height collapse for gravity slide effect */
+.ndd-toast--exiting {
+  opacity: 0; max-height: 0 !important;
+  padding-top: 0; padding-bottom: 0; margin: 0;
+}
+
+/* Icon */
+.ndd-toast__icon { flex-shrink: 0; width: 16px; height: 16px; margin-top: 1px; }
+.ndd-toast--info    .ndd-toast__icon { color: var(--ndd-toast-info-color); }
+.ndd-toast--success .ndd-toast__icon { color: var(--ndd-toast-success-color); }
+.ndd-toast--warning .ndd-toast__icon { color: var(--ndd-toast-warning-color); }
+.ndd-toast--error   .ndd-toast__icon { color: var(--ndd-toast-error-color); }
+
+/* Body & close button */
+.ndd-toast__body { flex: 1; min-width: 0; word-break: break-word; }
+.ndd-toast__close {
+  position: absolute; top: 8px; inset-inline-end: 10px;
+  background: none; border: none; cursor: pointer;
+  opacity: .5; padding: 2px; color: inherit; line-height: 1;
+}
+.ndd-toast__close:hover { opacity: 1; }
+
+/* Progress bar */
+.ndd-toast__progress {
+  position: absolute; bottom: 0; left: 0; right: 0; height: 3px;
+  transform-origin: left; animation: ndd-toast-shrink linear forwards;
+}
+.ndd-toast--paused .ndd-toast__progress { animation-play-state: paused; }
+.ndd-toast--info    .ndd-toast__progress { background: var(--ndd-toast-info-color); }
+.ndd-toast--success .ndd-toast__progress { background: var(--ndd-toast-success-color); }
+.ndd-toast--warning .ndd-toast__progress { background: var(--ndd-toast-warning-color); }
+.ndd-toast--error   .ndd-toast__progress { background: var(--ndd-toast-error-color); }
+
+@keyframes ndd-toast-shrink { from { transform: scaleX(1); } to { transform: scaleX(0); } }
+
+/* Toast RTL: flip icon/body order and progress bar collapse direction */
+[dir="rtl"] .ndd-toast           { flex-direction: row-reverse; }
+[dir="rtl"] .ndd-toast__progress { transform-origin: right; }
+

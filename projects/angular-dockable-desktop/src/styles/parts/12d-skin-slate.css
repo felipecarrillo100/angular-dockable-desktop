@@ -1,0 +1,54 @@
+/* --------------------------------------------------------------------------
+   SKIN 4: Fluent Slate Preset
+   -------------------------------------------------------------------------- */
+[data-ndd-skin="slate"] {
+  --ndd-skin-font-family: 'Segoe UI Variable Text', 'Segoe UI', -apple-system, BlinkMacSystemFont, Roboto, 'Helvetica Neue', sans-serif; /* Fluent's stack */
+  --ndd-bg-workspace: var(--ndd--b-bg-workspace, #0f172a);
+  --ndd-bg-panel: var(--ndd--b-bg-panel, #1e293b);
+  --ndd-bg-tab-bar: var(--ndd--b-bg-tab-bar, #0f172a);
+  --ndd-window-bg: color-mix(in srgb, var(--ndd--b-window-bg, rgb(30 41 59)) calc(var(--ndd-window-opacity, 1.0) * 100%), transparent);
+  --ndd-window-border: var(--ndd--b-window-border, #334155);
+  --ndd-window-header-bg: var(--ndd--b-window-header-bg, #1e293b);
+  --ndd-accent-color: var(--ndd-brand-accent, #38bdf8);
+  --ndd-accent-glow: color-mix(in srgb, var(--ndd-accent-color) 15%, transparent);
+  --ndd-border-panel: var(--ndd--b-border-panel, #334155);
+  --ndd-bg-tab-inactive: var(--ndd--b-bg-tab-inactive, #1e293b);
+  --ndd-text-tab-inactive: var(--ndd--b-text-tab-inactive, #64748b);
+  --ndd-text-tab-active: var(--ndd--b-text-tab-active, #f8fafc);
+  --ndd-panel-card-bg: var(--ndd--b-panel-card-bg, #0f172a);
+  --ndd-panel-card-border: var(--ndd--b-panel-card-border, #334155);
+  --ndd-window-text: var(--ndd--b-window-text, #f8fafc);
+  --ndd-panel-text: var(--ndd--b-panel-text, #f8fafc);
+}
+
+[data-ndd-skin="slate"][data-color-scheme="light"] {
+  --ndd-bg-workspace: var(--ndd--b-bg-workspace, #f1f5f9);
+  --ndd-bg-panel: var(--ndd--b-bg-panel, #ffffff);
+  --ndd-bg-tab-bar: var(--ndd--b-bg-tab-bar, #f1f5f9);
+  --ndd-window-bg: color-mix(in srgb, var(--ndd--b-window-bg, rgb(255 255 255)) calc(var(--ndd-window-opacity, 1.0) * 100%), transparent);
+  --ndd-window-border: var(--ndd--b-window-border, #cbd5e1);
+  --ndd-window-header-bg: var(--ndd--b-window-header-bg, #f8fafc);
+  --ndd-accent-color: var(--ndd-brand-accent, #0078d4);
+  --ndd-accent-glow: color-mix(in srgb, var(--ndd-accent-color) 15%, transparent);
+  --ndd-border-panel: var(--ndd--b-border-panel, #e2e8f0);
+  --ndd-bg-tab-inactive: var(--ndd--b-bg-tab-inactive, #f8fafc);
+  --ndd-text-tab-inactive: var(--ndd--b-text-tab-inactive, #475569);
+  --ndd-text-tab-active: var(--ndd--b-text-tab-active, #0f172a);
+  --ndd-panel-card-bg: var(--ndd--b-panel-card-bg, #f8fafc);
+  --ndd-panel-card-border: var(--ndd--b-panel-card-border, #cbd5e1);
+  --ndd-window-text: var(--ndd--b-window-text, #0f172a);
+  --ndd-panel-text: var(--ndd--b-panel-text, #0f172a);
+  --ndd-panel-title-color: var(--ndd-accent-color);
+  --ndd-close-btn-color: var(--ndd--b-close-btn-color, #475569);
+  --ndd-close-btn-active-color: var(--ndd--b-close-btn-active-color, #0f172a);
+  --ndd-tab-icon-active: var(--ndd-accent-color);
+  --ndd-toolbar-btn-radio-active-bg: color-mix(in srgb, var(--ndd-accent-color) 10%, transparent);
+  --ndd-toolbar-btn-toggle-active-bg: color-mix(in srgb, var(--ndd-accent-color) 16%, transparent);
+}
+
+[data-ndd-skin="slate"] .ndd-workspace-tab.ndd-active::before {
+  top: auto !important;
+  bottom: 0 !important;
+  height: 3px !important;
+}
+

@@ -6,7 +6,7 @@
   "layout-tree.spec.ts": 40,
   "serializable.spec.ts": 12,
   "stretch.spec.ts": 12,
-  "stylesheet.spec.ts": 21,
+  "stylesheet.spec.ts": 22,
   "round-trip.spec.ts": 26,
   "registry.spec.ts": 12,
   "event-bus.spec.ts": 11,

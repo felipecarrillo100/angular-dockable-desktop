@@ -1,0 +1,42 @@
+/* --------------------------------------------------------------------------
+   obsidian — Deep Glow (near-black fill, 2 px bar, inner glow, icon shadow)
+   -------------------------------------------------------------------------- */
+[data-ndd-skin="obsidian"] {
+  --ndd-tab-btn-active-bg: color-mix(in srgb, var(--ndd-accent-color) 3%, transparent);
+  --ndd-tab-btn-active-shadow: inset 0 0 12px color-mix(in srgb, var(--ndd-accent-color) 6%, transparent);
+  --ndd-tab-btn-active-glow: drop-shadow(0 0 5px color-mix(in srgb, var(--ndd-accent-color) 50%, transparent));
+  --ndd-tab-accent-bar-width: 2px;
+  --ndd-toolbar-btn-radio-active-bg: color-mix(in srgb, var(--ndd-accent-color) 3%, transparent);
+  --ndd-toolbar-btn-active-shadow: inset 0 0 12px color-mix(in srgb, var(--ndd-accent-color) 6%, transparent);
+  --ndd-toolbar-btn-active-glow: drop-shadow(0 0 5px color-mix(in srgb, var(--ndd-accent-color) 50%, transparent));
+  --ndd-toolbar-accent-bar-width: 2px;
+}
+[data-ndd-skin="obsidian"] .ndd-sidebar-tabs-strip.ndd-left .ndd-sidebar-tab-btn.ndd-active {
+  box-shadow: var(--ndd-tab-btn-active-shadow), inset 3px 0 8px color-mix(in srgb, var(--ndd-accent-color) 8%, transparent) !important;
+}
+[data-ndd-skin="obsidian"] .ndd-sidebar-tabs-strip.ndd-right .ndd-sidebar-tab-btn.ndd-active {
+  box-shadow: var(--ndd-tab-btn-active-shadow), inset -3px 0 8px color-mix(in srgb, var(--ndd-accent-color) 8%, transparent) !important;
+}
+[data-ndd-skin="obsidian"] .ndd-toolbar-strip.ndd-left .ndd-toolbar-btn-radio.ndd-active,
+[data-ndd-skin="obsidian"] .ndd-toolbar-strip.ndd-left .ndd-toolbar-btn-group.ndd-active {
+  box-shadow: var(--ndd-toolbar-btn-active-shadow), inset 3px 0 8px color-mix(in srgb, var(--ndd-accent-color) 8%, transparent) !important;
+}
+[data-ndd-skin="obsidian"] .ndd-toolbar-strip.ndd-right .ndd-toolbar-btn-radio.ndd-active,
+[data-ndd-skin="obsidian"] .ndd-toolbar-strip.ndd-right .ndd-toolbar-btn-group.ndd-active {
+  box-shadow: var(--ndd-toolbar-btn-active-shadow), inset -3px 0 8px color-mix(in srgb, var(--ndd-accent-color) 8%, transparent) !important;
+}
+[data-ndd-skin="obsidian"] .ndd-toolbar-strip.ndd-top .ndd-toolbar-btn-radio.ndd-active,
+[data-ndd-skin="obsidian"] .ndd-toolbar-strip.ndd-top .ndd-toolbar-btn-group.ndd-active {
+  box-shadow: var(--ndd-toolbar-btn-active-shadow), inset 0 -3px 8px color-mix(in srgb, var(--ndd-accent-color) 8%, transparent) !important;
+}
+[data-ndd-skin="obsidian"] .ndd-toolbar-strip.ndd-bottom .ndd-toolbar-btn-radio.ndd-active,
+[data-ndd-skin="obsidian"] .ndd-toolbar-strip.ndd-bottom .ndd-toolbar-btn-group.ndd-active {
+  box-shadow: var(--ndd-toolbar-btn-active-shadow), inset 0 3px 8px color-mix(in srgb, var(--ndd-accent-color) 8%, transparent) !important;
+}
+[data-ndd-skin="obsidian"][data-color-scheme="light"] {
+  --ndd-tab-btn-active-shadow: inset 0 0 12px color-mix(in srgb, var(--ndd-accent-color) 6%, transparent);
+  --ndd-tab-btn-active-glow: drop-shadow(0 0 4px color-mix(in srgb, var(--ndd-accent-color) 40%, transparent));
+  --ndd-toolbar-btn-active-shadow: inset 0 0 12px color-mix(in srgb, var(--ndd-accent-color) 6%, transparent);
+  --ndd-toolbar-btn-active-glow: drop-shadow(0 0 4px color-mix(in srgb, var(--ndd-accent-color) 40%, transparent));
+}
+

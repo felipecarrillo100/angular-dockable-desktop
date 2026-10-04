@@ -1,0 +1,32 @@
+/* Cross-browser scrollbar styling (Firefox standard) — scoped to the library's
+   own workspace subtree, never the consumer's page. .ndd-sidebar-drawer-body is
+   included explicitly alongside it: <Sidebar> mounts as a sibling of
+   <WindowManager>, not a descendant of .ndd-workspace, so it needs its own
+   entry here to pick up the same treatment — keep both in sync if this block
+   ever changes. */
+.ndd-workspace *,
+.ndd-sidebar-drawer-body {
+  scrollbar-width: thin;
+  scrollbar-color: var(--ndd-scrollbar-thumb) var(--ndd-scrollbar-track);
+}
+
+/* WebKit (Chrome, Safari, Edge) scrollbar styling */
+.ndd-workspace ::-webkit-scrollbar,
+.ndd-sidebar-drawer-body::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+.ndd-workspace ::-webkit-scrollbar-track,
+.ndd-sidebar-drawer-body::-webkit-scrollbar-track {
+  background: var(--ndd-scrollbar-track);
+}
+.ndd-workspace ::-webkit-scrollbar-thumb,
+.ndd-sidebar-drawer-body::-webkit-scrollbar-thumb {
+  background: var(--ndd-scrollbar-thumb);
+  border-radius: calc(4px * var(--ndd-radius-scale, 1));
+}
+.ndd-workspace ::-webkit-scrollbar-thumb:hover,
+.ndd-sidebar-drawer-body::-webkit-scrollbar-thumb:hover {
+  background: var(--ndd-scrollbar-thumb-hover);
+}
+

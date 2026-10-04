@@ -1,0 +1,41 @@
+/* Every element the library renders carries an ndd- prefixed class (see
+   CLAUDE.md's prefix convention) — this targets exactly those elements
+   directly, never their descendants, so a consumer's own content nested
+   inside (tab renderContent, panel/modal body content) is never touched.
+   Without this, several rules combining padding with a fixed/percentage
+   min-height/max-height/height (e.g. .ndd-side-panel-header,
+   .ndd-toolbar-strip) render at a size that depends on whatever box-sizing
+   the host page happens to set globally — MUI's CssBaseline and Bootstrap's
+   reboot both reset it via a bare `*` selector, but a plain page with no
+   such reset leaves the browser default (content-box) in effect, so the
+   exact same CSS renders at a visibly different size purely depending on
+   which app it's dropped into. Deliberately no !important: this selector's
+   specificity (0,1,0) already beats an accidental bare `*` reset (both
+   examples above are (0,0,0)) unconditionally, regardless of stylesheet
+   load order, while still losing — via source order at the resulting tie —
+   to a consumer's own deliberate, equally-specific override of a specific
+   ndd- class, which normally loads after this stylesheet. */
+[class*="ndd-"] {
+  box-sizing: border-box;
+}
+
+/*
+ * The library does not style the host page.
+ *
+ * react-dockable-desktop sets `height: 100%; overflow: hidden` on `html, body, #root`,
+ * because a percentage-height chain needs a real height all the way up. That works, but it
+ * reaches outside the library's own DOM and silently changes the page of any app that
+ * embeds a workspace in part of a view. ndd (like vdd) asks the application to give the workspace a
+ * height instead, warns in development when it has none, and offers this opt-in helper.
+ *
+ * See docs/PARITY.md section 4, divergence D8.
+ */
+.ndd-fill-viewport,
+/* On the workspace element itself too — the obvious place to put it, and the one the zero-height
+   warning points at. Without the compound selector the later `.ndd-workspace { height: 100% }`
+   wins and the utility does nothing (N11, found by the M13 consumer smoke). */
+.ndd-workspace.ndd-fill-viewport {
+  height: 100vh;
+  overflow: hidden;
+}
+

@@ -1,0 +1,112 @@
+[data-color-scheme="light"] {
+  /* The default skin's light-mode accent (the blue its light tokens were already drawn in). */
+  --ndd-accent-color: var(--ndd-brand-accent, #0066cc);
+  --ndd-bg-primary: var(--ndd--b-bg-primary, #f8f9fa);
+  --ndd-bg-workspace: var(--ndd--b-bg-workspace, #f1f5f9);
+  --ndd-bg-panel: var(--ndd--b-bg-panel, #ffffff);
+  --ndd-bg-tab-bar: var(--ndd--b-bg-tab-bar, #e9ecef);
+  --ndd-text-primary: var(--ndd--b-text-primary, #212529);
+  --ndd-text-secondary: var(--ndd--b-text-secondary, #6c757d);
+  --ndd-border-color: rgba(0, 0, 0, 0.08);
+
+  --ndd-sidebar-bg: var(--ndd--b-sidebar-bg, #f8f9fa);
+  --ndd-sidebar-tabs-bg: var(--ndd--b-sidebar-tabs-bg, #e9ecef);
+  --ndd-sidebar-border: rgba(0, 0, 0, 0.08);
+  --ndd-sidebar-card-bg: var(--ndd--b-sidebar-card-bg, #ffffff);
+  --ndd-sidebar-card-border: rgba(0, 0, 0, 0.08);
+  --ndd-sidebar-card-active-bg: color-mix(in srgb, var(--ndd-accent-color) 5%, transparent);
+  --ndd-sidebar-card-active-border: color-mix(in srgb, var(--ndd-accent-color) 30%, transparent);
+  --ndd-sidebar-text-title: var(--ndd--b-sidebar-text-title, #212529);
+  --ndd-sidebar-text-muted: var(--ndd--b-sidebar-text-muted, #6c757d);
+  --ndd-sidebar-badge-bg: var(--ndd--b-sidebar-badge-bg, #e9ecef);
+  --ndd-sidebar-badge-text: var(--ndd--b-sidebar-badge-text, #495057);
+  --ndd-sidebar-btn-front-border: var(--ndd-accent-color);
+  --ndd-sidebar-btn-front-text: var(--ndd-accent-color);
+  --ndd-sidebar-btn-front-bg: transparent;
+  --ndd-sidebar-btn-front-hover-bg: color-mix(in srgb, var(--ndd-accent-color) 8%, transparent);
+  --ndd-tab-icon-active: var(--ndd-accent-color);
+  --ndd-tab-icon-inactive: var(--ndd--b-tab-icon-inactive, #555c66);
+  --ndd-tab-btn-active-bg: var(--ndd--b-tab-btn-active-bg, #f8f9fa); /* Seamless merge look */
+  --ndd-sidebar-btn-hover-bg: rgba(0, 0, 0, 0.05);
+  --ndd-sidebar-card-hover-border: color-mix(in srgb, var(--ndd-accent-color) 30%, transparent);
+  --ndd-sidebar-card-hover-bg: rgba(0, 0, 0, 0.03);
+  --ndd-sidebar-card-active-shadow: color-mix(in srgb, var(--ndd-accent-color) 8%, transparent);
+  --ndd-sidebar-drawer-header-bg: rgba(0, 0, 0, 0.04);
+  --ndd-toolbar-btn-hover-bg: rgba(0, 0, 0, 0.05);
+  --ndd-toolbar-btn-radio-active-bg: color-mix(in srgb, var(--ndd-accent-color) 10%, transparent);
+  --ndd-toolbar-btn-toggle-active-bg: color-mix(in srgb, var(--ndd-accent-color) 16%, transparent);
+  --ndd-toolbar-separator-color: rgba(0, 0, 0, 0.1);
+  /* Light skin window overrides */
+  --ndd-window-bg: color-mix(in srgb, var(--ndd--b-window-bg, rgb(243 244 246)) calc(var(--ndd-window-opacity, 0.9) * 100%), transparent);
+  --ndd-window-border: rgba(0, 0, 0, 0.08);
+  --ndd-window-border-focused: rgba(0, 0, 0, 0.28);
+  --ndd-window-header-bg: rgba(0, 0, 0, 0.04);
+  --ndd-window-text: var(--ndd--b-window-text, #212529);
+  --ndd-window-shadow: 0 10px 30px rgba(0, 0, 0, 0.06);
+  --ndd-window-shadow-focused: 0 16px 36px rgba(0, 0, 0, 0.12);
+  /* Light skin modal overrides */
+  --ndd-modal-curtain-bg: rgba(0, 0, 0, 0.5);
+  --ndd-modal-bg: rgba(255, 255, 255, 0.97);
+  --ndd-modal-border: rgba(0, 0, 0, 0.1);
+  --ndd-modal-header-bg: rgba(0, 0, 0, 0.04);
+  --ndd-modal-header-border: rgba(0, 0, 0, 0.08);
+  --ndd-modal-close-hover-color: var(--ndd--b-modal-close-hover-color, #212529);
+  /* Light skin side panel overrides */
+  --ndd-side-panel-bg: rgba(255, 255, 255, 0.97);
+  --ndd-side-panel-border: rgba(0, 0, 0, 0.1);
+  --ndd-side-panel-header-bg: rgba(0, 0, 0, 0.04);
+  --ndd-side-panel-header-border: rgba(0, 0, 0, 0.08);
+  --ndd-side-panel-close-hover-color: var(--ndd--b-side-panel-close-hover-color, #212529);
+  /* Light skin grid/docked panel overrides */
+  --ndd-border-panel: rgba(0, 0, 0, 0.08);
+  --ndd-bg-tab-inactive: var(--ndd--b-bg-tab-inactive, #e9ecef);
+  --ndd-text-tab-inactive: var(--ndd--b-text-tab-inactive, #495057);
+  --ndd-text-tab-active: var(--ndd--b-text-tab-active, #212529);
+  /* Light skin tab and control button hover colors */
+  --ndd-bg-tab-hover: var(--ndd--b-bg-tab-hover, #dee2e6);
+  --ndd-text-tab-hover: var(--ndd--b-text-tab-hover, #212529);
+  --ndd-close-btn-hover-bg: rgba(0, 0, 0, 0.08);
+  --ndd-close-btn-hover-color: var(--ndd--b-close-btn-hover-color, #212529);
+  --ndd-close-btn-color: var(--ndd--b-close-btn-color, #6c757d);
+  --ndd-close-btn-active-color: var(--ndd--b-close-btn-active-color, #212529);
+  --ndd-tab-indicator-focused: var(--ndd-accent-color);
+  --ndd-tab-indicator-unfocused: rgba(0, 0, 0, 0.25);
+  --ndd-tab-bg-active-focused: var(--ndd-bg-panel);
+  --ndd-tab-bg-active-unfocused: color-mix(in srgb, var(--ndd--b-tab-bg-active-unfocused, rgb(220 224 230)) 65%, transparent);
+  --ndd-tab-text-active-focused: var(--ndd--b-tab-text-active-focused, #212529);
+  --ndd-tab-text-active-unfocused: var(--ndd--b-tab-text-active-unfocused, #6c757d);
+  --ndd-resizer-bg: rgba(0, 0, 0, 0.08);
+  --ndd-custom-btn-bg: rgba(0, 0, 0, 0.03);
+  --ndd-custom-btn-border: rgba(0, 0, 0, 0.08);
+  --ndd-custom-btn-hover-bg: rgba(0, 0, 0, 0.08);
+  --ndd-custom-btn-hover-color: var(--ndd--b-custom-btn-hover-color, #212529);
+  /* Light skin taskbar theme variables */
+  --ndd-taskbar-bg: color-mix(in srgb, var(--ndd--b-taskbar-bg, rgb(248 249 250)) 85%, transparent);
+  --ndd-taskbar-border: rgba(0, 0, 0, 0.08);
+  --ndd-taskbar-nav-color: rgba(0, 0, 0, 0.5);
+  --ndd-taskbar-item-bg: rgba(255, 255, 255, 0.65);
+  --ndd-taskbar-item-hover-bg: rgba(255, 255, 255, 0.85);
+  --ndd-taskbar-item-border: rgba(0, 0, 0, 0.08);
+  --ndd-taskbar-item-text: var(--ndd-accent-color);
+  /* Light skin scrollbar theme variables */
+  --ndd-scrollbar-thumb: rgba(0, 0, 0, 0.15);
+  --ndd-scrollbar-thumb-hover: rgba(0, 0, 0, 0.25);
+  --ndd-scrollbar-track: rgba(0, 0, 0, 0.02);
+  /* Light skin mockup panel inner theme variables */
+  --ndd-panel-card-bg: rgba(0, 0, 0, 0.03);
+  --ndd-panel-card-border: rgba(0, 0, 0, 0.08);
+  --ndd-panel-text: var(--ndd--b-panel-text, #212529);
+  --ndd-panel-title-color: var(--ndd-accent-color);
+  /* ── Panel Overlay — Toolbar (light) ── */
+  --ndd-panel-toolbar-fg: rgba(0, 0, 0, 0.55);
+  --ndd-panel-toolbar-fg-hover: rgba(0, 0, 0, 0.85);
+  --ndd-panel-toolbar-btn-hover-bg: rgba(0, 0, 0, 0.08);
+  --ndd-panel-toolbar-btn-active-bg: var(--ndd-accent-color);
+  --ndd-panel-toolbar-separator-color: rgba(0, 0, 0, 0.1);
+  /* ── Panel Overlay — Floating Window (light) ── */
+  --ndd-panel-float-bg: rgba(255, 255, 255, 0.96);
+  --ndd-panel-float-border: rgba(0, 0, 0, 0.1);
+  --ndd-panel-float-shadow: 0 4px 16px rgba(0, 0, 0, 0.12);
+  --ndd-panel-float-shadow-active: 0 8px 28px rgba(0, 0, 0, 0.2);
+}
+

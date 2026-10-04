@@ -1,0 +1,147 @@
+/* ============================================================
+   TOUCH SUPPORT (Phase 1C, 2A–B, 3B, 4A, 4C)
+   ============================================================ */
+
+/* Phase 1C: touch-action — suppress scroll on drag handles,
+   allow horizontal pan on tab bar */
+.ndd-workspace-tab              { touch-action: none; }
+.ndd-floating-window-titlebar   { touch-action: none; }
+.ndd-resizer-bar                { touch-action: none; }
+.ndd-resize-handle              { touch-action: none; }
+
+/* Phase 2A: Expand resizer hit area to 44px on touch devices */
+@media (pointer: coarse) {
+  .ndd-resizer-bar[style*="cursor: col-resize"]::before {
+    left: -20px;
+    width: 44px;
+  }
+  .ndd-resizer-bar[style*="cursor: row-resize"]::before {
+    top: -32px;
+    height: 33px; /* 32px upward into safe content area, 0px downward into tab bar */
+  }
+}
+
+/* Phase 3B: 8-direction resize handles on floating windows */
+.ndd-resize-handle {
+  position: absolute;
+  z-index: 30;
+}
+
+/*
+ * Resize handles sit fully INSIDE their window.
+ *
+ * rdd positions every handle at `-4px`, straddling the edge for an 8px grab area — but the
+ * elements that carry them (`.rdd-floating-window`, `.rdd-panel-float`) are `overflow:
+ * hidden`, which clips the outer half away. Measured in Chrome: an 8px edge handle leaves
+ * ~4px hittable, a 16px corner handle leaves ~12px, and at the extreme corner the window's
+ * own `border-radius` means *nothing* is hit at all — the click falls straight through to
+ * the grid behind, so a corner drag does nothing.
+ *
+ * Insetting to 0 makes the whole nominal area hittable. The trade is that you cannot grab
+ * from just outside the window; in exchange, every pixel of the handle works, which it did
+ * not before. See docs/PARITY.md divergence D5.
+ */
+
+/* Edge handles */
+.ndd-resize-n  { top: 0;    left: 16px;   right: 16px;  height: 8px;  cursor: n-resize; }
+.ndd-resize-s  { bottom: 0; left: 16px;   right: 16px;  height: 8px;  cursor: s-resize; }
+.ndd-resize-e  { right: 0;  top: 16px;    bottom: 16px; width:  8px;  cursor: e-resize; }
+.ndd-resize-w  { left: 0;   top: 16px;    bottom: 16px; width:  8px;  cursor: w-resize; }
+
+/* Corner handles */
+.ndd-resize-ne { top: 0;    right: 0;  width: 16px; height: 16px; cursor: ne-resize; }
+.ndd-resize-se { bottom: 0; right: 0;  width: 16px; height: 16px; cursor: se-resize; }
+.ndd-resize-sw { bottom: 0; left: 0;   width: 16px; height: 16px; cursor: sw-resize; }
+.ndd-resize-nw { top: 0;    left: 0;   width: 16px; height: 16px; cursor: nw-resize; }
+
+/* SE corner subtle visual indicator (preserve existing look) */
+.ndd-resize-se::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(135deg, transparent 50%, rgba(255,255,255,0.2) 50%);
+}
+
+/*
+ * Touch: larger hit areas — still fully inside the box.
+ *
+ * rdd enlarges these to 12px but positions them at -6px, so `overflow: hidden` clips half of
+ * the enlargement away: the intent is 12px and the reality is 6px, on exactly the devices
+ * that need a *bigger* target. The enlargement is kept and the insets are zeroed, so the
+ * whole 12px is grabbable. Same reasoning as the handle note above; see PARITY.md D5.
+ */
+@media (pointer: coarse) {
+  .ndd-resize-ne, .ndd-resize-se, .ndd-resize-sw, .ndd-resize-nw {
+    width: 28px;
+    height: 28px;
+  }
+  .ndd-resize-n, .ndd-resize-s {
+    left: 28px;
+    right: 28px;
+    height: 12px;
+    top: 0;
+  }
+  .ndd-resize-s { top: auto; bottom: 0; }
+  .ndd-resize-e, .ndd-resize-w {
+    top: 28px;
+    bottom: 28px;
+    width: 12px;
+    right: 0;
+  }
+  .ndd-resize-w { right: auto; left: 0; }
+}
+
+/* Phase 2B: Adaptive density for coarse-pointer (touch) devices */
+@media (pointer: coarse) {
+  /* Taller tabs for touch targets */
+  .ndd-workspace-tab {
+    min-height: 44px !important;
+    height: 44px !important;
+    padding: 0 12px 0 14px !important;
+  }
+
+  /* Always-visible close button (no hover-to-reveal) */
+  .ndd-workspace-tab .ndd-close-tab-x {
+    opacity: 0.8 !important;
+    width: 24px !important;
+    height: 24px !important;
+  }
+
+  /* Larger titlebar action buttons */
+  .ndd-custom-tab-btn {
+    width: 28px !important;
+    height: 28px !important;
+  }
+
+  /* Taller taskbar items */
+  .ndd-taskbar-glassmorphic-item {
+    width: 48px !important;
+    height: 48px !important;
+  }
+
+  /* Wider tab min-width on touch */
+  .ndd-workspace-tab { min-width: 88px; }
+
+  /* Wider scroll arrows on touch */
+
+  /* Keep top edge trigger thin even on touch — avoids collision with tab bar */
+  .ndd-edge-trigger-top { height: 14px; }
+}
+
+/* Phase 4A: Long-press active animation (visual feedback during 300ms hold) */
+.ndd-long-press-active {
+  animation: ndd-long-press-pulse 0.25s ease-out forwards;
+  transform-origin: center;
+}
+
+@keyframes ndd-long-press-pulse {
+  0%   { transform: scale(1);    box-shadow: 0 0 0 0 var(--ndd-accent-glow, rgba(56,189,248,0.3)); }
+  60%  { transform: scale(1.04); box-shadow: 0 0 0 6px var(--ndd-accent-glow, rgba(56,189,248,0.15)); }
+  100% { transform: scale(1.02); box-shadow: 0 0 0 4px var(--ndd-accent-glow, rgba(56,189,248,0.1)); }
+}
+
+/* Phase 4C: Tab bar horizontal scroll (handled by existing .ndd-tab-headers-container overflow-x: auto) */
+/* Note: touch-action and -webkit-overflow-scrolling intentionally omitted — they cause iOS Safari
+   to fire pointercancel before the 300ms long-press timer can activate tab drag */
+.ndd-tab-headers-container::-webkit-scrollbar { display: none; }
+

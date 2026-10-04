@@ -12,6 +12,9 @@
     "playground": "ng build angular-dockable-desktop && ng serve playground",
     "demo": "ng build angular-dockable-desktop && ng serve demo",
     "gate": "node scripts/gate.mjs",
+    "css": "node scripts/build-css.mjs",
+    "css:check": "node scripts/build-css.mjs --check",
+    "css:watch": "node scripts/build-css.mjs --watch",
     "gate:selftest": "node scripts/gates/selftest.mjs",
     "gate:sweep": "node scripts/gates/non-vacuity.mjs",
     "backup": "node scripts/backup.mjs"

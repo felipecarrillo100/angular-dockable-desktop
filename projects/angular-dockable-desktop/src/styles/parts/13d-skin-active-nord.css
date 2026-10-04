@@ -1,0 +1,64 @@
+/* --------------------------------------------------------------------------
+   nord — Nordic Line (zero fill, zero bar, 16×2 px accent line via ::after)
+   -------------------------------------------------------------------------- */
+[data-ndd-skin="nord"] {
+  --ndd-tab-btn-active-bg: transparent;
+  --ndd-tab-btn-active-width: 44px;
+  --ndd-tab-btn-active-radius: 6px;
+  --ndd-tab-accent-bar-width: 0px;
+  --ndd-toolbar-btn-radio-active-bg: transparent;
+  --ndd-toolbar-accent-bar-width: 0px;
+}
+[data-ndd-skin="nord"] .ndd-sidebar-tab-btn.ndd-active {
+  border-top: 1px solid transparent !important;
+  border-bottom: 1px solid transparent !important;
+  border-left: none !important;
+  border-right: none !important;
+}
+[data-ndd-skin="nord"] .ndd-sidebar-tab-btn.ndd-active::after {
+  content: '';
+  position: absolute;
+  bottom: 5px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 16px;
+  height: 2px;
+  border-radius: calc(1px * var(--ndd-radius-scale, 1));
+  background-color: var(--ndd-tab-icon-active);
+}
+[data-ndd-skin="nord"] .ndd-toolbar-strip .ndd-toolbar-btn-radio.ndd-active,
+[data-ndd-skin="nord"] .ndd-toolbar-strip .ndd-toolbar-btn-group.ndd-active {
+  border-left: none !important;
+  border-right: none !important;
+  border-top: none !important;
+  border-bottom: none !important;
+}
+[data-ndd-skin="nord"] .ndd-toolbar-strip.ndd-left  .ndd-toolbar-btn-radio.ndd-active::after,
+[data-ndd-skin="nord"] .ndd-toolbar-strip.ndd-left  .ndd-toolbar-btn-group.ndd-active::after,
+[data-ndd-skin="nord"] .ndd-toolbar-strip.ndd-right .ndd-toolbar-btn-radio.ndd-active::after,
+[data-ndd-skin="nord"] .ndd-toolbar-strip.ndd-right .ndd-toolbar-btn-group.ndd-active::after,
+[data-ndd-skin="nord"] .ndd-toolbar-strip.ndd-top   .ndd-toolbar-btn-radio.ndd-active::after,
+[data-ndd-skin="nord"] .ndd-toolbar-strip.ndd-top   .ndd-toolbar-btn-group.ndd-active::after {
+  content: '';
+  position: absolute;
+  bottom: 4px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 14px;
+  height: 2px;
+  border-radius: calc(1px * var(--ndd-radius-scale, 1));
+  background-color: var(--ndd-tab-icon-active);
+}
+[data-ndd-skin="nord"] .ndd-toolbar-strip.ndd-bottom .ndd-toolbar-btn-radio.ndd-active::after,
+[data-ndd-skin="nord"] .ndd-toolbar-strip.ndd-bottom .ndd-toolbar-btn-group.ndd-active::after {
+  content: '';
+  position: absolute;
+  top: 4px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 14px;
+  height: 2px;
+  border-radius: calc(1px * var(--ndd-radius-scale, 1));
+  background-color: var(--ndd-tab-icon-active);
+}
+

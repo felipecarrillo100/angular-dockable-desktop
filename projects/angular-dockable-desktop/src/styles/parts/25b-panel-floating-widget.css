@@ -1,0 +1,146 @@
+/* ── Floating window ── */
+.ndd-panel-float {
+  position: absolute;
+  min-width: 120px;
+  min-height: 60px;
+  display: flex;
+  flex-direction: column;
+  border-radius: calc(var(--ndd-panel-float-radius, 8px) * var(--ndd-radius-scale, 1));
+  background: var(--ndd-panel-float-bg, rgba(22, 24, 34, 0.92));
+  border: 1px solid var(--ndd-panel-float-border, rgba(255, 255, 255, 0.1));
+  box-shadow: var(--ndd-panel-float-shadow, 0 4px 16px rgba(0, 0, 0, 0.35));
+  overflow: hidden;
+}
+.ndd-panel-float::before {
+  backdrop-filter: blur(8px);
+}
+
+.ndd-panel-float--active {
+  box-shadow: var(--ndd-panel-float-shadow-active, 0 8px 28px rgba(0, 0, 0, 0.55));
+}
+
+.ndd-panel-float__header {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 0 8px;
+  height: 28px;
+  flex-shrink: 0;
+  background: var(--ndd-panel-float-header-bg, rgba(255, 255, 255, 0.04));
+  cursor: grab;
+  user-select: none;
+}
+
+.ndd-panel-float__header:active {
+  cursor: grabbing;
+}
+
+.ndd-panel-float--active .ndd-panel-float__header {
+  background: var(--ndd-panel-float-header-bg-active, rgba(56, 189, 248, 0.08));
+}
+
+.ndd-panel-float__title {
+  flex: 1;
+  font-size: 11px;
+  font-weight: 500;
+  color: var(--ndd-panel-float-title-color, rgba(255, 255, 255, 0.6));
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.ndd-panel-float--active .ndd-panel-float__title {
+  color: var(--ndd-panel-float-title-color-active, rgba(255, 255, 255, 0.9));
+}
+
+.ndd-panel-float__icon {
+  flex-shrink: 0;
+  width: 14px;
+  height: 14px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  opacity: 0.7;
+  color: var(--ndd-panel-float-title-color, rgba(255, 255, 255, 0.6));
+}
+.ndd-panel-float--active .ndd-panel-float__icon {
+  opacity: 1;
+  color: var(--ndd-panel-float-title-color-active, rgba(255, 255, 255, 0.9));
+}
+
+.ndd-panel-float__close {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 18px;
+  height: 18px;
+  flex-shrink: 0;
+  background: var(--ndd-custom-btn-bg, rgba(255, 255, 255, 0.03));
+  border: 1px solid var(--ndd-custom-btn-border, rgba(255, 255, 255, 0.05));
+  color: var(--ndd-text-secondary, #94a3b8);
+  cursor: pointer;
+  border-radius: calc(4px * var(--ndd-radius-scale, 1));
+  padding: 0;
+  line-height: 1;
+  transition: all 0.15s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.ndd-panel-float__close:hover {
+  background-color: var(--ndd-custom-btn-hover-bg, rgba(255, 255, 255, 0.12));
+  color: var(--ndd-custom-btn-hover-color, #ffffff);
+  border-color: var(--ndd-custom-btn-border, rgba(255, 255, 255, 0.05));
+  transform: scale(1.05);
+}
+
+.ndd-panel-float__body {
+  flex: 1;
+  overflow: auto;
+  min-height: 0;
+}
+
+/* A `.ndd-panel-float__resize` rule lived here in rdd and was dead: nothing rendered that
+   class in either library — the widget's handles are `.ndd-resize-handle.ndd-resize-<dir>`,
+   which have their own rules. Removed in M13, when the class/rule correspondence sweep found
+   it. A rule that matches nothing looks exactly like styling and does nothing at all. */
+
+/* ── Docking drop zones (visible while dragging a floating window) ── */
+/* Armed for resize-to-stretch: the clamps already hold the widget exactly where a stretched axis
+   would sit, so releasing now locks it there. The outline is the cue that it *will* lock — without
+   it the gesture is invisible and undiscoverable. Same dashed accent vocabulary as the drop zones
+   below. */
+.ndd-panel-float--snapping {
+  outline: 2px dashed var(--ndd-accent-color, #38bdf8);
+  outline-offset: -2px;
+}
+
+.ndd-panel-float-dropzone {
+  position: absolute;
+  width: 80px;
+  height: 80px;
+  border: 2px dashed var(--ndd-accent-color, #38bdf8);
+  border-radius: calc(8px * var(--ndd-radius-scale, 1));
+  background: color-mix(in srgb, var(--ndd-accent-color) 6%, transparent);
+  pointer-events: none;
+  z-index: 200;
+  opacity: 0.55;
+  transition: opacity 0.15s ease, background 0.15s ease, border-style 0.15s ease;
+}
+
+.ndd-panel-float-dropzone--hovered {
+  opacity: 1;
+  background: color-mix(in srgb, var(--ndd-accent-color) 18%, transparent);
+  border-style: solid;
+}
+
+.ndd-panel-float-dropzone--top-left     { top:    8px; left:  8px; }
+.ndd-panel-float-dropzone--top-right    { top:    8px; right: 8px; }
+.ndd-panel-float-dropzone--bottom-left  { bottom: 8px; left:  8px; }
+.ndd-panel-float-dropzone--bottom-right { bottom: 8px; right: 8px; }
+
+[dir="rtl"] .ndd-panel-float-dropzone--top-right    { right: auto; left:  8px; }
+[dir="rtl"] .ndd-panel-float-dropzone--top-left     { left:  auto; right: 8px; }
+[dir="rtl"] .ndd-panel-float-dropzone--bottom-right { right: auto; left:  8px; }
+[dir="rtl"] .ndd-panel-float-dropzone--bottom-left  { left:  auto; right: 8px; }
+
+[dir="rtl"] .ndd-panel-float__title  { text-align: right; }
+

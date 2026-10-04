@@ -79,6 +79,13 @@ Every template's context is typed through `ngTemplateContextGuard`.
 `injectSidebarTab()` / `injectToolbar()` / `injectContextMenu()` / `injectMerged*()`; lazy panels
 through `registerLazy`; server-side rendering and hydration (§4.2 N12).
 
+### Source layout (1.5.1, from rdd 7.6.1)
+
+rdd 7.6.1 split its large files to mirror the ports' layout (`src/types.ts`, `src/core/*`,
+`components/workspace/*`, `components/panelOverlay/*`). ndd's TypeScript was already modular; only
+its stylesheet changed: `styles.css` is now generated from `src/styles/parts/NN-area.css`, with the
+same area names as rdd's and vdd's `src/styles/`.
+
 ### Context-menu focus (1.5.0, from rdd 7.6.0)
 
 | rdd 7.6.0 | ndd 1.5.0 |

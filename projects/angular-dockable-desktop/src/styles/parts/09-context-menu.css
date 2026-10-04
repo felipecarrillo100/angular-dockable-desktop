@@ -1,0 +1,143 @@
+/* ==========================================================================
+   CONTEXT MENU (.ndd-context-menu)
+   ========================================================================== */
+
+/* rdd wrapped its built-in menu icons in `.rdd-menu-icon` for the icon column's sizing.
+   vdd renders them inside `.ndd-context-menu__icon`, which is shared with the toolbar
+   flyout's rows, so the separate wrapper rule matched nothing. Removed in M13. */
+
+.ndd-context-menu {
+  position: fixed;
+  z-index: calc(var(--ndd-z-base, 1000) + 8500);
+  background: var(--ndd-sidebar-bg, #1e2024);
+  border: 1px solid var(--ndd-sidebar-border, rgba(255, 255, 255, 0.08));
+  border-radius: calc(6px * var(--ndd-radius-scale, 1));
+  padding: 4px 0;
+  min-width: 220px;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4), 0 2px 8px rgba(0, 0, 0, 0.2);
+  font-family: var(--ndd-font-family);
+  font-size: 13px;
+  animation: ndd-context-menu-in 0.1s cubic-bezier(0.16, 1, 0.3, 1);
+  outline: none;
+}
+
+@keyframes ndd-context-menu-in {
+  from { opacity: 0; transform: scale(0.97); }
+  to   { opacity: 1; transform: scale(1); }
+}
+
+.ndd-context-menu--submenu {
+  z-index: calc(var(--ndd-z-base, 1000) + 8501);
+}
+
+.ndd-context-menu__separator {
+  height: 1px;
+  background: var(--ndd-sidebar-border, rgba(255, 255, 255, 0.08));
+  margin: 4px 8px;
+  border: none;
+}
+
+.ndd-context-menu__item {
+  display: flex;
+  align-items: center;
+  width: calc(100% - 8px);
+  margin: 0 4px;
+  padding: 5px 8px;
+  gap: 8px;
+  background: none;
+  border: none;
+  border-radius: calc(4px * var(--ndd-radius-scale, 1));
+  color: var(--ndd-sidebar-text-title, #cccccc);
+  cursor: pointer;
+  text-align: start;
+  white-space: nowrap;
+  letter-spacing: 0.01em;
+  box-sizing: border-box;
+  font-size: inherit;
+  font-family: inherit;
+}
+
+.ndd-context-menu__item:hover:not(:disabled):not(.ndd-context-menu__item--disabled) {
+  background-color: var(--ndd-toolbar-btn-hover-bg, rgba(255, 255, 255, 0.07));
+  color: var(--ndd-sidebar-text-title, #f8f9fa);
+}
+
+.ndd-context-menu__item:disabled,
+.ndd-context-menu__item--disabled {
+  opacity: 0.38;
+  cursor: default;
+  pointer-events: none;
+}
+
+.ndd-context-menu__item--has-submenu.ndd-context-menu__item--submenu-open {
+  background-color: var(--ndd-toolbar-btn-radio-active-bg, rgba(9, 71, 113, 0.35));
+}
+
+/* Focus. A menu opens with focus on the menu itself and nothing highlighted (it has outline: none).
+   A menu item that has keyboard focus draws the skin's ring, never the browser's default. Restyle
+   it with --ndd-context-menu-focus-ring, or every library ring at once with --ndd-focus-ring. */
+.ndd-context-menu__item:focus-visible {
+  outline: var(--ndd-context-menu-focus-ring, var(--ndd-focus-ring, 2px solid var(--ndd-accent-color)));
+  outline-offset: -2px;
+}
+
+.ndd-context-menu__icon {
+  width: 16px;
+  min-width: 16px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  color: inherit;
+  opacity: 0.85;
+}
+
+.ndd-context-menu__label {
+  flex: 1;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.ndd-context-menu__chevron {
+  flex-shrink: 0;
+  margin-left: auto;
+  padding-left: 12px;
+  font-size: 14px;
+  line-height: 1;
+  opacity: 0.6;
+}
+
+[dir="rtl"] .ndd-context-menu__chevron {
+  margin-left: 0;
+  margin-right: auto;
+  padding-left: 0;
+  padding-right: 12px;
+  transform: scaleX(-1);
+}
+
+[dir="rtl"] .ndd-context-menu__checkbox {
+  margin-left: 0;
+  margin-right: auto;
+  padding-left: 0;
+  padding-right: 12px;
+}
+
+.ndd-context-menu__checkbox {
+  width: 14px;
+  min-width: 14px;
+  height: 14px;
+  flex-shrink: 0;
+  margin-left: auto;
+  padding-left: 12px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--ndd-tab-icon-active, #38bdf8);
+  box-sizing: content-box;
+  opacity: 0.6;
+}
+
+.ndd-context-menu__checkbox--checked {
+  opacity: 1;
+}
+

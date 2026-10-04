@@ -1,0 +1,57 @@
+/* --------------------------------------------------------------------------
+   SKIN 5: Nordic Frost Preset (Nord Theme)
+   -------------------------------------------------------------------------- */
+[data-ndd-skin="nord"] {
+  --ndd-skin-font-family: 'Avenir Next', 'Nunito', 'Segoe UI', system-ui, sans-serif; /* no official font: a softer humanist sans */
+  --ndd-bg-workspace: var(--ndd--b-bg-workspace, #2e3440);
+  --ndd-bg-panel: var(--ndd--b-bg-panel, #3b4252);
+  --ndd-bg-tab-bar: var(--ndd--b-bg-tab-bar, #2e3440);
+  --ndd-window-bg: color-mix(in srgb, var(--ndd--b-window-bg, rgb(59 66 82)) calc(var(--ndd-window-opacity, 1.0) * 100%), transparent);
+  --ndd-window-border: var(--ndd--b-window-border, #434c5e);
+  --ndd-window-header-bg: var(--ndd--b-window-header-bg, #2e3440);
+  --ndd-accent-color: var(--ndd-brand-accent, #88c0d0);
+  --ndd-accent-glow: color-mix(in srgb, var(--ndd-accent-color) 20%, transparent);
+  --ndd-border-panel: var(--ndd--b-border-panel, #434c5e);
+  --ndd-bg-tab-inactive: var(--ndd--b-bg-tab-inactive, #2e3440);
+  --ndd-text-tab-inactive: var(--ndd--b-text-tab-inactive, #d8dee9);
+  --ndd-text-tab-active: var(--ndd--b-text-tab-active, #eceff4);
+  --ndd-panel-card-bg: var(--ndd--b-panel-card-bg, #2e3440);
+  --ndd-panel-card-border: var(--ndd--b-panel-card-border, #4c566a);
+  --ndd-close-btn-color: var(--ndd--b-close-btn-color, #d8dee9);
+  --ndd-close-btn-active-color: var(--ndd-accent-color);
+  --ndd-scrollbar-thumb: color-mix(in srgb, var(--ndd-accent-color) 25%, transparent);
+  --ndd-scrollbar-thumb-hover: color-mix(in srgb, var(--ndd-accent-color) 40%, transparent);
+  --ndd-window-text: var(--ndd--b-window-text, #eceff4);
+  --ndd-panel-text: var(--ndd--b-panel-text, #eceff4);
+  --ndd-tab-icon-active: var(--ndd-accent-color);
+  --ndd-toolbar-btn-radio-active-bg: color-mix(in srgb, var(--ndd-accent-color) 14%, transparent);
+  --ndd-toolbar-btn-toggle-active-bg: color-mix(in srgb, var(--ndd-accent-color) 22%, transparent);
+}
+
+[data-ndd-skin="nord"][data-color-scheme="light"] {
+  --ndd-bg-workspace: var(--ndd--b-bg-workspace, #e5e9f0);
+  --ndd-bg-panel: var(--ndd--b-bg-panel, #eceff4);
+  --ndd-bg-tab-bar: var(--ndd--b-bg-tab-bar, #e5e9f0);
+  --ndd-window-bg: color-mix(in srgb, var(--ndd--b-window-bg, rgb(236 239 244)) calc(var(--ndd-window-opacity, 1.0) * 100%), transparent);
+  --ndd-window-border: var(--ndd--b-window-border, #d8dee9);
+  --ndd-window-header-bg: var(--ndd--b-window-header-bg, #e5e9f0);
+  --ndd-accent-color: var(--ndd-brand-accent, #5e81ac);
+  --ndd-accent-glow: color-mix(in srgb, var(--ndd-accent-color) 15%, transparent);
+  --ndd-border-panel: var(--ndd--b-border-panel, #d8dee9);
+  --ndd-bg-tab-inactive: var(--ndd--b-bg-tab-inactive, #e5e9f0);
+  --ndd-text-tab-inactive: var(--ndd--b-text-tab-inactive, #4c566a);
+  --ndd-text-tab-active: var(--ndd--b-text-tab-active, #2e3440);
+  --ndd-panel-card-bg: var(--ndd--b-panel-card-bg, #e5e9f0);
+  --ndd-panel-card-border: var(--ndd--b-panel-card-border, #d8dee9);
+  --ndd-close-btn-color: var(--ndd--b-close-btn-color, #4c566a);
+  --ndd-close-btn-active-color: var(--ndd-accent-color);
+  --ndd-scrollbar-thumb: color-mix(in srgb, var(--ndd-accent-color) 20%, transparent);
+  --ndd-scrollbar-thumb-hover: color-mix(in srgb, var(--ndd-accent-color) 35%, transparent);
+  --ndd-window-text: var(--ndd--b-window-text, #2e3440);
+  --ndd-panel-text: var(--ndd--b-panel-text, #2e3440);
+  --ndd-panel-title-color: var(--ndd-accent-color);
+  --ndd-tab-icon-active: var(--ndd-accent-color);
+  --ndd-toolbar-btn-radio-active-bg: color-mix(in srgb, var(--ndd-accent-color) 12%, transparent);
+  --ndd-toolbar-btn-toggle-active-bg: color-mix(in srgb, var(--ndd-accent-color) 16%, transparent);
+}
+

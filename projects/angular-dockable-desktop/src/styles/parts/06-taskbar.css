@@ -1,0 +1,258 @@
+/* Taskbar Sibling Footer Styling */
+/* ── autohide mode: absolute overlay, collapses to peek strip ── */
+/*
+ * The taskbar sits above the workspace content.
+ *
+ * rdd set `zIndex: 100` inline on its footer; ported here because it is load-bearing, not
+ * decorative. Without it the autohide overlay is covered by whatever the grid puts at the
+ * bottom edge — a split divider's invisible 8px hit-box was enough to swallow every
+ * `pointerenter`, so the peek strip could not be hovered at all. Found by the M7 browser
+ * gate; the same class of omission as the structural flex styles in M4.
+ *
+ * Below floating windows on purpose: those stack from `--ndd-z-base` (1000), matching rdd.
+ */
+.ndd-taskbar-footer-container {
+  position: relative;
+  z-index: 100;
+}
+
+.ndd-taskbar-footer-container.ndd-taskbar-mode-autohide {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  transform: translateY(calc(100% - 8px));
+  transition: transform 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.ndd-taskbar-footer-container.ndd-taskbar-mode-autohide.ndd-taskbar-expanded {
+  transform: translateY(0);
+}
+
+.ndd-taskbar-peek-handle {
+  position: absolute;
+  top: 3px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 32px;
+  height: 3px;
+  border-radius: 999px;
+  background: var(--ndd-accent-color, #38bdf8);
+  opacity: 0.5;
+  pointer-events: none;
+  transition: opacity 0.2s;
+}
+
+.ndd-taskbar-footer-container.ndd-taskbar-mode-autohide.ndd-taskbar-expanded .ndd-taskbar-peek-handle {
+  opacity: 0;
+}
+
+@media (pointer: coarse) {
+  .ndd-taskbar-footer-container.ndd-taskbar-mode-autohide {
+    transform: translateY(calc(100% - 12px));
+  }
+}
+
+.ndd-taskbar-footer-container {
+  background-color: var(--ndd-taskbar-bg) !important;
+  border-top: 1px solid var(--ndd-border-panel) !important;
+  backdrop-filter: blur(12px) saturate(180%);
+  -webkit-backdrop-filter: blur(12px) saturate(180%);
+  flex-shrink: 0;
+  width: 100%;
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  justify-content: center;
+  padding: 0 1rem;
+}
+
+.ndd-taskbar-nav-btn {
+  color: var(--ndd-taskbar-nav-color) !important;
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  font-family: monospace;
+  padding: 0;
+  text-decoration: none;
+  font-size: 0.875rem;
+  line-height: 1;
+}
+
+.ndd-taskbar-nav-btn:hover {
+  color: var(--ndd-accent-color) !important;
+}
+
+/* macOS/Win11 Glassmorphic Taskbar */
+.ndd-taskbar-glassmorphic-item {
+  background: var(--ndd-taskbar-item-bg) !important;
+  backdrop-filter: blur(12px) saturate(180%);
+  -webkit-backdrop-filter: blur(12px) saturate(180%);
+  border: 1px solid var(--ndd-taskbar-item-border) !important;
+  color: var(--ndd-taskbar-item-text) !important;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1) !important;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: calc(4px * var(--ndd-radius-scale, 1));
+  cursor: pointer;
+}
+
+.ndd-taskbar-glassmorphic-item:hover {
+  background: var(--ndd-taskbar-item-hover-bg) !important;
+  border-color: var(--ndd-accent-color, #38bdf8) !important;
+  box-shadow: 0 6px 16px color-mix(in srgb, var(--ndd-accent-color) 15%, transparent);
+}
+
+/* Minimalist Taskbar Icon-Only & Premium Tooltip Rules */
+.ndd-taskbar-item-icon {
+  font-size: 22px !important;
+  line-height: 1 !important;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.ndd-taskbar-item-icon svg,
+.ndd-taskbar-item-icon img {
+  width: 22px !important;
+  height: 22px !important;
+  max-width: 22px !important;
+  max-height: 22px !important;
+  object-fit: contain;
+  display: block;
+}
+
+/* The slide-in starts 6px low — inside the 8px gap above the icon — never 10% of the preview's
+   own height (~18px, as in rdd/vdd), which covered the icon for the first frames: a click or
+   right-click just after hovering landed on the preview instead. Found by the M8 browser gate. */
+@keyframes ndd-tooltip-fade-in {
+  from {
+    opacity: 0;
+    transform: translateX(-50%) translateY(calc(-100% + 6px));
+  }
+  to {
+    opacity: 1;
+    transform: translateX(-50%) translateY(-100%);
+  }
+}
+
+/*
+ * The hover preview stacks above everything in the workspace.
+ *
+ * rdd set `zIndex: 999999` inline on this element, so the ported stylesheet had no z-index at
+ * all and the preview came out at `auto`: a split divider painted over it, and the pointer
+ * could never reach the preview to click it. Expressed against `--ndd-z-base` like the rest
+ * of the library's chrome, so `zIndexBase` moves it with everything else.
+ *
+ * This is the third value rdd carried inline rather than in CSS (after the structural flex
+ * styles and the taskbar's own z-index) — all three were load-bearing, and all three were
+ * found by a browser gate rather than by reading.
+ */
+.ndd-taskbar-item-tooltip {
+  z-index: calc(var(--ndd-z-base, 1000) + 8000);
+  background: var(--ndd-bg-panel, #1e1e1e) !important;
+  color: var(--ndd-text-primary, #ffffff) !important;
+  padding: 8px !important;
+  border-radius: calc(6px * var(--ndd-radius-scale, 1));
+  font-size: 11px !important;
+  font-family: var(--ndd-font-family);
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.35);
+  border: 1px solid var(--ndd-taskbar-item-border, rgba(255, 255, 255, 0.1)) !important;
+  animation: ndd-tooltip-fade-in 0.15s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+/* Invisible bridge so mouse transitions smoothly to tooltip */
+.ndd-taskbar-item-tooltip::before {
+  content: '';
+  position: absolute;
+  top: 100%;
+  left: 0;
+  width: 100%;
+  height: 12px;
+  background: transparent;
+}
+
+.ndd-taskbar-item-tooltip::after {
+  content: '';
+  position: absolute;
+  top: 100%;
+  left: 50%;
+  transform: translateX(-50%);
+  border-width: 5px;
+  border-style: solid;
+  border-color: var(--ndd-bg-panel, #1e1e1e) transparent transparent transparent;
+}
+
+/* Live preview thumbnail styles.
+   rdd additionally shipped `.ndd-taskbar-item-preview-host .luciad canvas` rules, hard-coding
+   a specific third-party mapping library's class name into a framework-agnostic stylesheet.
+   Dropped — an application can style its own content inside the preview host itself.
+   See docs/PARITY.md, divergence D10. */
+/*
+ * The thumbnail frame is clickable; its *contents* are not.
+ *
+ * rdd sets `pointer-events: none` on the frame itself, so a click anywhere over the
+ * thumbnail — which is most of the preview — passes through the tooltip entirely and does
+ * nothing. Only its little header row responds. Here the frame accepts the click (and the
+ * tooltip's handler restores the panel) while everything inside stays inert, so the live
+ * panel in the preview can never be interacted with by accident.
+ * See docs/PARITY.md divergence D11.
+ */
+.ndd-taskbar-item-preview-frame {
+  border-radius: calc(4px * var(--ndd-radius-scale, 1));
+  overflow: hidden;
+  background: #000000;
+  border: 1px solid var(--ndd-taskbar-item-border, rgba(255, 255, 255, 0.15));
+  position: relative;
+  margin-top: 4px;
+  user-select: none !important;
+}
+
+.ndd-taskbar-item-preview-host,
+.ndd-taskbar-item-preview-letter {
+  pointer-events: none !important;
+}
+
+.ndd-taskbar-item-preview-host {
+  transform-origin: top left;
+  position: absolute;
+  top: 0;
+  left: 0;
+}
+.ndd-taskbar-item-preview-host * {
+  pointer-events: none !important;
+  user-select: none !important;
+}
+
+
+
+.ndd-tooltip-close-x {
+  width: 18px;
+  height: 18px;
+  border-radius: calc(3px * var(--ndd-radius-scale, 1));
+  background: transparent !important;
+  border: none !important;
+  color: var(--ndd-close-btn-color, var(--ndd-text-secondary, #888888)) !important;
+  cursor: pointer;
+  transition: opacity 0.12s ease, background-color 0.12s ease, color 0.12s ease;
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  opacity: 0.75;
+}
+
+.ndd-tooltip-close-x:hover {
+  background: var(--ndd-close-btn-hover-bg) !important;
+  color: var(--ndd-close-btn-hover-color) !important;
+  opacity: 1 !important;
+}
+.ndd-scrollbar-hidden::-webkit-scrollbar {
+  display: none;
+}
+

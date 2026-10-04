@@ -1,0 +1,135 @@
+/* Drag split target drop zone overlays */
+.ndd-dock-drop-zone-overlay {
+  position: absolute;
+  inset: 0;
+  /* Must outrank .ndd-workspace-edge-trigger (+8999) and .ndd-corner-zone (+9000) —
+     a leaf's cross commonly falls within the outer edge band or a corner region,
+     and the more specific per-leaf target should win the hover/drop hit-test there. */
+  z-index: calc(var(--ndd-z-base, 1000) + 9001);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background-color: rgba(0, 0, 0, 0.15);
+  pointer-events: none;
+  border-radius: calc(4px * var(--ndd-radius-scale, 1));
+}
+
+/* Translucent overlay preview highlighting the grid section about to split */
+.ndd-dock-preview-highlight {
+  position: absolute;
+  background-color: color-mix(in srgb, var(--ndd-accent-color) 20%, transparent) !important; /* accent overlay */
+  border: 1.5px dashed var(--ndd-accent-color) !important;
+  transition: all 0.1s ease-out;
+  pointer-events: none;
+  z-index: 90;
+}
+
+/* Central cross layout container */
+.ndd-dock-target-cross {
+  position: relative;
+  width: 140px;
+  height: 140px;
+  pointer-events: auto;
+}
+
+/* Visual split target buttons (top, bottom, left, right, center) */
+.ndd-dock-target-box {
+  position: absolute;
+  background-color: color-mix(in srgb, var(--ndd--b-dock-target-bg, rgb(15 23 42)) 92%, transparent);
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  border-radius: calc(4px * var(--ndd-radius-scale, 1));
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: copy;
+  transition: all 0.12s ease-in-out;
+  pointer-events: auto;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.5);
+  color: var(--ndd-text-secondary);
+}
+
+/* State-driven (activeDropZone), not :hover-driven — :hover never reliably
+   updates during an active drag in Safari, and doesn't exist on touch at all. */
+.ndd-dock-target-box--active {
+  background-color: var(--ndd-accent-color) !important;
+  border-color: #ffffff !important;
+  color: var(--ndd-brand-on-accent, #090b11) !important;
+  transform: scale(1.12);
+  box-shadow: 0 0 12px var(--ndd-accent-color);
+}
+
+/* Specific split target layouts */
+.ndd-dock-target-left {
+  left: 0;
+  top: 45px;
+  width: 40px;
+  height: 50px;
+}
+.ndd-dock-target-right {
+  right: 0;
+  top: 45px;
+  width: 40px;
+  height: 50px;
+}
+.ndd-dock-target-top {
+  left: 45px;
+  top: 0;
+  width: 50px;
+  height: 40px;
+}
+.ndd-dock-target-bottom {
+  left: 45px;
+  bottom: 0;
+  width: 50px;
+  height: 40px;
+}
+.ndd-dock-target-center {
+  left: 45px;
+  top: 45px;
+  width: 50px;
+  height: 50px;
+  background-color: color-mix(in srgb, var(--ndd--b-dock-target-center-bg, rgb(30 41 59)) 95%, transparent);
+  color: var(--ndd-accent-color);
+}
+
+/* Drag hover indicators: glowing insertion line */
+.ndd-workspace-tab.ndd-drag-hover-left {
+  box-shadow: -3px 0 0 0 var(--ndd-accent-color, #38bdf8),
+              -10px 0 10px -2px var(--ndd-accent-glow, rgba(56,189,248,0.35));
+}
+.ndd-workspace-tab.ndd-drag-hover-right {
+  box-shadow: 3px 0 0 0 var(--ndd-accent-color, #38bdf8),
+              10px 0 10px -2px var(--ndd-accent-glow, rgba(56,189,248,0.35));
+}
+
+/* Close button for empty LeafGroups inside header */
+.ndd-header-close-empty-group {
+  opacity: 0 !important;
+  transition: opacity 0.12s ease, background-color 0.12s ease, color 0.12s ease !important;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-inline-end: 0.5rem;
+}
+
+.ndd-workspace-panel:hover .ndd-header-close-empty-group {
+  opacity: 0.75 !important;
+}
+
+.ndd-header-close-empty-group:hover {
+  opacity: 1 !important;
+  background-color: rgba(255, 255, 255, 0.12) !important;
+  color: #ffffff !important;
+}
+
+/* Grabbing cursor style during active dragging */
+.ndd-dragging-active,
+.ndd-dragging-active * {
+  cursor: grabbing !important;
+}
+body.ndd-dragging-active {
+  -webkit-user-select: none !important;
+  user-select: none !important;
+}
+
+

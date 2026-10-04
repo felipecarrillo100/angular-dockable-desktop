@@ -1,0 +1,73 @@
+/* ── Coexistence base (M13) ─────────────────────────────────────────────────────────────────
+   The chrome must look the same whatever the host page loads — Bootstrap's body typography and
+   element rules, Tailwind's preflight (`* { padding: 0; border: 0 solid }`), a Material theme.
+   Two things made it depend on the page, and the M13 coexistence gate measured both:
+
+   1. chrome rendered *outside* the workspace root — the sidebar strip and header, the toolbar,
+      everything portalled to <body> — set no typography of its own and inherited the page's;
+   2. the library's buttons relied on the browser's default button padding and font, which a
+      reset removes.
+
+   So every chrome root states its own base, and every library button starts from an explicit
+   reset. These are single-class rules placed early: they beat any element selector a framework
+   uses, and the library's own later rules still decide the actual look. Consumer content inside
+   a root (a panel, a drawer tab, a modal body) inherits this base exactly as panels always
+   inherited the workspace's. */
+.ndd-workspace,
+.ndd-sidebar-tabs-strip,
+.ndd-sidebar-drawer-header,
+.ndd-toolbar-strip,
+.ndd-toolbar-group-flyout,
+.ndd-context-menu,
+.ndd-modal-overlay,
+.ndd-side-panel,
+.ndd-toast-container,
+.ndd-taskbar-item-tooltip,
+.ndd-panel-toolbar-search__dropdown {
+  font-family: var(--ndd-font-family);
+  line-height: normal;
+  text-transform: none;
+  letter-spacing: normal;
+  color: var(--ndd-text-primary);
+}
+.ndd-sidebar-tab-btn,
+.ndd-toolbar-btn,
+.ndd-toolbar-group-flyout-item,
+.ndd-custom-tab-btn,
+.ndd-modal-close-button,
+.ndd-side-panel-close-button,
+.ndd-sidebar-drawer-close-button,
+.ndd-toast__close,
+.ndd-panel-toolbar-btn,
+.ndd-panel-toolbar-search__item,
+.ndd-taskbar-nav-btn,
+.ndd-header-close-empty-group,
+.ndd-context-menu__item,
+.ndd-btn {
+  font: inherit;
+  line-height: inherit;
+  letter-spacing: inherit;
+  text-transform: none;
+  padding: 0;
+  margin: 0;
+}
+.ndd-modal-title,
+.ndd-side-panel-title {
+  line-height: 1.3;
+}
+/* An icon inside a library button sits on no text baseline: inline SVG does, and resets move it
+   (Tailwind's preflight makes svg display: block, Bootstrap sets vertical-align: middle). */
+.ndd-sidebar-tab-btn > svg,
+.ndd-toolbar-btn > svg,
+.ndd-custom-tab-btn > svg,
+.ndd-modal-close-button > svg,
+.ndd-side-panel-close-button > svg,
+.ndd-sidebar-drawer-close-button > svg,
+.ndd-toast__close > svg,
+.ndd-panel-toolbar-btn > svg,
+.ndd-taskbar-nav-btn > svg,
+.ndd-header-close-empty-group > svg,
+.ndd-close-tab-x > svg {
+  display: block;
+}
+

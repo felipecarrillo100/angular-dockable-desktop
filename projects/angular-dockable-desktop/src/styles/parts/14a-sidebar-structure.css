@@ -1,0 +1,65 @@
+/* ─── Sidebar structure ──────────────────────────────────────────────────────
+   rdd carried every rule below as an inline `style={{…}}` object on the JSX,
+   which is why its stylesheet had no sidebar layout at all: the sizes and the
+   flex behaviour lived in the component file. Anything inline is unreachable to
+   a consumer without `!important`, and invisible to a stylesheet review — the
+   class of omission catalogued as docs/PARITY.md divergence D12. Only the
+   values that genuinely vary per render stay inline: the strip's own
+   width (it animates between 56px and 0), the drawer's flex-basis/min/max, and
+   each pane's display. */
+
+/* The row that holds strip, drawer, resizer and the workspace itself. */
+.ndd-sidebar-layout {
+  display: flex;
+  flex-direction: row;
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+}
+
+/* Collapse wrapper around the strip. The animated width is set inline; this
+   clips the 56px strip inside it while that width is on its way to 0. */
+.ndd-sidebar-strip-outer {
+  height: 100%;
+  overflow: hidden;
+  flex-shrink: 0;
+  transition: width 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* The consumer's own content — the workspace, normally.
+
+   flex-basis: 0 rather than the `auto` a bare `flex-grow: 1` would leave in
+   place: with `auto`, a flex item's hypothetical size is its content's
+   max-content width, and `min-width: 0` lowers only the shrink floor, not that
+   starting size. So a wide panel inside would inflate this wrapper and steal
+   width from the drawer beside it, moving the drawer according to what happens
+   to be rendered in the workspace. At 0 the width is purely flex-grow's share
+   of the free space. */
+.ndd-sidebar-main {
+  flex-grow: 1;
+  flex-shrink: 1;
+  flex-basis: 0;
+  min-width: 0;
+  overflow: hidden;
+}
+
+/* The drawer animates its flex-basis, not its width: in a flex row, `width` has
+   no effect once flex-basis is set. */
+.ndd-sidebar-content-drawer {
+  flex-grow: 0;
+  flex-shrink: 1;
+  overflow: hidden;
+  transition:
+    flex-basis 0.2s cubic-bezier(0.4, 0, 0.2, 1),
+    min-width 0.2s cubic-bezier(0.4, 0, 0.2, 1),
+    max-width 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* One pane per mounted tab; all but the open one are display: none, set inline.
+   Column so a tab's header sits above its scrolling body. */
+.ndd-sidebar-drawer-pane {
+  flex-direction: column;
+  height: 100%;
+  width: 100%;
+}
+

@@ -1,0 +1,77 @@
+/* Outer Workspace Edge Drop Zones */
+.ndd-workspace-edge-trigger {
+  position: absolute;
+  z-index: calc(var(--ndd-z-base, 1000) + 8999);
+  background-color: color-mix(in srgb, var(--ndd-accent-color) 1%, transparent);
+  transition: background-color 0.2s;
+}
+
+.ndd-workspace-edge-trigger:hover {
+  background-color: color-mix(in srgb, var(--ndd-accent-color) 12%, transparent);
+}
+
+.ndd-edge-trigger-left {
+  left: 0;
+  top: 0;
+  bottom: 0;
+  width: 24px;
+}
+
+.ndd-edge-trigger-right {
+  right: 0;
+  top: 0;
+  bottom: 0;
+  width: 24px;
+}
+
+.ndd-edge-trigger-top {
+  top: 0;
+  left: 24px;
+  right: 24px;
+  height: 10px; /* thin strip — keeps clear of tab bar (38px tall) */
+}
+
+.ndd-edge-trigger-bottom {
+  bottom: 0;
+  left: 24px;
+  right: 24px;
+  height: 24px;
+}
+
+.ndd-workspace-edge-preview {
+  position: absolute;
+  z-index: calc(var(--ndd-z-base, 1000) + 8998);
+  background-color: color-mix(in srgb, var(--ndd-accent-color) 20%, transparent);
+  border: 2px dashed var(--ndd-accent-color);
+  pointer-events: none;
+  animation: ndd-fade-in 0.15s ease-out;
+}
+
+/* Workspace corner anchor drop zones */
+.ndd-corner-zone {
+  position: absolute;
+  width: 80px;
+  height: 80px;
+  border: 2px dashed var(--ndd-accent-color, #38bdf8);
+  border-radius: calc(8px * var(--ndd-radius-scale, 1));
+  background: color-mix(in srgb, var(--ndd-accent-color) 6%, transparent);
+  pointer-events: auto;
+  z-index: calc(var(--ndd-z-base, 1000) + 9000);
+  opacity: 0.55;
+  transition: opacity 0.15s ease, background 0.15s ease, border-style 0.15s ease;
+}
+.ndd-corner-zone--top-left     { top: 0;    left: 0;  }
+.ndd-corner-zone--top-right    { top: 0;    right: 0; }
+.ndd-corner-zone--bottom-left  { bottom: 0; left: 0;  }
+.ndd-corner-zone--bottom-right { bottom: 0; right: 0; }
+.ndd-corner-zone--hovered {
+  opacity: 1;
+  background: color-mix(in srgb, var(--ndd-accent-color) 18%, transparent);
+  border-style: solid;
+}
+
+[dir="rtl"] .ndd-corner-zone--top-right    { right: auto; left: 0;  }
+[dir="rtl"] .ndd-corner-zone--top-left     { left: auto;  right: 0; }
+[dir="rtl"] .ndd-corner-zone--bottom-right { right: auto; left: 0;  }
+[dir="rtl"] .ndd-corner-zone--bottom-left  { left: auto;  right: 0; }
+

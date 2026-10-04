@@ -10,6 +10,30 @@ feature-by-feature map is [docs/PARITY.md](https://github.com/felipecarrillo100/
 
 ## [Unreleased]
 
+## [1.5.1] — 2026-10-04
+
+**Parity: react-dockable-desktop 7.6.1** (internal restructuring; vue-dockable-desktop 1.7.1 made
+the same change). No behaviour, API or visual change.
+
+### Internal
+
+- **The stylesheet is built from area files.**
+  `projects/angular-dockable-desktop/src/styles/parts/NN-area.css` (tokens, base, coexistence,
+  tabs, grid, taskbar, floating windows, context menu, drop zones, one file per skin, sidebar,
+  modals, drawers, RTL, toolbar, panel overlay, toasts, the Angular port's own structure…) are
+  concatenated in file-name order into `styles.css` next to them, which is generated and committed,
+  and published as `angular-dockable-desktop/styles.css` (the area files are not shipped). The
+  published stylesheet is byte-identical to 1.5.0 apart from a header comment. To change a style,
+  edit the area file and run `npm run css` (or `npm run css:watch`); `npm run css:check` and a unit
+  test fail if `styles.css` is out of date. The gates read `styles.css` as before.
+
+### Tests
+
+- The M16 colour baseline (`scripts/gates/browser/fixtures/m16-branding-baseline.json`, which M17
+  also reads) is regenerated for 1.4.0's intended toolbar changes (toggle "on" colours and edge,
+  the new tokens, the vscode/macos light-mode hover), which 1.4.0 shipped without refreshing it.
+  Nothing in this release changes a colour.
+
 ## [1.5.0] — 2026-10-04
 
 **Parity: react-dockable-desktop 7.6.0** (vue-dockable-desktop 1.7.0 made the same port).
