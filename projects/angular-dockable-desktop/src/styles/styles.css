@@ -1102,6 +1102,14 @@ body.ndd-resizing-col-active * {
   background-color: var(--ndd-toolbar-btn-radio-active-bg, rgba(9, 71, 113, 0.35));
 }
 
+/* Focus. A menu opens with focus on the menu itself and nothing highlighted (it has outline: none).
+   A menu item that has keyboard focus draws the skin's ring, never the browser's default. Restyle
+   it with --ndd-context-menu-focus-ring, or every library ring at once with --ndd-focus-ring. */
+.ndd-context-menu__item:focus-visible {
+  outline: var(--ndd-context-menu-focus-ring, var(--ndd-focus-ring, 2px solid var(--ndd-accent-color)));
+  outline-offset: -2px;
+}
+
 .ndd-context-menu__icon {
   width: 16px;
   min-width: 16px;

@@ -10,6 +10,57 @@ feature-by-feature map is [docs/PARITY.md](docs/PARITY.md).
 
 ## [Unreleased]
 
+## [1.5.0] — 2026-10-04
+
+**Parity: react-dockable-desktop 7.6.0** (vue-dockable-desktop 1.7.0 made the same port).
+Context menus open with nothing highlighted, the same every time.
+
+### Changed
+
+- **A context menu opens with focus on the menu itself, no item highlighted.** It used to focus
+  its first item, and whether the browser then drew a focus ring depended on the user's previous
+  interaction: a menu opened from script (a map library's right-click calling `showContextMenu`,
+  say) showed a ring after a page load or a key press and none after a mouse click. ArrowDown
+  reaches the first item and ArrowUp the last.
+- **Menus opened from the keyboard still start on their first item**: a keyboard `contextmenu`
+  event (the ContextMenu key or Shift+F10, which report no pointer position), a button menu opened
+  with Enter or Space (the floating window's ⋮), and `initialFocus: 'first-item'`.
+
+### Added
+
+- **`initialFocus?: 'menu' | 'first-item'`** on `ShowContextMenuOptions`
+  (`workspace.showContextMenu`, `injectContextMenu()`).
+- **`--ndd-context-menu-focus-ring`**: the outline on a menu item with keyboard focus, by default
+  `--ndd-focus-ring` (the skin's accent). Both are now documented in the theming chapter. They are
+  read with a fallback rather than declared: a value declared on `:root` would be computed there
+  once and stop following the skin's or your brand's accent.
+
+### Fixed
+
+- **Menu items drew the browser's default focus ring** instead of the skin's.
+
+### Upgrading
+
+- Nothing to change for menus opened with the mouse or from script. If you open a menu from your
+  own keyboard shortcut, pass `initialFocus: 'first-item'` so it starts on an item.
+- Tests that expected the first item to have focus right after `showContextMenu` should press
+  ArrowDown first, or open the menu with `initialFocus: 'first-item'`.
+
+### Tests
+
+- `context-menu.spec.ts`: the menu itself is focused on open; ArrowUp from it; `initialFocus`;
+  keyboard and mouse `contextmenu` events; a keyboard click on a button menu. Each was seen
+  failing with its part of the fix removed.
+- The M8 browser gate checks the new opening deliberately (an intended behaviour change): the
+  menu is focused with no item highlighted, ArrowDown reaches "First", ArrowDown and Enter run
+  "Second", and `initialFocus: 'first-item'` opens on "First".
+
+### Documentation
+
+- Overlays chapter: initial focus, the option, keys, the focus ring. Theming chapter: a "Focus
+  rings" table. API reference: `ShowContextMenuOptions.initialFocus`. PARITY: N3 updated, a 1.5.0
+  table.
+
 ## [1.4.0] — 2026-10-04
 
 **Parity: react-dockable-desktop 7.5.0** (vue-dockable-desktop 1.6.0 made the same port).

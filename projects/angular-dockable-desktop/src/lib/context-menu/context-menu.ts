@@ -13,7 +13,8 @@
  *     <ng-template nddContextMenuTemplate let-items let-x="x" let-y="y" let-close="close">…</ng-template>
  *   </ndd-context-menu>
  *
- * The built-in menu follows the WAI-ARIA menu pattern (ADR 0005): focus moves into it on open;
+ * The built-in menu follows the WAI-ARIA menu pattern (ADR 0005): focus moves into it on open, onto
+ * the menu itself with nothing highlighted (onto its first item when opened from the keyboard);
  * ArrowUp/ArrowDown/Home/End rove across enabled items; ArrowRight (ArrowLeft under RTL) opens
  * a submenu and enters it, ArrowLeft/Escape leave it; Escape closes and returns focus to where it
  * was. Ported from vdd `VddContextMenu.vue`, which offered Escape only.
@@ -297,7 +298,7 @@ export class NddContextMenu {
           this.position.set({ x: req.x, y: req.y });
           this.openSubmenu.set(null);
           // Pull the menu back inside the viewport once it has a size, then move focus in.
-          afterNextRender(() => this.settle(req.x, req.y), { injector: this.injector });
+          afterNextRender(() => this.settle(req.x, req.y, req.initialFocus), { injector: this.injector });
           if (!listening) {
             // Two dismissal listeners, because one is not enough: `pointerdown` in the capture
             // phase runs before any canvas or map gesture handler can swallow it, and a bubbled
@@ -327,7 +328,7 @@ export class NddContextMenu {
     });
   }
 
-  private settle(x: number, y: number): void {
+  private settle(x: number, y: number, initialFocus: 'menu' | 'first-item'): void {
     const el = this.root()?.nativeElement;
     if (!el) return;
     const box = el.getBoundingClientRect();
@@ -339,7 +340,11 @@ export class NddContextMenu {
         { width: view?.innerWidth ?? 1024, height: view?.innerHeight ?? 768 },
       ),
     );
-    this.items(el)[0]?.focus({ preventScroll: true });
+    // Focus moves into the menu: onto the menu itself, nothing highlighted, unless it was opened
+    // from the keyboard. Focusing an item made the browser's focus ring come and go with the
+    // user's previous interaction.
+    if (initialFocus === 'first-item') this.items(el)[0]?.focus({ preventScroll: true });
+    else el.focus({ preventScroll: true });
   }
 
   protected clearTimers(): void {

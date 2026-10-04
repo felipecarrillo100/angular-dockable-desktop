@@ -20,7 +20,7 @@
   "floating-windows.spec.ts": 25,
   "drag-dock.spec.ts": 27,
   "taskbar.spec.ts": 20,
-  "context-menu.spec.ts": 39,
+  "context-menu.spec.ts": 42,
   "sidebar.spec.ts": 111,
   "toolbar.spec.ts": 48,
   "overlays.spec.ts": 11,

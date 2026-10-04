@@ -35,7 +35,12 @@ export function taskbarMenu(ws: Workspace<never>, id: string): ContextMenuItem[]
   return buildTaskbarMenu(ws, id, optionsFor(ws, id), actionsFor(ws, id));
 }
 
-/** Open a menu if it has anything in it. */
+/**
+ * Open a menu if it has anything in it. A click from the keyboard (Enter or Space on a button,
+ * `detail` 0) opens it on its first item; otherwise the menu itself takes focus.
+ */
 export function openMenu(ws: Workspace<never>, event: MouseEvent | PointerEvent, items: ContextMenuItem[]): void {
-  if (items.length > 0) ws.showContextMenu({ event, items });
+  if (items.length === 0) return;
+  const fromKeyboard = event.type === 'click' && event.detail === 0;
+  ws.showContextMenu({ event, items, ...(fromKeyboard ? { initialFocus: 'first-item' as const } : {}) });
 }

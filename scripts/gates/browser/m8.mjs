@@ -3,8 +3,9 @@
  *
  *   tab menu   a real right-click on a tab opens the standard menu at the pointer
  *   clamp      a menu opened at the viewport's corner is pulled back inside it
- *   keyboard   focus moves into the menu; ArrowDown/Enter activate an item with no mouse at all;
- *              Escape returns focus to where it was
+ *   keyboard   focus moves into the menu, onto the menu itself with no item highlighted (1.5.0,
+ *              rdd 7.6.0); ArrowDown/Enter activate an item with no mouse at all; Escape returns
+ *              focus to where it was; initialFocus: 'first-item' opens on the first item
  *   D1         the taskbar menu's Maximize, clicked for real, restores and maximises
  *   submenu    opens beside its parent — to the right under LTR, to the left under RTL
  *   dismissal  a real click outside closes the menu
@@ -74,8 +75,15 @@ await runBrowserGate(control ? 'M8-control' : 'M8', {}, async (page, { fail, ope
     window.__pg.ws.showContextMenu({ x: 200, y: 200, items: [{ label: 'First', action: () => window.__ran.push('first') }, { label: 'Second', action: () => window.__ran.push('second') }] });
   });
   await page.waitForTimeout(200);
+  const onOpen = await page.evaluate(() => ({
+    onMenu: document.activeElement?.hasAttribute('data-ndd-menu') ?? false,
+    ring: [...document.querySelectorAll('[data-ndd-menu-item]')].filter((i) => i.matches(':focus-visible')).length,
+  }));
+  if (!onOpen.onMenu) fail('focus did not move onto the menu itself');
+  if (onOpen.ring !== 0) fail(`an item was highlighted on open (${onOpen.ring})`);
+  await page.keyboard.press('ArrowDown');
   const firstFocus = await page.evaluate(() => document.activeElement?.getAttribute('data-ndd-menu-item'));
-  if (firstFocus !== 'First') fail(`focus did not move into the menu (${firstFocus})`);
+  if (firstFocus !== 'First') fail(`ArrowDown from the menu did not reach the first item (${firstFocus})`);
   await page.keyboard.press('ArrowDown');
   await page.keyboard.press('Enter');
   await page.waitForTimeout(150);
@@ -84,6 +92,11 @@ await runBrowserGate(control ? 'M8-control' : 'M8', {}, async (page, { fail, ope
   if (await menuOpen(page)) fail('keyboard: the menu stayed open after activating an item');
   const back = await page.evaluate(() => document.activeElement?.id);
   if (back !== 'pg-return-focus') fail(`keyboard: focus did not return to where it was (${back})`);
+  await page.evaluate(() => window.__pg.ws.showContextMenu({ x: 200, y: 200, initialFocus: 'first-item', items: [{ label: 'First' }, { label: 'Second' }] }));
+  await page.waitForTimeout(200);
+  const startOn = await page.evaluate(() => document.activeElement?.getAttribute('data-ndd-menu-item'));
+  if (startOn !== 'First') fail(`initialFocus: 'first-item' did not open on the first item (${startOn})`);
+  await page.evaluate(() => window.__pg.ws.closeContextMenu());
   await page.evaluate(() => {
     document.getElementById('pg-return-focus').focus();
     window.__pg.ws.showContextMenu({ x: 200, y: 200, items: [{ label: 'Only' }] });

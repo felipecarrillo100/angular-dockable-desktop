@@ -252,7 +252,7 @@ Keyboard support follows the WAI-ARIA menu pattern. [Ch. 8](08-overlays.md)
 | `ContextMenuSeparator` | `{ separator: true }`. |
 | `ContextMenuSubMenu` | `label`, `title`, `items` — one level deep. |
 | `ContextMenuCheckbox` | The checkbox column on a simple item: `value`, `active`, `enabled`. |
-| `ShowContextMenuOptions` | `items`, and a position from `event` or `x`/`y`. |
+| `ShowContextMenuOptions` | `items`, a position from `event` or `x`/`y`, and `initialFocus` (`'menu'`, the default, or `'first-item'`). |
 
 ## Panel overlay
 

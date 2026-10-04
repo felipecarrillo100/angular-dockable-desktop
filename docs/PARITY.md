@@ -79,6 +79,18 @@ Every template's context is typed through `ngTemplateContextGuard`.
 `injectSidebarTab()` / `injectToolbar()` / `injectContextMenu()` / `injectMerged*()`; lazy panels
 through `registerLazy`; server-side rendering and hydration (§4.2 N12).
 
+### Context-menu focus (1.5.0, from rdd 7.6.0)
+
+| rdd 7.6.0 | ndd 1.5.0 |
+|---|---|
+| menu opens with the menu element focused, nothing highlighted | `settle()` in `context-menu.ts`; the menu already had `tabindex="-1"` |
+| `initialFocus?: 'menu' \| 'first-item'`; a keyboard `contextmenu` event (0,0) defaults to `'first-item'` | same option; `menuInitialFocus()` in `core/context-menu.ts` |
+| ArrowUp from the menu goes to the last item | already: `onMenuKey` handled `current < 0` |
+| the ⋮ button and the Menu key / Shift+F10 pass `'first-item'` | `openMenu()` passes it for a keyboard click (`detail` 0), which covers the ⋮ button; ndd has no Menu-key openers of its own, and a native keyboard `contextmenu` event is covered by the 0,0 rule |
+| hover-opened submenu never takes focus | already: `openSubmenuAt(…, focusFirst)` focuses only from the keyboard |
+| `--rdd-context-menu-focus-ring` | `--ndd-context-menu-focus-ring` |
+| `KeyboardAccess.test.tsx` | `context-menu.spec.ts` (keyboard block); M8 browser gate |
+
 ### Toolbar buttons (1.4.0, from rdd 7.5.0)
 
 | rdd 7.5.0 | ndd 1.4.0 |
@@ -185,7 +197,7 @@ The counts gate enforces each floor; 834 tests run against vdd's 765.
 | `floatingWindows.test.ts` | `floating-windows.spec.ts` | 25 | 25 | M5 |
 | `dragDock.test.ts` | `drag-dock.spec.ts` | 27 | 27 | M6 |
 | `taskbar.test.ts` | `taskbar.spec.ts` | 20 | 20 | M7 |
-| `contextMenu.test.ts` | `context-menu.spec.ts` | 33 | 38 | M8 |
+| `contextMenu.test.ts` | `context-menu.spec.ts` | 33 | 42 | M8 |
 | `sidebar.test.ts` | `sidebar.spec.ts` | 91 | 111 | M9 |
 | `toolbar.test.ts` | `toolbar.spec.ts` | 42 | 48 | M9 |
 | `useOverlays.test.ts` | `modals-side-panels.spec.ts` | 9 | 10 | M10 |
@@ -281,7 +293,7 @@ are back-portable to vdd.
 |---|---|---|---|
 | N1 | Scroll offsets and focus are captured only at move time. A panel whose **host** is destroyed (a leaf re-created) is detached before any hook runs, and detached subtrees read `scrollTop 0`, so the offset is lost | The record is kept current from live capture-phase `scroll` / `focusin` events, so it is correct whenever the detach happens. Chrome's synchronous `focusout` during removal is handled (ignored for own moves; judged a microtask later otherwise) | M0 `REBUILD` steps; ADR 0002 findings 1–2 |
 | N2 | The taskbar preview's entry animation starts `translateY(-90%)` — 10% of its own height (~18px) low, more than the 8px gap — so for the first frames it covers its icon, and a quick click or right-click after hovering lands on the preview | The slide-in starts 6px low, inside the gap: the preview never covers its icon | M8 browser gate (overlap check + `--control` with vdd's keyframes) |
-| N3 | The context menu supports Escape only | The WAI-ARIA menu pattern: focus moves in, arrows/Home/End rove enabled items, ArrowRight/Left (mirrored in RTL) enter/leave submenus, Escape returns focus, checkbox items are `menuitemcheckbox` | context-menu spec (keyboard block); M8 browser gate |
+| N3 | The context menu supports Escape only | The WAI-ARIA menu pattern: focus moves in (onto the menu itself with nothing highlighted since 1.5.0; onto the first item with `initialFocus: 'first-item'` or a keyboard opening), arrows/Home/End rove enabled items, ArrowRight/Left (mirrored in RTL) enter/leave submenus, Escape returns focus, checkbox items are `menuitemcheckbox` | context-menu spec (keyboard block); M8 browser gate |
 | N4 | A tab's close × is a clickable `<span>` with no keyboard access | The focused tab closes with **Delete** (the WAI-ARIA tabs pattern), announced by `aria-keyshortcuts`, through the same close sequence as the ×. The × itself stays a pointer affordance, `aria-hidden`: a focusable control inside `role="tab"` is a nested interactive. (M4 first made the × focusable; M13's axe sweep showed why that was the wrong fix.) | style-hookups spec (accessibility); M13 axe + keyboard gate |
 | N5 | A toolbar group's flyout mirrors on the **workspace's** direction. That is right only when the app also puts `dir` on the chrome around the desktop (vdd's demo does); with only the desktop RTL, the strip stays on the left while the flyout opens leftwards off-screen and is clamped back over the strip | The flyout mirrors on the **strip's own computed direction** — where it is actually laid out. Its content still takes the workspace's `dir` | toolbar spec ("by the strip's own direction"); M9 browser gate (`rtl` and `rtl-desktop-only` cases) |
 | N6 | The sidebar's resizer grows the drawer by the **logical** side. Under a right-to-left container the flex row reverses, so `position="left"` renders on the right edge — and dragging its resizer away from the edge shrinks it | The drag direction follows the side the drawer is physically on (logical side × computed direction) | sidebar spec ("Right-to-left"); M9 browser gate (RTL page resize) |

@@ -52,6 +52,32 @@ export interface ShowContextMenuOptions {
   x?: number;
   y?: number;
   items: ContextMenuItem[];
+  /**
+   * Where focus goes when the menu opens. `'menu'` (the default) focuses the menu itself, with no
+   * item highlighted: ArrowDown then reaches the first item and ArrowUp the last. `'first-item'`
+   * focuses the first enabled item, for a menu opened from the keyboard. When this is left out, a
+   * keyboard `contextmenu` event (the ContextMenu key or Shift+F10, which report no pointer
+   * position) opens on the first item and everything else, including a call with no event, on
+   * the menu: the same view every time, whatever the user did before.
+   */
+  initialFocus?: 'menu' | 'first-item';
+}
+
+/** A menu request as the workspace holds it. */
+export interface ContextMenuRequest {
+  x: number;
+  y: number;
+  items: ContextMenuItem[];
+  initialFocus: 'menu' | 'first-item';
+}
+
+/** The menu's initial focus, from what the caller passed (see `ShowContextMenuOptions.initialFocus`). */
+export function menuInitialFocus(options: ShowContextMenuOptions): 'menu' | 'first-item' {
+  if (options.initialFocus) return options.initialFocus;
+  const event = options.event;
+  if (!event || 'touches' in event) return 'menu';
+  const mouse = event as MouseEvent;
+  return mouse.clientX === 0 && mouse.clientY === 0 ? 'first-item' : 'menu';
 }
 
 export const isSeparator = (item: ContextMenuItem): item is ContextMenuSeparator =>

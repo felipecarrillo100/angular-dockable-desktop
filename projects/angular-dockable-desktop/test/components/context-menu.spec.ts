@@ -25,6 +25,7 @@ import {
 } from '../../src/lib/context-menu/inject-context-menu';
 import { clampToViewport, menuPosition } from '../../src/lib/core/context-menu';
 import type { ContextMenuItem } from '../../src/lib/core/context-menu';
+import { openMenu } from '../../src/lib/desktop/menus';
 
 @Component({ selector: 'ndd-test-mock', template: 'panel' })
 class P {}
@@ -630,6 +631,10 @@ describe('keyboard: the WAI-ARIA menu pattern', () => {
       ],
     });
     await stable();
+    // 1.5.0: focus lands on the menu itself, nothing highlighted; ArrowDown reaches the first item.
+    expect(document.activeElement?.hasAttribute('data-ndd-menu')).toBe(true);
+    expect(focused()).toBeFalsy();
+    key('ArrowDown');
     expect(focused()).toBe('One');
     key('ArrowDown');
     expect(focused()).toBe('Two'); // skips the disabled item and the separator
@@ -652,6 +657,7 @@ describe('keyboard: the WAI-ARIA menu pattern', () => {
         items: [{ label: 'More', items: [{ label: 'Nested' }] }],
       });
       await stable();
+      key('ArrowDown');
       expect(focused()).toBe('More');
       key(dir === 'ltr' ? 'ArrowRight' : 'ArrowLeft');
       await stable();
@@ -672,12 +678,50 @@ describe('keyboard: the WAI-ARIA menu pattern', () => {
     before.focus();
     ws.showContextMenu({ x: 10, y: 10, items: [{ label: 'One' }] });
     await stable();
-    expect(focused()).toBe('One');
+    expect(document.activeElement?.hasAttribute('data-ndd-menu')).toBe(true);
     key('Escape');
     await stable();
     expect(document.querySelector('[data-ndd-menu]')).toBeNull();
     expect(document.activeElement).toBe(before);
     before.remove();
+  });
+
+  // 1.5.0 (rdd 7.6.0): a menu opens with nothing highlighted, the same however it was opened.
+  it('from the menu itself, ArrowUp reaches the last item', async () => {
+    const { ws, stable } = await setup();
+    ws.showContextMenu({ x: 10, y: 10, items: [{ label: 'One' }, { label: 'Two' }, { label: 'Three' }] });
+    await stable();
+    key('ArrowUp');
+    expect(focused()).toBe('Three');
+  });
+
+  it("initialFocus: 'first-item', and a keyboard contextmenu event, open on the first item", async () => {
+    const { ws, stable } = await setup();
+    ws.showContextMenu({ x: 10, y: 10, items: [{ label: 'One' }, { label: 'Two' }], initialFocus: 'first-item' });
+    await stable();
+    expect(focused()).toBe('One');
+    ws.closeContextMenu();
+    await stable();
+    ws.showContextMenu({ event: new MouseEvent('contextmenu', { clientX: 0, clientY: 0 }), items: [{ label: 'One' }] });
+    await stable();
+    expect(focused()).toBe('One');
+    ws.closeContextMenu();
+    await stable();
+    ws.showContextMenu({ event: new MouseEvent('contextmenu', { clientX: 40, clientY: 30 }), items: [{ label: 'One' }] });
+    await stable();
+    expect(document.activeElement?.hasAttribute('data-ndd-menu')).toBe(true);
+  });
+
+  it('a button menu opened from the keyboard (a click with detail 0) opens on the first item', async () => {
+    const { ws, stable } = await setup();
+    openMenu(ws as never, new MouseEvent('click', { detail: 0, clientX: 50, clientY: 50 }), [{ label: 'One' }]);
+    await stable();
+    expect(focused()).toBe('One');
+    ws.closeContextMenu();
+    await stable();
+    openMenu(ws as never, new MouseEvent('click', { detail: 1, clientX: 50, clientY: 50 }), [{ label: 'One' }]);
+    await stable();
+    expect(document.activeElement?.hasAttribute('data-ndd-menu')).toBe(true);
   });
 
   it('marks checkbox items with the menuitemcheckbox role', async () => {

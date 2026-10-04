@@ -706,6 +706,13 @@ A skin sets its own font as `--ndd-skin-font-family` — declared by each built-
 | `--ndd-scrollbar-thumb-hover` | `rgba(255, 255, 255, 0.2)` | Thumb on hover. |
 | `--ndd-scrollbar-track` | `rgba(255, 255, 255, 0.01)` | Scrollbar track. |
 
+### Focus rings
+
+| Token | Default | What it paints |
+|---|---|---|
+| `--ndd-focus-ring` | `2px solid var(--ndd-accent-color)` | Outline on a toolbar, rail or panel toolbar button reached from the keyboard (`:focus-visible`). Read with that fallback rather than declared, so it follows the skin's or your brand's accent wherever it is drawn. |
+| `--ndd-context-menu-focus-ring` | `var(--ndd-focus-ring)` | Outline on a context-menu item that has keyboard focus. |
+
 ### Panel overlay — toolbars
 
 | Token | Default | What it paints |

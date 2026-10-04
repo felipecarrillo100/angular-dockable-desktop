@@ -53,8 +53,8 @@ import { PanelRegistry } from '../core/registry';
 import type { PanelDefaultOptions, PanelLoader } from '../core/registry';
 import { EventBus } from '../core/event-bus';
 import type { BuiltInEvents } from '../core/event-bus';
-import { menuPosition } from '../core/context-menu';
-import type { ContextMenuItem, ShowContextMenuOptions } from '../core/context-menu';
+import { menuInitialFocus, menuPosition } from '../core/context-menu';
+import type { ContextMenuItem, ContextMenuRequest, ShowContextMenuOptions } from '../core/context-menu';
 import { defaultMessages, formatLabel } from '../core/messages';
 import { createToolbarState } from '../core/toolbar-state';
 import type { ToolbarState } from '../core/toolbar-state';
@@ -199,7 +199,7 @@ export class Workspace<TEvents extends Record<string, unknown> = Record<string, 
   /** Bumped when a panel registers or withdraws menu items, so a `computed` asking "does this
    *  panel contribute anything?" has something to track. The items themselves are pulled. */
   private readonly panelMenuVersion = signal(0);
-  private readonly menu = signal<{ x: number; y: number; items: ContextMenuItem[] } | null>(null);
+  private readonly menu = signal<ContextMenuRequest | null>(null);
   private readonly _state: WritableSignal<WorkspaceState>;
   private readonly zIndexBase: number;
   private maxZ: number;
@@ -215,7 +215,7 @@ export class Workspace<TEvents extends Record<string, unknown> = Record<string, 
   readonly dir: Signal<'ltr' | 'rtl'>;
   readonly isRtl: Signal<boolean>;
   /** The pending context-menu request, or `null`. Rendered by `<ndd-context-menu>`. */
-  readonly contextMenu: Signal<{ x: number; y: number; items: ContextMenuItem[] } | null>;
+  readonly contextMenu: Signal<ContextMenuRequest | null>;
   /** What the active panel has published, or `null`. */
   readonly activeContribution: Signal<PanelContribution | null>;
 
@@ -878,7 +878,7 @@ export class Workspace<TEvents extends Record<string, unknown> = Record<string, 
    */
   showContextMenu(options: ShowContextMenuOptions): void {
     options.event?.preventDefault?.();
-    this.menu.set({ ...menuPosition(options), items: options.items });
+    this.menu.set({ ...menuPosition(options), items: options.items, initialFocus: menuInitialFocus(options) });
   }
 
   /** Dismiss the open menu, if any. */

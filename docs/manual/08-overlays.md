@@ -449,6 +449,14 @@ and the menu appears at the pointer (or the first touch) and the event's default
 pass `x`/`y` instead to place it yourself. It is pulled back inside the viewport once it has a
 size, and closes on Escape, on an outside press, and when an item runs.
 
+Focus moves into the menu when it opens: onto the menu itself, with no item highlighted, so the
+menu looks the same every time, whether it was opened with the mouse, from script (a map
+library's own right-click handling calling `showContextMenu`, say) or after a key press. A
+keyboard `contextmenu` event (the ContextMenu key or Shift+F10, which report no pointer
+position), a button menu opened with Enter or Space (the floating window's ⋮), and
+`initialFocus: 'first-item'` open on the first enabled item instead: pass the option when you
+open a menu from your own keyboard shortcut.
+
 For the common case there is a directive. `[nddContextMenu]` opens its items on the host's
 `contextmenu` event; it takes an array or a getter, read at the moment of opening, and does
 nothing for an empty list:
@@ -485,10 +493,13 @@ and stays open for 200 ms after the pointer leaves, long enough to travel into i
 instantly makes the menu twitchy; closing instantly makes a submenu unreachable.
 
 The built-in menu follows the WAI-ARIA menu pattern ([PARITY N3](../PARITY.md)): focus moves
-into it on open, ArrowUp/ArrowDown/Home/End rove across enabled items, ArrowRight enters a
+into it on open, ArrowUp/ArrowDown/Home/End rove across enabled items (from the menu itself
+ArrowDown reaches the first item and ArrowUp the last), ArrowRight enters a
 submenu and ArrowLeft leaves it (mirrored under RTL), Escape closes and returns focus to where
 it was, and checkbox items are `menuitemcheckbox`. `<ndd-context-menu>` has one input, `theme`
-(default `'dark'`), mirrored onto the menu as `ndd-context-menu--<theme>`.
+(default `'dark'`), mirrored onto the menu as `ndd-context-menu--<theme>`. An item with keyboard
+focus draws the skin's focus ring, never the browser's default: `--ndd-context-menu-focus-ring`,
+by default `--ndd-focus-ring`.
 
 ### A panel's own menu
 
