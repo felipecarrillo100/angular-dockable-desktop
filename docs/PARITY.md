@@ -80,6 +80,16 @@ Every template's context is typed through `ngTemplateContextGuard`.
 `injectSidebarTab()` / `injectToolbar()` / `injectContextMenu()` / `injectMerged*()`; lazy panels
 through `registerLazy`; server-side rendering and hydration (§4.2 N12).
 
+### Two workspaces on one page (1.6.1, from rdd 7.7.1 / vdd 1.8.1)
+
+| rdd 7.7.1 | ndd 1.6.1 |
+|---|---|
+| per-workspace panel host (DOM, sizes, lifecycle) | already: `PanelHost` provided per `<ndd-desktop>` since 1.0 |
+| scroll/focus records keyed by element | already: kept on the desktop's own `PanelDomCache` |
+| taskbar preview tooltip found by ref | already: no document-wide query |
+| `<html>` mirror as an owner stack (`utils/documentMirror.ts`) | `core/document-mirror.ts`, used by `desktop.ts` |
+| `TwoWorkspaces.test.tsx` (mirror cases) | `test/components/desktop.spec.ts`, "two desktops on one page" |
+
 ### Dialogs (1.6.0, from rdd 7.7.0 / vdd 1.8.0)
 
 | rdd 7.7.0 | ndd 1.6.0 |

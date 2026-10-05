@@ -10,6 +10,28 @@ feature-by-feature map is [docs/PARITY.md](https://github.com/felipecarrillo100/
 
 ## [Unreleased]
 
+## [1.6.1] — 2026-10-05
+
+**Parity: react-dockable-desktop 7.7.1** (vue-dockable-desktop 1.8.1 made the same port).
+Two desktops on one page no longer strip each other's skin.
+
+### Fixed
+
+- **Destroying one desktop stripped `<html>` of the other's skin, animations opt-out and stacking
+  base** (`data-ndd-skin`, `ndd-no-animations`, `--ndd-z-base`), and each desktop overwrote the
+  other's while both were mounted. The most recently mounted desktop now decides these, and
+  destroying it hands them back to the others instead of removing them. Chrome rendered into
+  `document.body` (menus, toasts, flyouts, modals) therefore follows the newest desktop's skin when
+  two desktops use different skins.
+
+rdd 7.7.1 also fixed panel DOM, sizes and lifecycle handlers shared between workspaces. None of it
+applied here: ndd's `PanelHost` has been per desktop from the start.
+
+### Tests
+
+- `desktop.spec.ts`: two desktops under their own `provideDockableDesktop()` — the newest wins and is
+  handed back on destroy, and an older desktop's skin change stays underneath. Both fail on 1.6.0.
+
 ### Internal
 
 Faster checks, the same checks. Nothing in the published package changes.
