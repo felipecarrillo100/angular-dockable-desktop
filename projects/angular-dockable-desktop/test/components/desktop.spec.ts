@@ -362,3 +362,76 @@ describe('skin and animations', () => {
     expect(document.documentElement.classList.contains('ndd-no-animations')).toBe(false);
   });
 });
+
+/**
+ * Two desktops on one page, each under its own `provideDockableDesktop()`, share `<html>`. Each used
+ * to overwrite the other's skin, animations opt-out and stacking base, and destroying either removed
+ * them for the one still on screen.
+ */
+describe('two desktops on one page', () => {
+  const wsA = createWorkspace({ zIndexBase: 2000 });
+  const wsB = createWorkspace({ zIndexBase: 3000 });
+
+  @Component({
+    selector: 'ndd-test-desk-a',
+    imports: [NddDesktop],
+    providers: [provideDockableDesktop(wsA)],
+    template: `<ndd-desktop [skin]="skin()" [animations]="false" />`,
+  })
+  class DeskA {
+    readonly skin = signal('nord');
+  }
+
+  @Component({
+    selector: 'ndd-test-desk-b',
+    imports: [NddDesktop],
+    providers: [provideDockableDesktop(wsB)],
+    template: `<ndd-desktop skin="tokyo" />`,
+  })
+  class DeskB {}
+
+  @Component({
+    imports: [DeskA, DeskB],
+    template: `@if (showA()) { <ndd-test-desk-a /> } @if (showB()) { <ndd-test-desk-b /> }`,
+  })
+  class Host {
+    readonly showA = signal(true);
+    readonly showB = signal(true);
+  }
+
+  const root = () => document.documentElement;
+
+  it('the newest decides, and destroying it hands <html> back', async () => {
+    const fixture = TestBed.createComponent(Host);
+    await fixture.whenStable();
+    expect(root().getAttribute('data-ndd-skin')).toBe('tokyo');
+    expect(root().classList.contains('ndd-no-animations')).toBe(false);
+    expect(root().style.getPropertyValue('--ndd-z-base')).toBe('3000');
+
+    fixture.componentInstance.showB.set(false);
+    await fixture.whenStable();
+    expect(root().getAttribute('data-ndd-skin')).toBe('nord');
+    expect(root().classList.contains('ndd-no-animations')).toBe(true);
+    expect(root().style.getPropertyValue('--ndd-z-base')).toBe('2000');
+
+    fixture.componentInstance.showA.set(false);
+    await fixture.whenStable();
+    expect(root().getAttribute('data-ndd-skin')).toBeNull();
+    expect(root().classList.contains('ndd-no-animations')).toBe(false);
+    expect(root().style.getPropertyValue('--ndd-z-base')).toBe('');
+    fixture.destroy();
+  });
+
+  it("changing an older desktop's skin doesn't put it over a newer one", async () => {
+    const fixture = TestBed.createComponent(Host);
+    await fixture.whenStable();
+    const deskA = fixture.debugElement.children[0]!.componentInstance as DeskA;
+    deskA.skin.set('slate');
+    await fixture.whenStable();
+    expect(root().getAttribute('data-ndd-skin')).toBe('tokyo');
+    fixture.componentInstance.showB.set(false);
+    await fixture.whenStable();
+    expect(root().getAttribute('data-ndd-skin')).toBe('slate');
+    fixture.destroy();
+  });
+});

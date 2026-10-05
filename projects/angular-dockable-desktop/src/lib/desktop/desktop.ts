@@ -29,6 +29,7 @@ import {
 import { Workspace } from '../workspace/workspace';
 import { PanelHost } from '../panel/panel-host';
 import { injectColorScheme } from '../core/color-scheme';
+import { claimDocumentMirror, releaseDocumentMirror } from '../core/document-mirror';
 import { NddWorkspaceGrid } from './workspace-grid';
 import { NddFloatingWindow } from './floating-window';
 import { DragDock } from './drag-dock';
@@ -106,12 +107,15 @@ export class NddDesktop {
     // Skin, animation state and the stacking base are mirrored onto <html>, so chrome rendered
     // into document.body — menus, toasts, flyouts, modals — inherits the same tokens.
     // `--ndd-z-base` is the easy one to forget: without it `zIndexBase` silently does nothing.
+    // Through the document mirror, keyed by this desktop: with several on one page the newest wins,
+    // and destroying one hands <html> back to the others rather than clearing it.
     effect(() => {
       if (!this.browser) return;
-      const root = this.doc.documentElement;
-      root.setAttribute('data-ndd-skin', this.skin());
-      root.classList.toggle('ndd-no-animations', !this.animations());
-      root.style.setProperty('--ndd-z-base', String(this.workspace.config.zIndexBase));
+      claimDocumentMirror(
+        this,
+        { skin: this.skin(), noAnimations: !this.animations(), zBase: this.workspace.config.zIndexBase },
+        this.doc,
+      );
     });
 
     // Keep floating windows reachable when the workspace shrinks. `clampFloatingRect` returns
@@ -137,10 +141,7 @@ export class NddDesktop {
 
     this.destroyRef.onDestroy(() => {
       if (!this.browser) return;
-      const root = this.doc.documentElement;
-      root.removeAttribute('data-ndd-skin');
-      root.classList.remove('ndd-no-animations');
-      root.style.removeProperty('--ndd-z-base');
+      releaseDocumentMirror(this, this.doc);
     });
   }
 

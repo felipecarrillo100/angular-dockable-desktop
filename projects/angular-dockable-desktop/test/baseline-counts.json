@@ -15,7 +15,7 @@
   "state-transitions.spec.ts": 45,
   "workspace.spec.ts": 30,
   "inject-panel.spec.ts": 14,
-  "desktop.spec.ts": 24,
+  "desktop.spec.ts": 26,
   "panel-host.spec.ts": 8,
   "floating-windows.spec.ts": 25,
   "drag-dock.spec.ts": 27,
