@@ -5,19 +5,27 @@
  * For each module listed in test/port-map.json → modules (up to the gated milestone, or only
  * `--only <file>`), every exported function's body is replaced by `throw`, the unit suite is
  * re-run, and the run must finish with **failing tests** — a build error does not count, since
- * it would prove nothing about the assertions. The original is copied aside first and always
- * restored (there is no git to stash with — ADR 0010).
+ * it would prove nothing about the assertions.
  *
- *   node scripts/gates/non-vacuity.mjs [--milestone N [--exact]] [--only src/lib/core/x.ts]
+ * The stubbing happens in copies of the workspace under artifacts/nv/, never in the real source
+ * tree, so an interrupted sweep cannot leave a stubbed file behind. Several copies run at once
+ * (`--workers N`, or NDD_NV_WORKERS; default a third of the cores, at most three), each with its
+ * own report, and every module still gets its own full run of the suite: the verdicts are the same
+ * as running them one after another. Before any module, each copy runs the unstubbed suite, which
+ * must be green. `NDD_NV_REPORT=<file>` writes every
+ * module's verdict and failure count as JSON.
+ *
+ *   node scripts/gates/non-vacuity.mjs [--milestone N [--exact]] [--only src/lib/core/x.ts] [--workers N]
  *
  * Milestone gates pass `--exact`: they sweep the modules *that milestone* touched (plan B1
  * rule 5). The full sweep over every module — no flags — is `npm run gate:sweep`, which M13 and
  * M15 run, so an earlier module whose guarding tests later weaken is still caught.
  */
-import { spawnSync } from 'node:child_process';
-import { copyFileSync, existsSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
+import { spawn } from 'node:child_process';
+import { copyFileSync, cpSync, existsSync, mkdirSync, readFileSync, readdirSync, rmSync, symlinkSync, writeFileSync } from 'node:fs';
+import { cpus } from 'node:os';
 import { join } from 'node:path';
-import { LIB, MILESTONE, PORT_MAP, ROOT } from './lib/config.mjs';
+import { MILESTONE, PORT_MAP, ROOT } from './lib/config.mjs';
 
 const arg = name => { const i = process.argv.indexOf(name); return i > 0 ? process.argv[i + 1] : undefined; };
 const upTo = Number(arg('--milestone') ?? MILESTONE);
@@ -25,6 +33,14 @@ const only = arg('--only');
 const map = JSON.parse(readFileSync(PORT_MAP, 'utf8'));
 const exact = process.argv.includes('--exact');
 const modules = (map.modules ?? []).filter(m => (only ? m.file === only : exact ? m.milestone === upTo : m.milestone <= upTo));
+/** The real workspace. The sweep stubs modules only in copies of it, never here. */
+const MAIN = ROOT;
+/**
+ * One `ng test` already runs its spec files on every core, so more workers soon just queue for the
+ * CPU: measured on 10 cores, 5 workers ran each module 3.7× slower than 1. A third of the cores, at
+ * most three, is where they stopped helping.
+ */
+const DEFAULT_WORKERS = Math.min(3, Math.max(1, Math.floor(cpus().length / 3)));
 
 /** Replace each exported function's (and exported class method's) body with a throw. */
 export function stub(src) {
@@ -127,36 +143,116 @@ export function stub(src) {
   return { out, count };
 }
 
-if (process.argv[1]?.endsWith('non-vacuity.mjs')) {
-  const results = [];
-  for (const m of modules) {
-    const file = join(LIB, m.file);
-    const backup = `${file}.nv-orig`;
-    if (!existsSync(file)) { results.push({ file: m.file, ok: false, why: 'module missing' }); continue; }
-    copyFileSync(file, backup);
-    try {
-      const { out, count } = stub(readFileSync(file, 'utf8'));
-      if (count === 0) { results.push({ file: m.file, ok: false, why: 'no exported functions to stub' }); continue; }
-      writeFileSync(file, out);
-      const report = join(ROOT, 'artifacts/.nv.json');
-      // Never reuse a previous module's report: a stale one would lend this module its red.
-      rmSync(report, { force: true });
-      // One retry when no report appears: that has been seen once as a transient (M5), and a
-      // stub that genuinely breaks the build fails both runs, so the verdict cannot soften.
-      for (let attempt = 0; attempt < 2 && !existsSync(report); attempt++) {
-        rmSync(report, { force: true });
-        spawnSync('npx', ['ng', 'test', 'angular-dockable-desktop', '--reporters=json', `--output-file=${report}`], { cwd: ROOT, encoding: 'utf8', env: { ...process.env, CI: '1' } });
-      }
-      if (!existsSync(report)) { results.push({ file: m.file, ok: false, why: `stubbed ${count} fn(s) but the suite did not run (build error proves nothing)` }); continue; }
-      const r = JSON.parse(readFileSync(report, 'utf8'));
-      results.push({ file: m.file, ok: r.numFailedTests > 0, why: `stubbed ${count} fn(s) → ${r.numFailedTests}/${r.numTotalTests} tests failed` });
-    } finally {
-      copyFileSync(backup, file);
-      rmSync(backup);
+/** One worker's copy of the workspace: everything `ng test` reads, with node_modules linked, not copied. */
+function makeCopy(dir) {
+  rmSync(dir, { recursive: true, force: true });
+  mkdirSync(dir, { recursive: true });
+  for (const f of ['angular.json', 'package.json', 'tsconfig.json']) copyFileSync(join(MAIN, f), join(dir, f));
+  cpSync(join(MAIN, 'projects/angular-dockable-desktop'), join(dir, 'projects/angular-dockable-desktop'), {
+    recursive: true, filter: src => !/[/\\](node_modules|\.angular)([/\\]|$)/.test(src) && !src.endsWith('.nv-orig'),
+  });
+  // The workspace tsconfig references the other projects' configs, which the test build resolves.
+  for (const project of readdirSync(join(MAIN, 'projects'))) {
+    if (project === 'angular-dockable-desktop') continue;
+    for (const f of readdirSync(join(MAIN, 'projects', project)).filter(n => /^tsconfig.*\.json$/.test(n))) {
+      mkdirSync(join(dir, 'projects', project), { recursive: true });
+      copyFileSync(join(MAIN, 'projects', project, f), join(dir, 'projects', project, f));
     }
   }
+  // Some specs run the repository's own scripts (the stylesheet check runs build-css.mjs).
+  cpSync(join(MAIN, 'scripts'), join(dir, 'scripts'), { recursive: true });
+  symlinkSync(join(MAIN, 'node_modules'), join(dir, 'node_modules'), 'dir');
+  mkdirSync(join(dir, 'artifacts'), { recursive: true });
+}
+
+/**
+ * The control: the unstubbed suite, in a copy, must be entirely green. A spec that fails only
+ * because a copy lacks something the real tree has would turn every module red and hide a module
+ * nothing guards — so a copy that is not green stops the sweep instead.
+ */
+async function controlRun(dir) {
+  const report = join(dir, 'artifacts/.nv-control.json');
+  rmSync(report, { force: true });
+  await suite(dir, report);
+  if (!existsSync(report)) return `the unstubbed suite did not run in ${dir}`;
+  const r = JSON.parse(readFileSync(report, 'utf8'));
+  const names = r.testResults.flatMap(f => f.assertionResults.filter(a => a.status === 'failed')
+    .map(a => `${a.fullName ?? a.title}: ${(a.failureMessages ?? []).join(' ').replace(/\s+/g, ' ').slice(0, 300)}`));
+  return r.numFailedTests === 0 && r.numTotalTests > 0 ? null
+    : `the unstubbed suite is not green in ${dir}: ${r.numFailedTests}/${r.numTotalTests} failed — ${names.slice(0, 3).join('; ')}`;
+}
+
+/**
+ * Run the full suite in a copy and resolve with its exit — the report is what is read. (Not
+ * vitest's `bail`: tried, and a bailed run can report the failure that stopped it as 0 failed.)
+ */
+const suite = (cwd, report) => new Promise(resolve => {
+  const args = ['ng', 'test', 'angular-dockable-desktop', '--reporters=json', `--output-file=${report}`];
+  const child = spawn('npx', args,
+    { cwd, stdio: 'ignore', env: { ...process.env, CI: '1', NG_CLI_ANALYTICS: 'false' } });
+  child.on('exit', resolve);
+  child.on('error', () => resolve(-1));
+});
+
+/**
+ * Stub one module in a worker's copy (`ROOT` here is that copy, never the real tree), run the
+ * suite there, and say whether it went red. The copy's file is restored afterwards, so the copy can
+ * take the next module.
+ */
+async function sweepOne(m, ROOT) {
+  const file = join(ROOT, 'projects/angular-dockable-desktop', m.file);
+  if (!existsSync(file)) return { file: m.file, ok: false, why: 'module missing' };
+  const original = readFileSync(file, 'utf8');
+  try {
+    const { out, count } = stub(original);
+    if (count === 0) return { file: m.file, ok: false, why: 'no exported functions to stub' };
+    writeFileSync(file, out);
+    const report = join(ROOT, 'artifacts/.nv.json');
+    // Never reuse a previous module's report: a stale one would lend this module its red.
+    rmSync(report, { force: true });
+    // One retry when no report appears: that has been seen once as a transient (M5), and a
+    // stub that genuinely breaks the build fails both runs, so the verdict cannot soften.
+    for (let attempt = 0; attempt < 2 && !existsSync(report); attempt++) {
+      rmSync(report, { force: true });
+      await suite(ROOT, report);
+    }
+    if (!existsSync(report)) return { file: m.file, ok: false, why: `stubbed ${count} fn(s) but the suite did not run (build error proves nothing)` };
+    const r = JSON.parse(readFileSync(report, 'utf8'));
+    return { file: m.file, ok: r.numFailedTests > 0, failed: r.numFailedTests, total: r.numTotalTests, why: `stubbed ${count} fn(s) → ${r.numFailedTests}/${r.numTotalTests} tests failed` };
+  } finally {
+    writeFileSync(file, original);
+  }
+}
+
+if (process.argv[1]?.endsWith('non-vacuity.mjs')) {
+  const t0 = Date.now();
+  const workers = Math.max(1, Math.min(modules.length, Number(arg('--workers') ?? process.env['NDD_NV_WORKERS'] ?? DEFAULT_WORKERS)));
+  const base = join(MAIN, 'artifacts/nv');
+  const copies = Array.from({ length: workers }, (_, k) => join(base, `w${k}`));
+  copies.forEach(makeCopy);
+  console.log(`  non-vacuity: ${modules.length} module(s) across ${workers} worker(s)`);
+
+  const results = new Array(modules.length);
+  let next = 0;
+  try {
+    const broken = (await Promise.all(copies.map(controlRun))).filter(Boolean);
+    if (broken.length) {
+      broken.forEach(b => console.error(`  ${b}`));
+      console.log('non-vacuity: FAIL — a copy of the workspace is not green unstubbed, so no verdict would mean anything');
+      rmSync(base, { recursive: true, force: true });
+      process.exit(1);
+    }
+    await Promise.all(copies.map(async dir => {
+      for (let i = next++; i < modules.length; i = next++) results[i] = await sweepOne(modules[i], dir);
+    }));
+  } finally {
+    rmSync(base, { recursive: true, force: true });
+  }
+
   for (const r of results) console.log(`  ${r.ok ? 'red ' : 'GREEN'}  ${r.file}  ${r.why}`);
+  if (process.env['NDD_NV_REPORT']) writeFileSync(process.env['NDD_NV_REPORT'], JSON.stringify(results, null, 2) + '\n');
   const vacuous = results.filter(r => !r.ok);
+  console.log(`  (${Math.round((Date.now() - t0) / 1000)}s)`);
   console.log(vacuous.length ? `non-vacuity: FAIL — ${vacuous.length} module(s) not guarded by the suite` : `non-vacuity: ok — ${results.length} module(s), each turns the suite red`);
   process.exit(vacuous.length ? 1 : 0);
 }

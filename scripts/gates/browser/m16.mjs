@@ -163,14 +163,16 @@ await runBrowserGate(CONTROL ? 'M16-control' : WRITE ? 'M16-baseline' : 'M16', {
     // A stylesheet change is deterministic; a hover or entrance caught mid-flight on a loaded
     // machine is not. A scene that differs is captured once more, and only differences both
     // captures agree on count. The transient ones are reported, never silently dropped.
+    const isUnexpected = v => { const [before, now] = v.split(' -> '); return now === undefined || !intended(before, now, skin, cs); };
     let d = await check();
-    if (d.size) {
+    // Only an unexpected difference earns a second capture: the intended fixes are in every capture.
+    if ([...d.values()].some(isUnexpected)) {
       const d2 = await check();
       const transient = [...d.keys(), ...d2.keys()].filter(k => !(d.has(k) && d2.has(k)));
       if (transient.length) console.warn(`  ${skin}/${cs}: ${transient.length} transient difference(s), e.g. ${transient[0]}`);
       d = new Map([...d].filter(([k]) => d2.has(k)));
     }
-    const unexpected = [...d].filter(([, v]) => { const [before, now] = v.split(' -> '); return now === undefined || !intended(before, now, skin, cs); });
+    const unexpected = [...d].filter(([, v]) => isUnexpected(v));
     if (REPORT) appendFileSync(REPORT, lines(d).map(l => `${sched.name} ${skin}/${cs} ${l}`).join('\n') + '\n');
     report[`${skin}/${cs}`] = { changed: d.size, unexpected: unexpected.length };
     if (unexpected.length) fail(`baseline ${skin}/${cs}: ${unexpected.length} unintended difference(s): ${lines(new Map(unexpected)).slice(0, 8).join(' | ')}`);

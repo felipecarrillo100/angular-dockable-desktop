@@ -10,6 +10,56 @@ feature-by-feature map is [docs/PARITY.md](docs/PARITY.md).
 
 ## [Unreleased]
 
+### Internal
+
+Faster checks, the same checks. Nothing in the published package changes.
+
+- **`npm run verify`** — types, lint, the unit suite and the stub sweep for only the modules
+  changed since `HEAD`, about a minute: the check to run while working. **`npm run gate:release`** —
+  `npm run gate -- M13 M14 M15 M16 M17 M18`, one pass: the check to run before a release.
+- **One release pass, no repeated work.** Several milestones in one `npm run gate` call share one
+  standing gate, and a sub-gate that already passed in the same call is not run again — M15
+  re-ran every browser gate M13 had just run, plus the consumer smoke, the round trips and the vdd
+  differential. A sub-gate that failed is never reused, nothing is reused outside such a call, and
+  every run is listed with its time in `artifacts/gate-runs.jsonl` (`scripts/gates/lib/subgate.mjs`;
+  three selftest cases, each seen failing with its rule broken).
+- **The full non-vacuity sweep runs in parallel**, in copies of the workspace (three by default),
+  never in the real source tree, so an interrupted sweep can no longer leave a stubbed file behind.
+  Each copy first runs the unstubbed suite, which must be green. Every module still gets its own
+  full run of the suite, and all 53 verdicts matched the serial sweep's.
+- **The consumer smoke reuses the app `ng new` generates** for the same CLI version, for up to a
+  week (`NDD_CONSUMER_FRESH=1` forces a fresh one; CI always starts fresh). The tarball install, the
+  quick start, the build, the server render and the browser still run every time; a library made to
+  throw still fails it.
+- **The branding gates wait for the page to be still instead of sleeping**, with the old sleep as
+  the ceiling; the wait after the pointer leaves a control stays fixed, since the timers it starts
+  are invisible to such a check. M17 checks its three corner scales on one page per scene, and no
+  longer runs the hover walk for corners, which never read it. M16 captures a scene twice only for
+  an unexpected difference. Rewriting both baselines with the new code gave byte-identical fixtures,
+  and a corner changed in the stylesheet still fails M17 at every scale.
+- **The baselines key elements by library class, not position**, so a new wrapper element no longer
+  renames everything after it. Both fixtures were regenerated once: every scene has the same
+  entries with identical values, under the new keys.
+
+### Fixed
+
+- **The demo restyled the library's toolbar and rail buttons globally** (from 1.4.0), which M14
+  forbids: its icon-sizing rule began with `.ndd-toolbar-btn`. It now starts from the demo's own
+  `.dd-icon`, matching the same elements with the same specificity. No release pass had run M14
+  since; `gate:release` does.
+- **The stylesheet-sync unit test could time out on a loaded machine** (it starts a node process):
+  it now allows 30 s. It was the one test the parallel sweep's control run found failing under load.
+
+| | before | after |
+|---|---|---|
+| release pass, M13–M18 | 2,892 s (48 min) | 1,212 s (20 min) |
+| non-vacuity sweep | 776 s | 349–384 s |
+| M17 browser gate | 476 s | 115 s |
+| M16 browser gate | 263 s | 186 s |
+| M15 | 504 s | 9 s (its sub-gates already ran in the pass) |
+| consumer smoke | 207 s | 38 s (cached app) |
+| while working | a gate run | `npm run verify`, ≈1 min |
+
 ## [1.6.0] — 2026-10-05
 
 **Parity: react-dockable-desktop 7.7.0** (vue-dockable-desktop 1.8.0 made the same port).

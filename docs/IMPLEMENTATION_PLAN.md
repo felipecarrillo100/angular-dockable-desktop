@@ -188,8 +188,10 @@ end.
    from vdd's baseline per the mapping in B3.
 4. There are no skipped, `todo` or `only` tests at a gate.
 5. Non-vacuity is proven. At each test-porting milestone, the gate replaces each touched source
-   module in turn with a broken stub (the original is copied aside and restored afterwards;
-   there is no git to stash with) and requires the suite to go red.
+   module in turn with a broken stub and requires the suite to go red. Since 1.6.x the stubbing
+   happens in copies of the workspace (`artifacts/nv/`), several at once, never in the real
+   tree; each copy first runs the unstubbed suite, which must be green, so a copy that differs
+   from the tree can never lend a module its red.
 6. `npm run gate:selftest` proves every gate rule can fail, using seeded violations.
 
 **Boundaries.** These hold regardless of the autonomy above:
@@ -230,6 +232,22 @@ end.
 | docs-api | a doc sample references a symbol that is not exported |
 | zone | playground zone build fails to build or boot |
 | browser | the milestone's browser rules, in both zoneless and zone builds |
+
+**Two tiers, and one release pass** (1.6.x). Nothing above is dropped; it is run less often and
+without repeating itself:
+
+| Command | When | What |
+|---|---|---|
+| `npm run verify` | while working | types, lint, the unit suite, and the stub sweep for only the modules changed since `HEAD` — about a minute. Not a gate. |
+| `npm run gate:release` | before a release | `npm run gate -- M13 M14 M15 M16 M17 M18`: one pass, every rule of every one of those gates |
+| `npm run gate -- M<n>` | one milestone | exactly as before |
+
+Several milestones in one `npm run gate` call share one standing gate, and a sub-gate that
+already passed in the same call is not run again (M15 re-runs every browser gate M13 ran, and
+the consumer smoke and round trips) — see `scripts/gates/lib/subgate.mjs`. A sub-gate that
+failed is never reused, and a single milestone runs everything it always did. Every run, reused
+or not, is listed with its time in `artifacts/gate-runs.jsonl`, and each step's time in
+`artifacts/M<n>/gate.json`.
 
 ### B3. Test porting method
 

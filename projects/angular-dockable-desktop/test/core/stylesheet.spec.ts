@@ -264,9 +264,11 @@ describe('consumer content contract (styles.css)', () => {
 });
 
 describe('generated stylesheet', () => {
+  // It starts a node process, which on a loaded machine (the parallel non-vacuity sweep runs
+  // several suites at once) can take longer than the default 5s.
   it('styles.css is exactly what styles/parts/*.css give (run `npm run css` after an edit)', () => {
     const run = spawnSync(process.execPath, [resolve(process.cwd(), 'scripts/build-css.mjs'), '--check'], { encoding: 'utf8' });
     expect(run.stderr.trim()).toBe('');
     expect(run.status).toBe(0);
-  });
+  }, 30_000);
 });

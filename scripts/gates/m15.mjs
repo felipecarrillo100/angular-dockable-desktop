@@ -19,7 +19,7 @@
  *
  * The clean install (`rm -rf node_modules dist && npm ci`) precedes the run; the evidence says so.
  */
-import { spawnSync } from 'node:child_process';
+import { runSub } from './lib/subgate.mjs';
 import { existsSync, readFileSync, readdirSync } from 'node:fs';
 import { dirname, join, resolve } from 'node:path';
 import { API_SURFACE, ROOT, STYLES } from './lib/config.mjs';
@@ -29,10 +29,9 @@ const failures = [];
 const must = (cond, msg) => { if (!cond) failures.push(msg); };
 const read = p => readFileSync(resolve(ROOT, p), 'utf8');
 const step = name => console.log(`\n── M15: ${name}`);
-const sub = (script, args = [], { expectFail = false } = {}) => {
-  const r = spawnSync('node', [join(ROOT, script), ...args], { stdio: expectFail ? 'pipe' : 'inherit', encoding: 'utf8' });
-  return expectFail ? r.status !== 0 : r.status === 0;
-};
+// Every sub-gate goes through runSub: it is timed in artifacts/gate-runs.jsonl, and inside one
+// release pass a sub-gate that already passed is not run twice (lib/subgate.mjs).
+const sub = (script, args = [], { expectFail = false } = {}) => runSub(script, args, { expectFail, from: 'M15' });
 
 // ── 1. Release files ────────────────────────────────────────────────────────
 step('release files');

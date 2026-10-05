@@ -18,7 +18,7 @@
  * The M13 browser gate itself (axe, keyboard, tick bounds, live class sweep) runs after this, as
  * every milestone's does.
  */
-import { spawnSync } from 'node:child_process';
+import { runSub } from './lib/subgate.mjs';
 import { existsSync, readFileSync, readdirSync } from 'node:fs';
 import { basename, join } from 'node:path';
 import { PORT_MAP, ROOT, STYLES, VITEST_JSON } from './lib/config.mjs';
@@ -28,10 +28,9 @@ import { COMPOSED_CLASSES, CONSUMER_HOOKS, LITERAL_MAP_CLASSES, OPT_IN_UTILITIES
 const failures = [];
 const must = (cond, msg) => { if (!cond) failures.push(msg); };
 const step = name => console.log(`\n── M13: ${name}`);
-const sub = (script, args = [], { expectFail = false, env = {} } = {}) => {
-  const r = spawnSync('node', [join(ROOT, script), ...args], { stdio: expectFail ? 'pipe' : 'inherit', encoding: 'utf8', env: { ...process.env, ...env } });
-  return expectFail ? r.status !== 0 : r.status === 0;
-};
+// Every sub-gate goes through runSub: it is timed in artifacts/gate-runs.jsonl, and inside one
+// release pass a sub-gate that already passed is not run twice (lib/subgate.mjs).
+const sub = (script, args = [], { expectFail = false, env = {} } = {}) => runSub(script, args, { expectFail, env, from: 'M13' });
 
 // ── 1. The suite ────────────────────────────────────────────────────────────
 step('suite');

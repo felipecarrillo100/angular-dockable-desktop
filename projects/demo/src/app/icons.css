@@ -4,8 +4,12 @@
 .dd-icon { display: block; width: 14px; height: 14px; background: currentColor;
   -webkit-mask: var(--dd-icon) center / contain no-repeat; mask: var(--dd-icon) center / contain no-repeat; }
 /* Inside the library's toolbar and rail buttons a mask icon follows the button's icon size
-   (--ndd-chrome-icon-size, --ndd-panel-toolbar-icon-size), which reaches it as font-size. */
-.ndd-toolbar-btn .dd-icon, .ndd-sidebar-tab-btn .dd-icon, .ndd-panel-toolbar-btn .dd-icon { width: 1em; height: 1em; }
+   (--ndd-chrome-icon-size, --ndd-panel-toolbar-icon-size), which reaches it as font-size.
+   Written from the demo's own class: the demo styles its icons inside the library's buttons, never
+   the buttons themselves (M14). Same elements and specificity as `.ndd-toolbar-btn .dd-icon`. */
+.dd-icon:is(.ndd-toolbar-btn *) { width: 1em; height: 1em; }
+.dd-icon:is(.ndd-sidebar-tab-btn *) { width: 1em; height: 1em; }
+.dd-icon:is(.ndd-panel-toolbar-btn *) { width: 1em; height: 1em; }
 .dd-icon-hamburger { --dd-icon: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2.2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M4 6h16'/%3E%3Cpath d='M4 12h16'/%3E%3Cpath d='M4 18h16'/%3E%3C/svg%3E"); }
 .dd-icon-code { --dd-icon: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m18 16 4-4-4-4'/%3E%3Cpath d='m6 8-4 4 4 4'/%3E%3Cpath d='m14.5 4-5 16'/%3E%3C/svg%3E"); }
 .dd-icon-document { --dd-icon: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z'/%3E%3Cpath d='M14 2v6h6'/%3E%3C/svg%3E"); }

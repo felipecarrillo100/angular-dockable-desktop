@@ -7,8 +7,8 @@
  * violation is broken, and this fails.
  */
 import { spawnSync } from 'node:child_process';
-import { mkdirSync, rmSync, utimesSync, writeFileSync } from 'node:fs';
-import { dirname, join } from 'node:path';
+import { existsSync, mkdirSync, readFileSync, rmSync, utimesSync, writeFileSync } from 'node:fs';
+import { dirname, join, relative } from 'node:path';
 import { ROOT } from './lib/config.mjs';
 
 const BASE = join(ROOT, 'artifacts/selftest');
@@ -136,6 +136,29 @@ expect('docs-api.mjs', 'uses an unknown element', false, docsEnv('```html\n<ndd-
   const body = src.slice(src.indexOf("const report = join(ROOT, 'artifacts/.nv.json');"));
   const ok = /^const report[^\n]*\n(?:\s*\/\/[^\n]*\n)*\s*rmSync\(report, \{ force: true \}\);/.test(body);
   results.push({ rule: 'non-vacuity.mjs', label: 'removes the previous report before each module runs', ok, got: ok ? 'pass' : 'fail', wanted: 'pass', out: body.slice(0, 200) });
+}
+
+// ── release-pass reuse (lib/subgate.mjs): only a pass is reused, and only inside a session ──
+{
+  const dir = join(BASE, 'subgate');
+  mkdirSync(dir, { recursive: true });
+  const counter = name => join(dir, `${name}.count`);
+  const runs = name => (existsSync(counter(name)) ? readFileSync(counter(name), 'utf8').length : 0);
+  // A sub-gate that records each run, and passes or fails as told.
+  writeFileSync(join(dir, 'sub.mjs'), "import { appendFileSync } from 'node:fs';\nappendFileSync(process.argv[2], 'x');\nprocess.exit(process.argv[3] === 'fail' ? 1 : 0);\n");
+  const call = (session, name, outcome) => spawnSync('node', ['-e',
+    `import('${join(ROOT, 'scripts/gates/lib/subgate.mjs')}').then(m => process.exit(m.runSub(${JSON.stringify(relative(ROOT, join(dir, 'sub.mjs')))}, [${JSON.stringify(counter(name))}, '${outcome}']) ? 0 : 1))`],
+    { encoding: 'utf8', env: { ...process.env, NDD_GATE_RUNLOG: join(dir, 'runs.jsonl'), ...(session ? { NDD_GATE_SESSION: session } : { NDD_GATE_SESSION: '' }) } });
+  for (let i = 0; i < 2; i++) call('s1', 'failing', 'fail');
+  for (let i = 0; i < 2; i++) call('s1', 'passing', 'pass');
+  for (let i = 0; i < 2; i++) call(null, 'alone', 'pass');
+  call('s2', 'passing', 'pass');
+  const cases = [
+    ['a sub-gate that failed is run again, never reused', runs('failing') === 2],
+    ['a sub-gate that passed is reused within its release pass', runs('passing') === 2],
+    ['outside a release pass nothing is reused', runs('alone') === 2],
+  ];
+  for (const [label, ok] of cases) results.push({ rule: 'subgate.mjs', label, ok, got: ok ? 'pass' : 'fail', wanted: 'pass', out: `failing ${runs('failing')}, passing ${runs('passing')}, alone ${runs('alone')}` });
 }
 
 // ── report ────────────────────────────────────────────────────────────────
