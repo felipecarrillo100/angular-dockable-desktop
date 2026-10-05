@@ -52,6 +52,7 @@ family's `props` key.
 | `<VddToolbar>` | `<ndd-toolbar>` |
 | `<VddContextMenu>` | `<ndd-context-menu>` |
 | `<VddModals>` / `<VddSidePanels>` / `<VddConfirm>` | `<ndd-modals>` / `<ndd-side-panels>` / `<ndd-confirm>` |
+| `<VddAlert>` (vdd 1.8.0) | `<ndd-alert>` (`NddAlert`, 1.6.0) |
 | `<VddToasts>` + `toast()` | `<ndd-toasts>` + `toast()`, and `NddToaster` for `inject()` |
 | `<VddPanelOverlay>` / `<VddPanelToolbar>` / `<VddFloatingWidget>` | `<ndd-panel-overlay>` / `<ndd-panel-toolbar>` / `<ndd-floating-widget>` |
 | `<VddToolbarButton>` … `<VddToolbarSearch>` | `<ndd-toolbar-button>` … `<ndd-toolbar-search>` |
@@ -78,6 +79,20 @@ Every template's context is typed through `ngTemplateContextGuard`.
 `injectModals()` / `injectSidePanels()` / `injectFloatingWidgets()` / `injectSidebar()` /
 `injectSidebarTab()` / `injectToolbar()` / `injectContextMenu()` / `injectMerged*()`; lazy panels
 through `registerLazy`; server-side rendering and hydration (§4.2 N12).
+
+### Dialogs (1.6.0, from rdd 7.7.0 / vdd 1.8.0)
+
+| rdd 7.7.0 | ndd 1.6.0 |
+|---|---|
+| `RddConfirm` `icon` prop, question icon beside the message | `NddConfirm` `icon` input (`NddIcon \| null`), via the internal `ndd-dialog-icon` |
+| `RddAlert` | `NddAlert` (`<ndd-alert>`) |
+| `useModals().confirm()` / `.alert()`, `ConfirmOptions` / `AlertOptions` | the same, on `injectModals()`; options left out are not passed, so each input keeps its default |
+| `rdd-dialog-icon-{type}` from the `--rdd-toast-*-color` tokens | `ndd-dialog-icon-{type}` from `--ndd-toast-*-color` |
+| `data-rdd-alert-ok`; `data-rdd-confirm-ok` / `-cancel` (new in rdd) | `data-ndd-alert-ok`; the confirm hooks already existed |
+| `alertTitle` message; confirm title from `modalTitle` | `alertTitle` and `confirmTitle`, as vdd |
+| `RddConfirm` `onSettled`; fix: dismissal never settled | already: `NddConfirm` settled on destroy |
+| fix: `RddConfirm` overwrote the header icon | already: `NddConfirm` never set one |
+| `Dialogs.test.tsx` | `test/components/dialogs.spec.ts`; M10 checks the alert settles on destroy, once |
 
 ### Source layout (1.5.1, from rdd 7.6.1)
 

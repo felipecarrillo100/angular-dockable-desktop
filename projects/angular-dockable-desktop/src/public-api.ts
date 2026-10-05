@@ -117,8 +117,9 @@ export type { ToolbarVariant, ButtonVariant, ToolbarInsets } from './lib/core/pa
 
 // ─── Side panels, modals, confirm, toasts ────────────────────────────────────
 export { NddModals, NddSidePanels, injectModals, injectSidePanels, injectModalRef } from './lib/overlays/modals';
-export type { NddModalRef, NddModalsApi, NddSidePanelsApi } from './lib/overlays/modals';
+export type { NddModalRef, NddModalsApi, NddSidePanelsApi, ConfirmOptions, AlertOptions } from './lib/overlays/modals';
 export { NddConfirm } from './lib/overlays/confirm';
+export { NddAlert } from './lib/overlays/alert';
 export { NddToasts } from './lib/toast/toasts';
 export { toast, resetToasts, NddToaster } from './lib/toast/toast';
 export type {

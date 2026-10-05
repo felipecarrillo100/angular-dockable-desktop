@@ -30,6 +30,7 @@ const workspace = code('src/lib/workspace/workspace.ts');
 const host = code('src/lib/overlays/overlay-host.ts');
 const modals = code('src/lib/overlays/modals.ts');
 const confirm = code('src/lib/overlays/confirm.ts');
+const alert = code('src/lib/overlays/alert.ts');
 const toast = code('src/lib/toast/toast.ts');
 const toasts = code('src/lib/toast/toasts.ts');
 const panelHost = code('src/lib/panel/panel-host.ts');
@@ -56,6 +57,9 @@ must(/this\.overlays\.setConfirmRenderer\(request => this\.confirmDiscard\(reque
 must(/onDestroy\(\(\) => this\.overlays\.setConfirmRenderer\(null\)\)/.test(modals), 'destroying the host must deregister it, or a dirty close awaits a modal nothing renders');
 must(/onDestroy\(\(\) => this\.settle\(false\)\)/.test(confirm), 'the question must resolve when dismissed by Escape, the backdrop or the ×');
 must(/if \(this\.settled\) return;/.test(confirm), 'it must resolve exactly once');
+// The alert (1.6.0) answers to the same rule: an acknowledgement nobody hears is a hang too.
+must(/onDestroy\(\(\) => this\.settle\(\)\)/.test(alert), 'the alert must settle when dismissed by Escape, the backdrop or the ×');
+must(/if \(this\.settled\) return;/.test(alert), 'the alert must settle exactly once');
 
 // ── 3. Escape routing, stated once ─────────────────────────────────────────
 must(/const onKeydown = \(event: KeyboardEvent\)/.test(shared), 'Escape routing belongs in the shared host state');
@@ -117,6 +121,8 @@ for (const t of [
   'injectModals().open() returns a ref whose afterClosed() resolves with what the content passed to injectModalRef().close()',
   'afterClosed() resolves undefined for every other way out — Escape, the ×, the backdrop, closeAll',
   'closing a dirty panel with nothing able to ask should silently abort (no modal, no close)',
+  'settles once when dismissed with Escape',
+  'confirm resolves false on cancel and on dismissal',
 ]) must(passed.has(t), `required test did not pass: "${t}"`);
 
 const control = spawnSync('node', [join(ROOT, 'scripts/gates/browser/m10.mjs'), '--control'], { encoding: 'utf8' });

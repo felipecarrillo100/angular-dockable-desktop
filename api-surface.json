@@ -1,5 +1,6 @@
 {
   "exports": [
+    "NddAlert",
     "NddConfirm",
     "NddContextMenu",
     "NddContextMenuTemplate",
@@ -58,11 +59,13 @@
     "toast"
   ],
   "types": [
+    "AlertOptions",
     "AlertType",
     "BuiltInEvents",
     "ButtonVariant",
     "ColorScheme",
     "ConfirmDiscard",
+    "ConfirmOptions",
     "ContainerType",
     "ContextMenuCheckbox",
     "ContextMenuItem",

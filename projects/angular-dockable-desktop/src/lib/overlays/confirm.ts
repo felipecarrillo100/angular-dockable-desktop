@@ -7,12 +7,15 @@
  * a close awaiting forever when the user pressed Escape. Ported from vdd `VddConfirm.vue`.
  */
 import { Component, DestroyRef, ElementRef, afterNextRender, inject, input, viewChild } from '@angular/core';
+import type { NddIcon } from '../core/icon';
 import type { AlertType, Label } from '../core/types';
 import { injectPanel } from '../panel/panel-ref';
 import { Workspace } from '../workspace/workspace';
+import { NddDialogIcon } from './dialog-icon';
 
 @Component({
   selector: 'ndd-confirm',
+  imports: [NddDialogIcon],
   template: `
     <form class="ndd-confirmation-form-body" (submit)="$event.preventDefault(); confirm()">
       @if (alert()) {
@@ -20,7 +23,10 @@ import { Workspace } from '../workspace/workspace';
           <span>{{ alert() }}</span>
         </div>
       }
-      <div class="ndd-confirmation-message">{{ workspace.format(message()) }}</div>
+      <div class="ndd-dialog-content">
+        <ndd-dialog-icon [icon]="icon()" [type]="alertType()" [question]="true" />
+        <div class="ndd-confirmation-message">{{ workspace.format(message()) }}</div>
+      </div>
       <div class="ndd-confirmation-actions">
         <button type="button" class="ndd-btn ndd-btn-sm ndd-btn-outline" data-ndd-confirm-cancel (click)="cancel()">
           {{ workspace.format(yesNo() ? workspace.messages.no : workspace.messages.cancel) }}
@@ -43,6 +49,11 @@ export class NddConfirm {
   readonly onCancel = input<(() => void) | undefined>(undefined);
   /** Called exactly once, whichever way the dialog closes. `ok` says which. */
   readonly onSettled = input<((ok: boolean) => void) | undefined>(undefined);
+  /**
+   * The icon left of the message (1.6.0): omit it for the built-in question mark, pass `null` for
+   * none, or pass an icon. Coloured by `alertType`.
+   */
+  readonly icon = input<NddIcon | null | undefined>(undefined);
 
   protected readonly workspace = inject(Workspace) as Workspace<never>;
   private readonly panel = injectPanel();

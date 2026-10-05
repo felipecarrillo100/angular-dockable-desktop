@@ -13,9 +13,12 @@
  */
 import { Component, DestroyRef, computed, inject, input } from '@angular/core';
 import type { Signal, Type } from '@angular/core';
+import type { NddIcon } from '../core/icon';
 import type { DiscardRequest, ModalOptions, OverlayInstance, SidePanelOptions } from '../core/overlays';
+import type { AlertType, Label } from '../core/types';
 import { injectWorkspace } from '../workspace/provide';
 import { Workspace } from '../workspace/workspace';
+import { NddAlert } from './alert';
 import { NddConfirm } from './confirm';
 import { MODAL_REF, NddModalHost, NddSidePanelHost, modalRef, requestOverlayClose } from './overlay-host';
 import type { NddModalRef } from './overlay-host';
@@ -112,6 +115,37 @@ export interface NddModalsApi {
   /** Close, honouring the modal's close guard and dirty state. `force` skips both. */
   close(id: string, options?: { force?: boolean }): Promise<void>;
   closeAll(): void;
+  /**
+   * Open an `<ndd-confirm>` (1.6.0). Resolves `true` for the confirm button, `false` for cancel and
+   * for any dismissal — Escape, the backdrop, the ×, or a close by code.
+   */
+  confirm(options: ConfirmOptions): Promise<boolean>;
+  /** Open an `<ndd-alert>` (1.6.0). Resolves once it is closed, however. */
+  alert(options: AlertOptions): Promise<void>;
+}
+
+/** Options of `injectModals().confirm()`. The title defaults to the `confirmTitle` message. */
+export interface ConfirmOptions {
+  message: Label;
+  title?: Label;
+  alert?: string;
+  alertType?: AlertType;
+  icon?: NddIcon | null;
+  /** Label the buttons "Yes"/"No" rather than "OK"/"Cancel". */
+  yesNo?: boolean;
+  /** @default 'small' */
+  size?: ModalOptions['size'];
+}
+
+/** Options of `injectModals().alert()`. The title defaults to the `alertTitle` message. */
+export interface AlertOptions {
+  message: Label;
+  title?: Label;
+  alertType?: AlertType;
+  icon?: NddIcon | null;
+  okLabel?: Label;
+  /** @default 'small' */
+  size?: ModalOptions['size'];
 }
 
 /**
@@ -134,7 +168,20 @@ export function injectModals(): NddModalsApi {
       modalRef<R>(workspace, overlays.openModal(component, inputs, options)),
     close: (id, options) => requestOverlayClose(workspace, id, options),
     closeAll: () => overlays.closeAllModals(),
+    confirm: ({ message, title, alert, alertType, icon, yesNo, size = 'small' }) => new Promise<boolean>(resolve => {
+      overlays.openModal(NddConfirm, defined({ message, alert, alertType, icon, yesNo, onSettled: resolve }),
+        { title: title ?? workspace.messages.confirmTitle, size });
+    }),
+    alert: ({ message, title, alertType, icon, okLabel, size = 'small' }) => new Promise<void>(resolve => {
+      overlays.openModal(NddAlert, defined({ message, alertType, icon, okLabel, onSettled: resolve }),
+        { title: title ?? workspace.messages.alertTitle, size });
+    }),
   };
+}
+
+/** Drops the options left out, so each input keeps its own default rather than `undefined`. */
+function defined(inputs: Record<string, unknown>): Record<string, unknown> {
+  return Object.fromEntries(Object.entries(inputs).filter(([, v]) => v !== undefined));
 }
 
 /**

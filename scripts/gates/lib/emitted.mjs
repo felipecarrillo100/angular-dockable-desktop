@@ -104,6 +104,8 @@ export const COMPOSED_CLASSES = {
   "'ndd-resize-' + dir": ['n', 'ne', 'e', 'se', 's', 'sw', 'w', 'nw'].map(d => `ndd-resize-${d}`),
   // `'ndd-confirmation-alert-' + alertType()` — NddConfirm
   "'ndd-confirmation-alert-' + alertType()": ['info', 'warning', 'success', 'danger'].map(t => `ndd-confirmation-alert-${t}`),
+  // `'ndd-dialog-icon-' + type()` — NddDialogIcon
+  "'ndd-dialog-icon-' + type()": ['info', 'warning', 'success', 'danger'].map(t => `ndd-dialog-icon-${t}`),
   // `ndd-modal-size-${…size}` — the modal host
   'ndd-modal-size-${': ['small', 'medium', 'large', 'fullscreen', 'auto'].map(x => `ndd-modal-size-${x}`),
   // `'ndd-toast--' + type()` — a toast card

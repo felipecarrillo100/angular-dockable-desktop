@@ -31,6 +31,9 @@ export const defaultMessages = {
   yes: { id: 'ndd.yes', defaultMessage: 'Yes' },
   no: { id: 'ndd.no', defaultMessage: 'No' },
   ok: { id: 'ndd.ok', defaultMessage: 'OK' },
+  // The default titles of injectModals().confirm() and .alert() (1.6.0).
+  confirmTitle: { id: 'ndd.confirmTitle', defaultMessage: 'Confirmation' },
+  alertTitle: { id: 'ndd.alertTitle', defaultMessage: 'Information' },
   closeTooltip: { id: 'ndd.closeTooltip', defaultMessage: 'Close' },
   scrollTabsLeft: { id: 'ndd.scrollTabsLeft', defaultMessage: 'Scroll tabs left' },
   scrollTabsRight: { id: 'ndd.scrollTabsRight', defaultMessage: 'Scroll tabs right' },

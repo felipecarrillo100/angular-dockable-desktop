@@ -63,7 +63,7 @@ lands on top of it.
 | Option | |
 |---|---|
 | `title` | Header title. A string or a message descriptor ([chapter 11](11-i18n.md)). |
-| `icon` | An `NddIcon` — a component, a `TemplateRef` or a class string — shown before the title. |
+| `icon` | An `NddIcon` — a component, a `TemplateRef` or a class string — shown before the title. (The icon beside an `<ndd-confirm>` or `<ndd-alert>` message is the dialog's own `icon` input.) |
 | `size` | `'small'` · `'medium'` · `'large'` · `'fullscreen'` · `'auto'` (default) |
 | `closable` | `false` removes the × *and* dismissal by Escape or backdrop click. Default `true`. |
 | `bodyPadding` | A number (px) or any CSS value. Unset by default, so content goes edge-to-edge. |
@@ -304,9 +304,15 @@ export class Selection {
 | `yesNo` | Label the buttons Yes/No instead of OK/Cancel. Default `false`. |
 | `onOk` / `onCancel` | Called by the buttons. |
 | `onSettled(ok)` | Called exactly once, however the dialog goes away — button, Escape, backdrop or ×. |
+| `icon` | An `NddIcon` drawn left of the message, or `null` for none. Default: a question mark (1.6.0). |
+
+A question mark sits left of the message, coloured by `alertType`. `icon` draws your own in its
+place and `icon: null` hides it. The modal's header icon (`ModalOptions.icon`) is separate and
+left as you set it.
 
 `<ndd-confirm>` closes itself without a result, so its `afterClosed()` resolves `undefined`
-whichever button was pressed. To await an answer, wrap `onSettled`:
+whichever button was pressed. To await an answer, use `injectModals().confirm()` (below), or wrap
+`onSettled`:
 
 ```ts
 const ok = await new Promise<boolean>(resolve =>
@@ -314,7 +320,57 @@ const ok = await new Promise<boolean>(resolve =>
 );
 ```
 
-The confirm button takes focus when the dialog opens, so Enter answers it.
+The confirm button takes focus when the dialog opens, so Enter answers it. The buttons carry
+`data-ndd-confirm-ok` and `data-ndd-confirm-cancel`.
+
+## `<ndd-alert>`
+
+A message and one OK button, for telling rather than asking (1.6.0). Its icon follows
+`alertType` — info, success, warning, danger — with the same `icon` override.
+
+```ts
+import { NddAlert, injectModals } from 'angular-dockable-desktop';
+
+this.modals.open(NddAlert, {
+  message: 'The layer was exported to exports/roads.geojson.',
+  alertType: 'success',
+}, { title: 'Export finished', size: 'small' });
+```
+
+| Input | |
+|---|---|
+| `message` | Required. A string or a message descriptor. |
+| `alertType` | Picks the built-in icon and its colour. `'info'` (default) · `'warning'` · `'success'` · `'danger'` |
+| `icon` | An `NddIcon`, or `null` for none. |
+| `okLabel` | The button label. Default: the `ok` message. |
+| `onSettled()` | Called exactly once: OK, Enter, Escape, the backdrop, the × or a close by code. |
+
+Focus starts on OK, and Enter presses it. Escape, the backdrop and the × acknowledge it too,
+unless the modal is opened with `closable: false` — then OK is the only way out. The button
+carries `data-ndd-alert-ok`.
+
+## `confirm()` and `alert()` — as promises
+
+`injectModals()` opens either dialog and hands back a promise (1.6.0):
+
+```ts
+const modals = injectModals();
+
+if (await modals.confirm({ message: 'Delete the selected features?', alertType: 'danger', yesNo: true })) {
+  this.deleteSelection();
+}
+
+await modals.alert({ message: 'Nothing to export.', alertType: 'warning' });
+```
+
+- `confirm(options)` resolves `true` for the confirm button and `false` for cancel or any
+  dismissal. Options: `message`, `title` (default: the `confirmTitle` message, "Confirmation"),
+  `alert`, `alertType`, `icon`, `yesNo`, `size` (default `'small'`).
+- `alert(options)` resolves once it is closed, however. Options: `message`, `title` (default:
+  the `alertTitle` message, "Information"), `alertType`, `icon`, `okLabel`, `size` (default
+  `'small'`).
+
+The option types are `ConfirmOptions` and `AlertOptions`.
 
 ## Toasts
 

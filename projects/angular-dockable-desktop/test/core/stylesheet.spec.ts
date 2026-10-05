@@ -23,7 +23,21 @@ const rule = (selector: string): string | null => {
     new RegExp(`${selector.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}\\s*\\{[^}]*\\}`),
   );
   return m ? m[0] : null;
-};
+}
+describe('the dialog icon row (1.6.0, rdd 7.7.0)', () => {
+  it('every class the dialog icon emits has a rule, and its colour comes from a toast token', () => {
+    expect(rule('.ndd-dialog-icon'), '.ndd-dialog-icon').toMatch(/width:\s*24px/);
+    for (const [type, token] of [['info', 'info'], ['success', 'success'], ['warning', 'warning'], ['danger', 'error']]) {
+      expect(rule(`.ndd-dialog-icon-${type}`), type).toMatch(new RegExp(`color:\\s*var\\(--ndd-toast-${token}-color\\)`));
+    }
+  });
+
+  it('the separator is the row\'s border, so it spans the icon as well as the message', () => {
+    expect(rule('.ndd-dialog-content'), '.ndd-dialog-content').toMatch(/border-bottom:/);
+    expect(rule('.ndd-confirmation-message'), '.ndd-confirmation-message').not.toMatch(/border-bottom:/);
+  });
+});
+;
 
 describe('SP1: .ndd-side-panel stays position: fixed', () => {
   it('does not regress to position: absolute', () => {

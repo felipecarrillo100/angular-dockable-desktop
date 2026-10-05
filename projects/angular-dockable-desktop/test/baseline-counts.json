@@ -6,7 +6,7 @@
   "layout-tree.spec.ts": 40,
   "serializable.spec.ts": 12,
   "stretch.spec.ts": 12,
-  "stylesheet.spec.ts": 22,
+  "stylesheet.spec.ts": 24,
   "round-trip.spec.ts": 26,
   "registry.spec.ts": 12,
   "event-bus.spec.ts": 11,
@@ -35,5 +35,6 @@
   "style-hookups.spec.ts": 17,
   "field-report.spec.ts": 6,
   "review-fixes.spec.ts": 8,
-  "drag-blur.spec.ts": 5
+  "drag-blur.spec.ts": 5,
+  "dialogs.spec.ts": 23
 }

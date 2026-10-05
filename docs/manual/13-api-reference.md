@@ -178,6 +178,19 @@ A confirm/cancel dialog body, usable as modal content. [Ch. 8](08-overlays.md)
 | `yesNo` | input, default `false` | Label the buttons Yes/No instead of OK/Cancel. |
 | `onOk` / `onCancel` | input, `() => void` | Callbacks for each answer. |
 | `onSettled` | input, `(ok: boolean) => void` | Called exactly once, whichever way the dialog closes. |
+| `icon` | input, `NddIcon \| null` | The icon left of the message; `null` hides it. Default: a question mark. |
+
+### `NddAlert` — `<ndd-alert>`
+
+A message dialog body with one OK button, usable as modal content (1.6.0). [Ch. 8](08-overlays.md)
+
+| Member | Kind | |
+|---|---|---|
+| `message` | input, required, `Label` | The text. |
+| `alertType` | input, `AlertType`, default `'info'` | Picks the built-in icon and its colour. |
+| `icon` | input, `NddIcon \| null` | Replaces the built-in icon; `null` hides it. |
+| `okLabel` | input, `Label` | The button label. Default: the `ok` message. |
+| `onSettled` | input, `() => void` | Called exactly once, whichever way the dialog closes. |
 
 ### `NddToasts` — `<ndd-toasts>`
 
@@ -198,7 +211,7 @@ The notification host. Mount once, anywhere. [Ch. 8](08-overlays.md)
 
 | Export | |
 |---|---|
-| `injectModals()` | The modal stack: `stack`, `topmost`, `open(component, inputs?, options?)` → `NddModalRef`, `close`, `closeAll`. [Ch. 8](08-overlays.md) |
+| `injectModals()` | The modal stack: `stack`, `topmost`, `open(component, inputs?, options?)` → `NddModalRef`, `close`, `closeAll`, and `confirm(options)` → `Promise<boolean>` / `alert(options)` → `Promise<void>`. [Ch. 8](08-overlays.md) |
 | `injectSidePanels()` | The drawers: `left`, `right`, `openLeft`, `openRight` (async, `null` when the occupant's guard refuses), `close`, `closeAll`. [Ch. 8](08-overlays.md) |
 | `injectModalRef()` | Inside a modal's content, the `NddModalRef` of the modal you are in. Throws elsewhere. [Ch. 8](08-overlays.md) |
 | `toast(message, options?)` | Show a notification from anywhere. Also `.info`, `.success`, `.warning`, `.error`, `.dismiss`, `.promise`. Returns the toast id. [Ch. 8](08-overlays.md) |
@@ -209,6 +222,8 @@ The notification host. Mount once, anywhere. [Ch. 8](08-overlays.md)
 |---|---|
 | `NddModalRef` | `id`, `close(result?)`, `requestClose()`, `afterClosed()` — shaped like `MatDialogRef`. |
 | `NddModalsApi` | What `injectModals()` returns. |
+| `ConfirmOptions` | `message`, `title`, `alert`, `alertType`, `icon`, `yesNo`, `size` — for `injectModals().confirm()`. |
+| `AlertOptions` | `message`, `title`, `alertType`, `icon`, `okLabel`, `size` — for `injectModals().alert()`. |
 | `NddSidePanelsApi` | What `injectSidePanels()` returns. |
 | `Overlays` | The store behind both, as `ws.overlays`: usable without a component (from a service). |
 | `OverlayInstance` | One open drawer or modal: `id`, `component`, `inputs`, `kind`, `options`, `dirty`. |

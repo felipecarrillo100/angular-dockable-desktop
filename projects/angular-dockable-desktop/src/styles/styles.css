@@ -3030,16 +3030,45 @@ html.ndd-no-animations [class*="ndd-"]::after {
 }
 
 /* The message body. rdd set these three values inline on the JSX, together with an <hr>
-   that existed only to draw a separator — so a consumer could restyle neither (D12). The
-   separator is this element's own border-bottom, which is one element instead of two and
-   leaves the spacing to the flex gap above. */
+   that existed only to draw a separator — so a consumer could restyle neither (D12). */
 .ndd-confirmation-message {
   font-size: 0.9rem;
   line-height: 1.5;
   color: inherit;
+}
+
+/* The row holding the icon and the message (1.6.0). The separator is this row's own
+   border-bottom — one element instead of rdd's <hr>, leaving the spacing to the flex gap above —
+   so it spans the icon as well as the text. Before 1.6.0 it was the message's own border. */
+.ndd-dialog-content {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.75rem;
   padding-bottom: 0.5rem;
   border-bottom: 1px solid var(--ndd-sidebar-border, rgba(255, 255, 255, 0.08));
 }
+.ndd-dialog-content > .ndd-confirmation-message {
+  flex: 1;
+  min-width: 0;
+}
+
+/* The icon left of the message: 24px, coloured by type with the toast tokens. */
+.ndd-dialog-icon {
+  flex: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 24px;
+}
+.ndd-dialog-icon > svg {
+  width: 100%;
+  height: 100%;
+}
+.ndd-dialog-icon-info    { color: var(--ndd-toast-info-color); }
+.ndd-dialog-icon-success { color: var(--ndd-toast-success-color); }
+.ndd-dialog-icon-warning { color: var(--ndd-toast-warning-color); }
+.ndd-dialog-icon-danger  { color: var(--ndd-toast-error-color); }
 
 .ndd-confirmation-actions {
   display: flex;

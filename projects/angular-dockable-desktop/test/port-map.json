@@ -364,6 +364,14 @@
       "milestone": 10
     },
     {
+      "file": "src/lib/overlays/alert.ts",
+      "milestone": 10
+    },
+    {
+      "file": "src/lib/overlays/dialog-icon.ts",
+      "milestone": 10
+    },
+    {
       "file": "src/lib/toast/toast.ts",
       "milestone": 10
     },
