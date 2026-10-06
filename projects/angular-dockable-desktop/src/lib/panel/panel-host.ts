@@ -1,6 +1,8 @@
 /**
  * The panel host: creates each open panel's component **once**, for as long as it is open, and
  * destroys it only when it closes. The one place a panel is ever created or destroyed (ADR 0002).
+ * The one exception is a kind with `keepAlive: false` (1.7.0, ADR 0018): its component exists only
+ * while the panel is on screen; the host, the content element, the size and the context stay.
  *
  * Each component is created on its library-owned `.ndd-panel-content` element and attached to
  * `ApplicationRef` — never to a `ViewContainerRef` inside a leaf — so no layout component's
@@ -31,6 +33,7 @@ import { PanelDomCache } from './panel-dom';
 import { PANEL_CONTEXT } from './panel-ref';
 import type { PanelContext } from './panel-ref';
 import { NddUnregisteredPanel, NddPanelLoading } from './panel-placeholders';
+import { findLeaf, findLeafForPanel } from '../core/layout-tree';
 
 interface HostedPanel {
   ref: ComponentRef<unknown> | null;
@@ -42,6 +45,8 @@ interface HostedPanel {
   /** Last props applied, to set only what changed. */
   applied: Record<string, unknown> | undefined;
   disposed: boolean;
+  /** The resolved component, once known: what a `keepAlive: false` panel is re-created from. */
+  type: Type<unknown> | null;
 }
 
 /** @internal — one per `<ndd-desktop>`, provided in its `providers`. */
@@ -61,6 +66,12 @@ export class PanelHost {
     effect(() => {
       const panels = this.workspace.panels();
       untracked(() => this.reconcile(panels));
+    });
+    // keepAlive: false (1.7.0): a panel's component exists only while the panel is on screen.
+    effect(() => {
+      this.workspace.panels();
+      this.workspace.gridRoot();
+      untracked(() => this.applyVisibility());
     });
     // Panel content follows the workspace's reading direction (the mount lives outside it).
     effect(() => {
@@ -96,6 +107,7 @@ export class PanelHost {
       observer: null,
       applied: undefined,
       disposed: false,
+      type: null,
     };
     this.hosted.set(id, hosted);
     this.dom.elementFor(id); // exists from open, so a slot can take it before content loads
@@ -107,7 +119,8 @@ export class PanelHost {
       return;
     }
     if (entry.component) {
-      this.mount(id, hosted, entry.component);
+      hosted.type = entry.component;
+      if (this.shouldBeMounted(id)) this.mount(id, hosted, entry.component);
       return;
     }
     // Lazy: a placeholder now, the real component when its chunk arrives.
@@ -115,9 +128,10 @@ export class PanelHost {
     this.workspace.registry.resolve(component).then(
       type => {
         if (hosted.disposed || this.hosted.get(id) !== hosted) return;
+        hosted.type = type;
         this.unmount(hosted);
         this.dom.resetContent(id);
-        this.mount(id, hosted, type);
+        if (this.shouldBeMounted(id)) this.mount(id, hosted, type);
       },
       error => console.error(`[angular-dockable-desktop] Could not load panel "${component}":`, error),
     );
@@ -134,10 +148,14 @@ export class PanelHost {
     const context: PanelContext = { id, containerType, size: hosted.size.asReadonly() };
     const elementInjector = Injector.create({ providers: [{ provide: PANEL_CONTEXT, useValue: context }], parent: this.injector });
 
+    const content = this.dom.contentFor(id);
+    // Per kind (1.7.0); applied on every mount, since a reset content element starts bare.
+    const kindClass = this.workspace.registry.get(this.workspace.panels()[id]?.component ?? '')?.defaultOptions?.className;
+    if (kindClass) content.classList.add(...kindClass.split(/\s+/).filter(Boolean));
     const ref = createComponent(type, {
       environmentInjector: this.environmentInjector,
       elementInjector,
-      hostElement: this.dom.contentFor(id),
+      hostElement: content,
     });
     hosted.inputs = new Set((reflectComponentType(type)?.inputs ?? []).map(i => i.templateName));
     hosted.applied = undefined;
@@ -148,6 +166,32 @@ export class PanelHost {
     this.appRef.attachView(ref.hostView);
     hosted.ref = ref;
     this.created.update(n => n + 1);
+  }
+
+  /** Whether a panel's component should exist now: always, unless its kind has `keepAlive: false`. */
+  private shouldBeMounted(id: string): boolean {
+    const panel = this.workspace.panels()[id];
+    if (!panel) return false;
+    if (this.workspace.registry.get(panel.component)?.defaultOptions?.keepAlive !== false) return true;
+    if (panel.state === 'floating') return true;
+    if (panel.state !== 'docked') return false;
+    const root = this.workspace.gridRoot();
+    const leafId = findLeafForPanel(root, id);
+    return leafId !== null && findLeaf(root, leafId)?.activePanelId === id;
+  }
+
+  /** Destroy hidden `keepAlive: false` components, and create the ones shown again. */
+  private applyVisibility(): void {
+    for (const [id, hosted] of this.hosted) {
+      if (!hosted.type || hosted.disposed) continue;
+      const wanted = this.shouldBeMounted(id);
+      if (!wanted && hosted.ref) {
+        this.unmount(hosted);
+        this.dom.resetContent(id);
+      } else if (wanted && !hosted.ref) {
+        this.mount(id, hosted, hosted.type);
+      }
+    }
   }
 
   private applyInputs(id: string, hosted: HostedPanel, ref: ComponentRef<unknown>): void {

@@ -51,6 +51,8 @@ const NONE: Placement = { left: null, top: null, bottom: null, inlineStart: null
     '[class.ndd-maximized]': 'window().maximized === true',
     '[class.ndd-window-focused]': 'isFocused()',
     '[attr.data-ndd-window]': 'window().id',
+    '[attr.data-ndd-focused]': "isFocused() ? '' : null",
+    '[attr.data-ndd-maximized]': "window().maximized === true ? '' : null",
     '[attr.dir]': 'workspace.dir()',
     role: 'dialog',
     '[attr.aria-label]': 'title()',

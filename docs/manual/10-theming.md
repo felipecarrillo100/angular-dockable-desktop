@@ -501,6 +501,80 @@ Now `position: fixed` inside any library container means the viewport, in every 
 If you write a skin of your own that frosts a container hosting content, do the same: put the
 `backdrop-filter` (and the background it tints) on `::before`.
 
+## Your own empty-workspace view
+
+While no panel is docked, the workspace shows a built-in message. Replace it with anything (1.7.0):
+
+```html
+<ndd-desktop>
+  <ng-template nddEmptyWorkspace>
+    <app-welcome-screen />
+  </ng-template>
+</ndd-desktop>
+```
+
+Import `NddEmptyWorkspaceTemplate` next to `NddDesktop`. The view fills the empty group: floating
+windows still show over it, and a window can still be dropped onto it to dock. Empty groups inside a
+split keep the built-in message. To change only its text, override `emptyGroup` in `messages`.
+
+## Styling by state and by panel kind
+
+Two hooks let your CSS target the desktop without depending on internal class names (1.7.0).
+Each attribute is present while its state is true and absent otherwise:
+
+| Attribute | On | Present while |
+|-----------|----|---------------|
+| `data-ndd-selected` | tab | it is the tab shown in its group |
+| `data-ndd-focused` | tab, floating window | it is the workspace's active panel |
+| `data-ndd-dirty` | tab | the panel has unsaved changes |
+| `data-ndd-maximized` | floating window | it is maximised |
+
+Tabs carry `data-ndd-tab="<panel id>"` and floating windows `data-ndd-window="<panel id>"`. And
+`className` / `tabClassName` in a kind's registration options add your class to every panel of
+that kind and to its tab ([Chapter 3](03-panels.md#registration-options)).
+
+```css
+[data-ndd-tab][data-ndd-dirty] { box-shadow: inset 0 -2px 0 #f59e0b; }
+[data-ndd-window][data-ndd-focused] { outline: 2px solid var(--ndd-brand-accent); }
+```
+
+## Using it with Angular Material, PrimeNG, Bootstrap or Tailwind
+
+Every class the library renders starts with `ndd-` and every variable with `--ndd-`, so nothing
+collides with a framework's own classes. Colours and fonts:
+[Use your UI framework's theme](#use-your-ui-frameworks-theme).
+
+**Dark mode.** The desktop reads `data-color-scheme` on `<html>` (`"light"` is light; anything
+else, or none, is dark) and never sets it. Wherever your app switches its theme (Angular
+Material's `color-scheme`, a dark-mode class for PrimeNG or Tailwind, Bootstrap's
+`data-bs-theme`), set the attribute too:
+
+```ts
+document.documentElement.setAttribute('data-color-scheme', dark ? 'dark' : 'light');
+```
+
+**Stacking.** With the default `zIndexBase` of 1000, floating windows start at 1001, and the
+library's drawers are at 9000, context menus 9500, modals 10000 and toasts 10100. Two cases need
+care:
+
+- **Angular Material's menus, selects, autocompletes, tooltips and dialogs render into the CDK
+  overlay container, at z-index 1000 by default: below the floating windows.** So a Material popup
+  opened from a panel in a floating window appears behind that window. Raise the container above the
+  library's whole range, which also covers the next case:
+  ```css
+  .cdk-overlay-container { z-index: 11000; }
+  ```
+- **A framework popup opened inside one of the library's modals or drawers appears behind it**
+  when it renders into `<body>` (Material's overlays, as above; PrimeNG overlays appended to the
+  body; Bootstrap's tooltips and popovers). Raise it (PrimeNG's `zIndex` setting; Bootstrap's
+  `--bs-popover-zindex` / `--bs-tooltip-zindex`), or render it inside the modal (PrimeNG's
+  `appendTo`; Bootstrap's `container` option).
+
+**Overriding styles.** Prefer the `--ndd-*` variables, then the state attributes and your own
+classes. A rule of yours on the library's classes needs equal specificity, and a declaration the
+library marks `!important` needs `!important` too. A version of the stylesheet in a CSS cascade
+layer, which would let any of your rules win, is planned for a later release.
+
 ## Stacking against your own overlays
 
 If your application's dialogs and the workspace fight over `z-index`, move the library's whole

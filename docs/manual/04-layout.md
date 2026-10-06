@@ -70,6 +70,23 @@ such an id again docks it into the first group).
 
 Queries: `ws.isOpen(id)`, `ws.getOpenPanelIds()` and `ws.findPanelId(component, dedupeKey)`.
 
+### Opening beside another panel
+
+`dockTo` places a *new* panel next to one that is already docked (1.7.0):
+
+```ts
+// A legend in a new group on the right of the chart, taking a quarter of the width:
+this.workspace.openPanel('legend-1', 'legend', { dockTo: { panel: 'chart-1', position: 'right', size: 0.25 } });
+// A second document as a tab in the same group as the first:
+this.workspace.openPanel('doc-2', 'editor', { dockTo: { panel: 'doc-1', position: 'center' } });
+```
+
+`position` is `'left'`, `'right'`, `'top'`, `'bottom'` (a new group on that side) or `'center'`
+(a tab in the same group). `size` is the new group's share of the split, 0.1–0.9, and defaults
+to the workspace's split ratio. `dockTo` wins over `initialTarget` and applies only to a panel
+that isn't open yet. If the target isn't docked (not open, floating or minimised), the panel is
+placed as usual and, in development, a warning says why.
+
 ## Split ratios
 
 Set the defaults once:

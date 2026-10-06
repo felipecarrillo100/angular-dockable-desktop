@@ -102,7 +102,9 @@ export class NddTaskbarPreview implements AfterViewInit, OnDestroy {
   protected readonly title = computed(() => this.workspace.format(this.panel()?.title));
   protected readonly live = computed(() => {
     const panel = this.panel();
-    return (panel && this.workspace.registry.get(panel.component)?.defaultOptions?.disableLivePreview) !== true;
+    const options = panel ? this.workspace.registry.get(panel.component)?.defaultOptions : undefined;
+    // A panel that is destroyed while hidden (keepAlive: false) has nothing to show while minimised.
+    return options?.disableLivePreview !== true && options?.keepAlive !== false;
   });
   protected readonly source = computed(() => this.host.dom.sizeOf(this.panelId()));
   protected readonly scale = computed(() => Math.min(MAX_W / this.source().width, MAX_H / this.source().height));

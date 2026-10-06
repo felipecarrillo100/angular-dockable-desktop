@@ -33,6 +33,22 @@ export interface PanelDefaultOptions {
    * @default true
    */
   preserveScroll?: boolean;
+  /**
+   * Class added to each panel of this kind, on its own content element (`.ndd-panel-content`),
+   * which moves with the panel between groups, windows and the taskbar preview. (1.7.0)
+   */
+  className?: string;
+  /** Class added to the tab of each panel of this kind. (1.7.0) */
+  tabClassName?: string;
+  /**
+   * `false` destroys the panel's component while it is hidden (an unselected tab, or minimised)
+   * and creates it afresh when shown, to free what a heavy, rarely shown panel holds. Its own
+   * state is lost each time, and a guard it registered is not active while it is destroyed (its
+   * dirty flag still is). Its tab, title, size and container carry on, and the taskbar shows a
+   * letter tile instead of a live preview. @default true
+   * @see docs/decisions/0018-opt-in-unmount-while-hidden.md
+   */
+  keepAlive?: boolean;
 }
 
 /** A lazily loaded panel component — the same shape as the router's `loadComponent`. */

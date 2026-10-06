@@ -288,6 +288,21 @@ vdd accounted for rdd's 26 suites; each lands in ndd through the vdd suite it be
 | `branding.browser.ts` brand-surface cases (7.3.0) — leftovers, layers, contrast, one input | `scripts/gates/browser/m17.mjs` (surfaces) |
 | `StylesheetContract.test.ts` — "corner contract" (2), "surface contract" (3) | `stylesheet.spec.ts` — the same, names kept |
 
+### rdd 7.8.0 Release A, traced
+
+| rdd 7.8.0 | vdd 1.9.0 | ndd 1.7.0 |
+|---|---|---|
+| `<RddDesktop emptyWorkspace={…}>` | slot `#empty-workspace` | `<ng-template nddEmptyWorkspace>` (`NddEmptyWorkspaceTemplate`), shown by the root group only |
+| `data-rdd-selected` / `-focused` / `-dirty` on tabs, `-focused` / `-maximized` on windows | `data-vdd-*` | `data-ndd-*`, same names and meaning |
+| `openPanel(…, { dockTo: { panel, position, size } })` | same | same; the not-docked warning is development-only (`ngDevMode`) |
+| `defaultOptions.className` / `tabClassName` | same | same, on `.ndd-panel-content` (applied on every creation) and the tab |
+| `defaultOptions.keepAlive: false` | same; vdd ADR 0021 | same; [ADR 0018](decisions/0018-opt-in-unmount-while-hidden.md), amending 0002 |
+| layered stylesheet | moved to a later phase | moved to a later phase (265 `!important` in ndd's stylesheet) |
+
+Also ndd-only, in the manual: Angular Material's CDK overlay container sits at z-index 1000, below
+the floating windows, so its popups opened from a floating window appear behind it; Chapter 10 gives
+the one-rule fix.
+
 ## 4. Deliberate divergences
 
 ### 4.1 Inherited from vdd (D-series)

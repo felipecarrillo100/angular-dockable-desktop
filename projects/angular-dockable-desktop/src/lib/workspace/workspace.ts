@@ -126,6 +126,15 @@ export interface OpenPanelOptions<I extends object = Record<string, unknown>> {
   inputs?: I;
   /** If another open panel of the same `component` has this key, focus that one instead. */
   dedupeKey?: string;
+  /**
+   * Dock the new panel beside an open, docked panel: in that panel's group (`position: 'center'`,
+   * as a tab) or in a new group split off on one side of it. `size` is the new group's share of
+   * that split, from 0.1 to 0.9 (the workspace's split ratio when omitted). Wins over
+   * `initialTarget`. If `panel` is not docked (not open, floating or minimised), the new panel is
+   * placed as usual and, in development, a warning says why. Applies only to a newly opened
+   * panel. (1.7.0)
+   */
+  dockTo?: { panel: string; position: DropPosition; size?: number };
 }
 
 /** The live workspace state. */
@@ -452,18 +461,33 @@ export class Workspace<TEvents extends Record<string, unknown> = Record<string, 
     }
 
     const inputsProvided = options?.inputs !== undefined;
+    // dockTo beside a docked panel wins over the target (1.7.0).
+    const dockTo = options?.dockTo;
+    const dockLeaf = dockTo ? findLeafForPanel(this.s.gridRoot, dockTo.panel) : null;
+    if (dockTo && dockLeaf === null && (typeof ngDevMode === 'undefined' || ngDevMode)) {
+      this.warn(`openPanel("${resolvedId}") could not dock beside "${dockTo.panel}": that panel is not docked ` +
+        `(not open, floating or minimised), so the new panel was placed as usual.`);
+    }
+
     const info: PanelInfo = {
       id: resolvedId,
       title: options?.title ?? entry?.defaultOptions?.title ?? resolvedId,
       component,
-      state: target === 'floating' ? 'floating' : 'docked',
+      state: dockLeaf === null && target === 'floating' ? 'floating' : 'docked',
       serializable: inputsProvided ? isSerializable(options!.inputs) : true,
       ...(inputsProvided ? { props: options!.inputs as Record<string, unknown> } : {}),
       ...(options?.dedupeKey !== undefined ? { dedupeKey: options.dedupeKey } : {}),
     };
     this.setPanel(resolvedId, info);
 
-    if (target === 'floating') {
+    if (dockTo && dockLeaf !== null) {
+      const share = Math.min(0.9, Math.max(0.1, dockTo.size ?? this.s.splitRatio));
+      this.set({
+        gridRoot: dockTo.position === 'center'
+          ? addPanelToLeaf(this.s.gridRoot, dockLeaf, resolvedId, { select: shouldFocus })
+          : splitLeafInTree(this.s.gridRoot, dockLeaf, resolvedId, dockTo.position, share),
+      });
+    } else if (target === 'floating') {
       this.addFloating(resolvedId, this.cascade(favourite), options?.anchor ?? entry?.defaultOptions?.defaultAnchor ?? null);
     } else {
       const leaf = findFirstLeafId(this.s.gridRoot) ?? emptyRoot().id;

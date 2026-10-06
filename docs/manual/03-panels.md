@@ -39,6 +39,9 @@ panels: {
       canMinimize: true,
       canDrag: true,                  // false also prevents floating
       disableLivePreview: false,      // taskbar hover shows a letter tile instead
+      className: 'app-notes',         // on each panel's own content element (1.7.0)
+      tabClassName: 'app-notes-tab',  // on its tab (1.7.0)
+      keepAlive: true,                // false: destroyed while hidden, see below (1.7.0)
       preserveScroll: true,           // restore scroll offsets after a move
     },
   },
@@ -54,6 +57,23 @@ An icon (`NddIcon`) takes three forms, so no icon library is imposed: a string o
 (Bootstrap Icons, Font Awesome), a component class rendered with no inputs, or a `TemplateRef`
 for an inline `<svg>`. `<ndd-desktop [defaultPanelIcon]="…">` is the fallback for panels that
 register none.
+
+### Freeing a hidden panel (`keepAlive: false`)
+
+By default a panel's component is created once and never destroyed while the panel is open (see
+[Zero unmount](02-concepts.md#zero-unmount)). For a heavy kind that is rarely shown,
+`keepAlive: false` trades that for memory: the component is destroyed while the panel is **an
+unselected tab or minimised**, and created afresh when it is shown again. `className` goes on the
+panel's own content element (`.ndd-panel-content`), which moves with the panel.
+
+- **Its own state is lost each time it is hidden**, and its `DestroyRef` callbacks run: in such a
+  panel, destroyed means *hidden*, not *closed*. Keep what must survive outside it.
+- **A guard it registered with `onBeforeClose` is not active while it is destroyed.** Its dirty
+  flag still is, so closing a hidden dirty panel still asks first.
+- **Its tab, title, dirty flag, size and container carry on**, and the taskbar shows a letter tile
+  instead of a live preview while it is minimised.
+- A floating window is always shown, so a floating panel keeps its component. A lazy kind loads
+  its chunk once; creating it again needs no second load.
 
 ### Lazy panels
 

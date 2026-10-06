@@ -12,21 +12,9 @@
  * and a missing stylesheet are both diagnosed in the console.
  */
 import { DOCUMENT, isPlatformBrowser } from '@angular/common';
-import {
-  Component,
-  DestroyRef,
-  ElementRef,
-  PLATFORM_ID,
-  ViewEncapsulation,
-  afterNextRender,
-  effect,
-  inject,
-  input,
-  output,
-  signal,
-  untracked,
-} from '@angular/core';
+import { Component, DestroyRef, ElementRef, PLATFORM_ID, ViewEncapsulation, afterNextRender, contentChild, effect, inject, input, output, signal, untracked } from '@angular/core';
 import { Workspace } from '../workspace/workspace';
+import { EmptyWorkspaceSlot, NddEmptyWorkspaceTemplate } from './empty-workspace';
 import { PanelHost } from '../panel/panel-host';
 import { injectColorScheme } from '../core/color-scheme';
 import { claimDocumentMirror, releaseDocumentMirror } from '../core/document-mirror';
@@ -46,7 +34,7 @@ import { clampFloatingRect } from '../core/anchor-geometry';
   selector: 'ndd-desktop',
   imports: [NddWorkspaceGrid, NddFloatingWindow, NddEdgeZones, NddDragGhost, NddTaskbar],
   encapsulation: ViewEncapsulation.None,
-  providers: [{ provide: PanelHost, useFactory: () => new PanelHost(inject(DOCUMENT)) }, DragDock],
+  providers: [{ provide: PanelHost, useFactory: () => new PanelHost(inject(DOCUMENT)) }, DragDock, EmptyWorkspaceSlot],
   host: {
     class: 'ndd-workspace',
     '[class.ndd-no-animations]': '!animations()',
@@ -97,6 +85,8 @@ export class NddDesktop {
   readonly viewport = signal({ width: 1024, height: 768 });
 
   private readonly host = inject(PanelHost);
+  /** The app's `<ng-template nddEmptyWorkspace>`, if any (1.7.0). */
+  private readonly emptyWorkspace = contentChild(NddEmptyWorkspaceTemplate);
   protected readonly drag = inject(DragDock);
   private readonly doc = inject(DOCUMENT);
   private readonly el = inject<ElementRef<HTMLElement>>(ElementRef).nativeElement;
@@ -104,6 +94,9 @@ export class NddDesktop {
   private readonly destroyRef = inject(DestroyRef);
 
   constructor() {
+    // Hand the app's empty-workspace template to the groups (1.7.0).
+    const emptySlot = inject(EmptyWorkspaceSlot);
+    effect(() => emptySlot.template.set(this.emptyWorkspace()?.template ?? null));
     // Skin, animation state and the stacking base are mirrored onto <html>, so chrome rendered
     // into document.body — menus, toasts, flyouts, modals — inherits the same tokens.
     // `--ndd-z-base` is the easy one to forget: without it `zIndexBase` silently does nothing.

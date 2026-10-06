@@ -21,6 +21,7 @@ export type { BuiltInEvents } from './lib/core/event-bus';
 
 // ─── Components ──────────────────────────────────────────────────────────────
 export { NddDesktop } from './lib/desktop/desktop';
+export { NddEmptyWorkspaceTemplate } from './lib/desktop/empty-workspace';
 export type { TaskbarVisibility } from './lib/desktop/taskbar';
 
 // ─── The panel's view of itself ──────────────────────────────────────────────

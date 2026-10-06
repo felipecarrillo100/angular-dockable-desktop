@@ -47,7 +47,8 @@ on hover).
 ## Zero unmount
 
 A minimised panel is off screen but **still running**. So is a panel in a background tab.
-Nothing in this library destroys a panel's component until the panel is closed.
+Nothing in this library destroys a panel's component until the panel is closed, unless its kind
+opts out with `keepAlive: false` (1.7.0; see [Chapter 3](03-panels.md#freeing-a-hidden-panel-keepalive-false)).
 
 Each panel's component is created once, attached to `ApplicationRef` rather than to any view
 inside the layout, and its element is *moved* between leaves, windows and the taskbar. No layout

@@ -10,6 +10,57 @@ feature-by-feature map is [docs/PARITY.md](https://github.com/felipecarrillo100/
 
 ## [Unreleased]
 
+## [1.7.0] — 2026-10-06
+
+**Parity: react-dockable-desktop 7.8.0** (vue-dockable-desktop 1.9.0 made the same port). More
+control over how the desktop looks and where panels open, all opt-in: without the new options,
+nothing changes. Same names as rdd and vdd, in Angular's idiom.
+
+### Added
+
+- **Your own empty-workspace view.** `<ng-template nddEmptyWorkspace>` inside `<ndd-desktop>`
+  (`NddEmptyWorkspaceTemplate`) is shown while no panel is docked, in place of the built-in
+  message: a welcome screen, a logo, "Open a file" buttons. Floating windows still show over it,
+  and a window can still be dropped onto it to dock. Empty groups inside a split keep the built-in
+  message.
+- **Open a panel beside another.** `openPanel(id, component, { dockTo: { panel, position, size } })`
+  docks a new panel as a tab in that panel's group (`position: 'center'`) or in a new group split
+  off on one side, taking `size` (0.1–0.9) of the split. It wins over `initialTarget`. If the
+  target isn't docked, the panel is placed as usual, with a development warning.
+- **State attributes for your CSS.** Tabs carry `data-ndd-selected`, `data-ndd-focused` and
+  `data-ndd-dirty`; floating windows carry `data-ndd-focused` and `data-ndd-maximized`. Each is
+  present only while it is true. The existing classes are unchanged.
+- **Per-kind classes.** `className` and `tabClassName` in a kind's `defaultOptions` add your class
+  to every panel of that kind (on its content element, which moves with it) and to its tab.
+- **`keepAlive: false`**, per kind: the component is destroyed while the panel is an unselected tab
+  or minimised, and created afresh when shown (a lazy kind loads its chunk once). Its own state is
+  lost each time; in such a panel `DestroyRef` callbacks mean hidden, not closed, and a guard it
+  registered with `onBeforeClose` is inactive while it is destroyed, though its dirty flag still
+  applies. The default is unchanged. Recorded as
+  [ADR 0018](https://github.com/felipecarrillo100/angular-dockable-desktop/blob/main/docs/decisions/0018-opt-in-unmount-while-hidden.md), which amends 0002 for kinds that
+  opt in.
+
+### Docs
+
+- Theming (Chapter 10): **Your own empty-workspace view**, **Styling by state and by panel kind**,
+  and **Using it with Angular Material, PrimeNG, Bootstrap or Tailwind**: dark mode, the library's
+  z-index layers, and two stacking cases. One is new to the manual: Angular Material's CDK overlay
+  container (z-index 1000) sits below the floating windows, so its popups opened from a floating
+  window appear behind it; one CSS rule fixes it. Layout (Chapter 4): **Opening beside another
+  panel**. Panels (Chapter 3): the new registration options and **Freeing a hidden panel**.
+  Concepts (Chapter 2) notes the `keepAlive: false` exception. API reference: the template.
+- `PARITY.md`: the rdd 7.8.0 trace, across all three editions.
+
+### Tests
+
+- `test/components/release-a.spec.ts` (15 tests): the empty-workspace template (shown and gone as
+  panels dock and close; empty groups inside a split keep the built-in message), the state
+  attributes on tabs and windows, `dockTo` (sides, centre, size clamping, winning over
+  `initialTarget`, the fallback and its warning, no effect on an open panel), the per-kind classes
+  (also after floating), and `keepAlive: false` (destroy and fresh creation, the default unchanged,
+  no leak over 50 hide/show cycles). Each was seen failing with its feature broken.
+- `api-surface.json` gains `NddEmptyWorkspaceTemplate`.
+
 ## [1.6.1] — 2026-10-05
 
 **Parity: react-dockable-desktop 7.7.1** (vue-dockable-desktop 1.8.1 made the same port).

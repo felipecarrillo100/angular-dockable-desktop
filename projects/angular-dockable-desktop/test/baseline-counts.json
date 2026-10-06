@@ -36,5 +36,6 @@
   "field-report.spec.ts": 6,
   "review-fixes.spec.ts": 8,
   "drag-blur.spec.ts": 5,
-  "dialogs.spec.ts": 23
+  "dialogs.spec.ts": 23,
+  "release-a.spec.ts": 15
 }

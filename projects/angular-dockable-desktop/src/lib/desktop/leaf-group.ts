@@ -9,6 +9,7 @@
  * alive and running, simply not shown.
  * @internal
  */
+import { NgTemplateOutlet } from '@angular/common';
 import { Component, DestroyRef, ElementRef, NgZone, afterNextRender, computed, inject, input, viewChild } from '@angular/core';
 import { Workspace } from '../workspace/workspace';
 import type { LayoutLeafNode } from '../core/types';
@@ -17,10 +18,11 @@ import { NddPanelSlot } from '../panel/panel-slot';
 import { DragDock } from './drag-dock';
 import { NddDropZones } from './drop-zones';
 import { openMenu, panelMenu } from './menus';
+import { EmptyWorkspaceSlot } from './empty-workspace';
 
 @Component({
   selector: 'ndd-leaf-group',
-  imports: [NddIconView, NddPanelSlot, NddDropZones],
+  imports: [NddIconView, NddPanelSlot, NddDropZones, NgTemplateOutlet],
   template: `
     <div
       class="ndd-workspace-panel"
@@ -42,6 +44,10 @@ import { openMenu, panelMenu } from './menus';
               [attr.data-ndd-tab]="tab.id"
               [attr.data-ndd-tab-leaf]="leaf().id"
               [attr.data-ndd-tab-index]="i"
+              [attr.data-ndd-selected]="tab.id === selectedId() ? '' : null"
+              [attr.data-ndd-focused]="tab.id === activePanelId() ? '' : null"
+              [attr.data-ndd-dirty]="tab.dirty ? '' : null"
+              [class]="tab.tabClassName"
               role="tab"
               [attr.aria-selected]="tab.id === selectedId()"
               [attr.tabindex]="tab.id === selectedId() ? 0 : -1"
@@ -108,9 +114,14 @@ import { openMenu, panelMenu } from './menus';
         @for (id of selectedList(); track 'slot:' + id) {
           <div [nddPanelSlot]="id"></div>
         } @empty {
-          <div class="ndd-empty-leaf-placeholder">
-            <span>{{ workspace.format(workspace.messages.emptyGroup) }}</span>
-          </div>
+          @if (emptyView(); as view) {
+            <!-- The app's empty-workspace view (1.7.0): the root group only, while it is empty. -->
+            <div class="ndd-empty-workspace"><ng-container [ngTemplateOutlet]="view" /></div>
+          } @else {
+            <div class="ndd-empty-leaf-placeholder">
+              <span>{{ workspace.format(workspace.messages.emptyGroup) }}</span>
+            </div>
+          }
         }
       </div>
     </div>
@@ -126,6 +137,13 @@ export class NddLeafGroup {
     const id = this.selectedId();
     return id ? [id] : [];
   });
+  private readonly emptySlot = inject(EmptyWorkspaceSlot, { optional: true });
+  /** The app's empty-workspace template, while this group is the grid's root (1.7.0). */
+  protected readonly emptyView = computed(() => {
+    const root = this.workspace.gridRoot();
+    return root.type === 'leaf' && root.id === this.leaf().id ? (this.emptySlot?.template() ?? null) : null;
+  });
+
   protected readonly tabs = computed(() => {
     const panels = this.workspace.panels();
     return this.leaf().panels.flatMap(id => {
@@ -140,6 +158,7 @@ export class NddLeafGroup {
           icon: options.icon,
           canClose: options.canClose !== false,
           canDrag: options.canDrag !== false,
+          tabClassName: options.tabClassName ?? '',
         },
       ];
     });

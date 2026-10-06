@@ -81,6 +81,7 @@ The workspace itself: grid, floating windows, taskbar, drag-and-dock. Mount one 
 | `taskbar` | input, `TaskbarVisibility`, default `'always'` | When the minimised-panel taskbar shows. |
 | `defaultPanelIcon` | input, `NddIcon` | Fallback icon for panels that register none. |
 | `taskbarContextMenu` | output, `{ panelId, event }` | A right-click or long press on a taskbar icon, emitted after the library has opened its own menu. |
+| `NddEmptyWorkspaceTemplate` | content, `<ng-template nddEmptyWorkspace>` | Your view while no panel is docked, in place of the built-in message (1.7.0). [Ch. 10](10-theming.md#your-own-empty-workspace-view) |
 
 | Type | |
 |---|---|

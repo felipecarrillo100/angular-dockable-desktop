@@ -6,6 +6,7 @@
     "NddContextMenuTemplate",
     "NddContextMenuTrigger",
     "NddDesktop",
+    "NddEmptyWorkspaceTemplate",
     "NddFloatingWidget",
     "NddModals",
     "NddPanelOverlay",
