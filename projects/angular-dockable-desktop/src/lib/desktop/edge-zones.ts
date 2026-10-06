@@ -9,6 +9,11 @@ import { Component, computed, inject } from '@angular/core';
 import { Workspace } from '../workspace/workspace';
 import type { FloatAnchor, SplitDirection } from '../core/types';
 import { DragDock } from './drag-dock';
+import { isDropAllowed } from '../core/dock-rules';
+import { flipZoneHorizontal } from '../core/anchor-geometry';
+
+const EDGES: SplitDirection[] = ['left', 'right', 'top', 'bottom'];
+const CORNERS: FloatAnchor[] = ['top-left', 'top-right', 'bottom-left', 'bottom-right'];
 
 /** Every property of the edge-dock preview; `null` removes it. */
 interface EdgePreview {
@@ -23,7 +28,7 @@ interface EdgePreview {
 @Component({
   selector: 'ndd-edge-zones',
   template: `
-    @for (e of edges; track e) {
+    @for (e of edges(); track e) {
       <div
         class="ndd-workspace-edge-trigger"
         [class.ndd-edge-trigger-left]="e === 'left'"
@@ -35,7 +40,7 @@ interface EdgePreview {
         (pointerleave)="drag.hoverEdge(null)"
       ></div>
     }
-    @for (c of corners; track c) {
+    @for (c of corners(); track c) {
       <div
         class="ndd-corner-zone"
         [class.ndd-corner-zone--top-left]="c === 'top-left'"
@@ -65,8 +70,22 @@ interface EdgePreview {
 export class NddEdgeZones {
   protected readonly drag = inject(DragDock);
   private readonly workspace = inject(Workspace) as Workspace<never>;
-  protected readonly edges: SplitDirection[] = ['left', 'right', 'top', 'bottom'];
-  protected readonly corners: FloatAnchor[] = ['top-left', 'top-right', 'bottom-left', 'bottom-right'];
+  /**
+   * Targets the rules forbid aren't offered (1.8.0). An edge dock flips left and right under RTL, and
+   * so does a corner float; `canDrop` sees the side and corner the move applies.
+   */
+  protected readonly edges = computed<SplitDirection[]>(() => {
+    const dragged = this.drag.draggedId();
+    if (dragged === null) return EDGES;
+    const rtl = this.workspace.isRtl();
+    return EDGES.filter(e => isDropAllowed(this.workspace, dragged, { kind: 'edge', side: rtl && (e === 'left' || e === 'right') ? (e === 'left' ? 'right' : 'left') : e }));
+  });
+  protected readonly corners = computed<FloatAnchor[]>(() => {
+    const dragged = this.drag.draggedId();
+    if (dragged === null) return CORNERS;
+    const rtl = this.workspace.isRtl();
+    return CORNERS.filter(c => isDropAllowed(this.workspace, dragged, { kind: 'float', anchor: rtl ? flipZoneHorizontal(c) : c }));
+  });
 
   /** The share of the workspace an edge dock would take. */
   protected readonly preview = computed<EdgePreview | null>(() => {

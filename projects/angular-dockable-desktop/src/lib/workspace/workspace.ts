@@ -19,6 +19,7 @@ import type { Signal, Type, WritableSignal } from '@angular/core';
 import type {
   DirtyStateOptions,
   DropPosition,
+  PanelDrop,
   FloatAnchor,
   FloatingWindow,
   Label,
@@ -91,6 +92,14 @@ export interface WorkspaceConfig {
    * utilities to elements inside the library's markup. The library's `ndd-` classes stay.
    */
   classes?: HostClasses;
+  /**
+   * Veto where users can move panels (1.8.0). Called for each place a dragged panel could go, and
+   * for the built-in "Float" and "Maximize" menu items: return `false` and that target isn't offered
+   * and the move doesn't happen. It runs after the kind's own `canFloat` / `canDock`, and only for
+   * what the user does: the app's own calls always work. Keep it fast and pure; it runs while the
+   * pointer moves.
+   */
+  canDrop?: (drop: PanelDrop) => boolean;
 }
 
 /** Consumer classes added to the library's chrome. Every field is optional. */

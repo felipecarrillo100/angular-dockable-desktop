@@ -165,6 +165,8 @@ export type {
   DirtyStateOptions,
   DropPosition,
   DropTarget,
+  PanelDrop,
+  PanelDropTarget,
   FloatAnchor,
   FloatingWindow,
   Label,

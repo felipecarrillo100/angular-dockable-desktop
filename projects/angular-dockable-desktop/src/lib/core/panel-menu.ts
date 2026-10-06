@@ -8,6 +8,8 @@
 import type { ContextMenuItem } from './context-menu';
 import type { PanelDefaultOptions } from './registry';
 import type { Label, MessageDescriptor } from './types';
+import { isDropAllowed } from './dock-rules';
+import type { Workspace } from '../workspace/workspace';
 
 /**
  * Just enough of the workspace to build a menu, so this module does not depend on the store.
@@ -20,6 +22,10 @@ interface MenuHost {
   format: (label: Label | undefined) => string;
   messages: Record<string, MessageDescriptor>;
   panelMenuItems: (id: string) => ContextMenuItem[];
+  /** For the docking rules (1.8.0): floating is a move they decide. */
+  panels: Workspace<never>['panels'];
+  registry: Workspace<never>['registry'];
+  config: Workspace<never>['config'];
 }
 
 export interface PanelMenuActions {
@@ -43,7 +49,7 @@ export function buildPanelMenu(
   actions: PanelMenuActions,
 ): ContextMenuItem[] {
   const items: ContextMenuItem[] = [];
-  if (options.canDrag !== false)
+  if (options.canDrag !== false && isDropAllowed(host, panelId, { kind: 'float', anchor: null }))
     items.push({ label: host.messages['floatWindow']!, action: actions.float });
   if (options.canMinimize !== false)
     items.push({
@@ -72,7 +78,10 @@ export function buildTaskbarMenu(
   const items: ContextMenuItem[] = [
     { label: host.messages['restorePanel']!, action: actions.restore },
   ];
-  if (options.canDrag !== false)
+  // A panel that was floating only goes back to floating; one from a group is floated, which the
+  // rules decide (1.8.0).
+  const wasFloating = host.panels()[panelId]?.previousState === 'floating';
+  if (options.canDrag !== false && (wasFloating || isDropAllowed(host, panelId, { kind: 'float', anchor: null })))
     items.push({
       label: host.messages['maximizePanel']!,
       action: actions.maximize,

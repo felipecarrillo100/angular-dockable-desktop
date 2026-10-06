@@ -23,8 +23,9 @@ import { DOCUMENT } from '@angular/common';
 import { NgZone, computed, inject, signal } from '@angular/core';
 import { Workspace } from '../workspace/workspace';
 import { flipZoneHorizontal } from '../core/anchor-geometry';
+import { isDropAllowed } from '../core/dock-rules';
 import { findLeaf } from '../core/layout-tree';
-import type { DropPosition, FloatAnchor, SplitDirection } from '../core/types';
+import type { DropPosition, FloatAnchor, PanelDropTarget, SplitDirection } from '../core/types';
 
 /** How far a mouse must move before a press becomes a drag. */
 export const DRAG_THRESHOLD_PX = 5;
@@ -105,7 +106,13 @@ export class DragDock {
   }
 
   hoverTab(value: TabTarget | null): void {
-    this.tab.set(value);
+    this.tab.set(value && this.canInsertInto(value.leafId) ? value : null);
+  }
+
+  /** Whether the dragged panel may be inserted among a group's tabs (1.8.0). */
+  private canInsertInto(leafId: string): boolean {
+    const dragged = this.draggedId();
+    return dragged !== null && isDropAllowed(this.workspace, dragged, { kind: 'group', leafId, position: 'center' });
   }
 
   /**
@@ -131,7 +138,7 @@ export class DragDock {
         this.zoneTarget.set({ leafId: d['nddLeaf'], position: d['nddDropZone'] as DropPosition });
         foundZone = true;
       }
-      if (!foundTab && d['nddTab'] && d['nddTabLeaf']) {
+      if (!foundTab && d['nddTab'] && d['nddTabLeaf'] && this.canInsertInto(d['nddTabLeaf'])) {
         const rect = el.getBoundingClientRect();
         this.tab.set({
           leafId: d['nddTabLeaf'],
@@ -161,9 +168,14 @@ export class DragDock {
     const armedZone = this.zoneTarget();
     const armedCorner = this.corner();
 
+    // Each target was only offered if the rules allowed it (1.8.0); asking again here covers a rule
+    // that changed mid-drag. A forbidden target, or nowhere when floating is forbidden, does nothing.
+    const ok = (to: PanelDropTarget) => isDropAllowed(ws, panelId, to);
     if (armedEdge) {
-      ws.dockPanelToWorkspaceEdge(panelId, this.flip(armedEdge) as SplitDirection);
+      const side = this.flip(armedEdge) as SplitDirection;
+      if (ok({ kind: 'edge', side })) ws.dockPanelToWorkspaceEdge(panelId, side);
     } else if (armedTab) {
+      if (!ok({ kind: 'group', leafId: armedTab.leafId, position: 'center' })) { this.reset(); return; }
       let index = armedTab.index;
       if (armedTab.side === 'right') index += 1;
       // Tab indices come from the DOM, which is pre-removal: `movePanelOrder` removes the panel
@@ -175,10 +187,12 @@ export class DragDock {
       }
       ws.movePanelOrder(panelId, armedTab.leafId, index);
     } else if (armedZone) {
-      ws.dockPanelToGroup(panelId, armedZone.leafId, this.flip(armedZone.position));
+      const position = this.flip(armedZone.position);
+      if (ok({ kind: 'group', leafId: armedZone.leafId, position })) ws.dockPanelToGroup(panelId, armedZone.leafId, position);
     } else if (armedCorner) {
-      ws.floatPanel(panelId, undefined, ws.isRtl() ? flipZoneHorizontal(armedCorner) : armedCorner);
-    } else {
+      const anchor = ws.isRtl() ? flipZoneHorizontal(armedCorner) : armedCorner;
+      if (ok({ kind: 'float', anchor })) ws.floatPanel(panelId, undefined, anchor);
+    } else if (ok({ kind: 'float', anchor: null })) {
       // Nothing armed: float it where the pointer let go, the title bar under the cursor.
       ws.floatPanel(panelId, { x: event.clientX - 150, y: event.clientY - 15, width: 450, height: 350 });
     }

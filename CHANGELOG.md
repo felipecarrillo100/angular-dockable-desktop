@@ -10,6 +10,53 @@ feature-by-feature map is [docs/PARITY.md](docs/PARITY.md).
 
 ## [Unreleased]
 
+## [1.8.0] — 2026-10-06
+
+**Parity: react-dockable-desktop 7.9.0** (vue-dockable-desktop 1.10.0 made the same port). Control over
+where users can move panels: per-kind rules and an app-wide veto, all opt-in. Without them nothing
+changes, and the app's own calls are never restricted. Same names as rdd and vdd.
+
+### Added
+
+- **`canFloat` and `canDock` per kind**, next to `canDrag`, `canMinimize` and `canClose`.
+  `canFloat: false` keeps a panel in the grid: a tab drag can't end in a floating window, and
+  "Float Window" and the taskbar's "Maximize" are hidden. `canDock: false` keeps a panel floating:
+  dragging it offers no group, tab or edge targets.
+- **`canDrop`, an app-wide veto.** `createWorkspace({ canDrop: ({ panelId, component, to }) => boolean })`
+  is asked for every place a dragged panel could go, and for the "Float" and "Maximize" menu items;
+  `to` is a `PanelDropTarget` (a group, an edge, or a float). A forbidden target isn't offered, and
+  it's asked again at release. Positions and corners are the ones the move applies, mirrored under
+  RTL. If it throws, the move is allowed and the error is logged. New types: `PanelDrop`,
+  `PanelDropTarget`.
+- Both apply only to what the user does; the app's own calls always work.
+- **`startPointerDrag` takes an optional `onCancel`**, called instead of `onEnd` when the drag is cut
+  short (see Fixed).
+
+### Fixed
+
+- **A drag built on `startPointerDrag` could outlive its gesture.** It ended only on pointerup or
+  pointercancel, so a window losing focus mid-drag, or the dragged element being removed (an overlay
+  widget closed during its own drag), left its listeners attached and its classes on the page. It
+  now also ends on window blur and on a lost pointer capture (listened for on the document, where
+  browsers fire it). The splitters, window resize handles, sidebar resizer and overlay widgets use it.
+  A floating window's title-bar drag now passes `onCancel` to disarm its drop, which replaces the
+  1.3.1 workaround (its own blur listener and a synthetic pointercancel); dragging a window and
+  losing focus still never docks it, now also when the capture is lost.
+
+### Docs
+
+- Layout (Chapter 4): **Controlling where users can move panels**. Panels (Chapter 3) and the API
+  reference: the new options. `PARITY.md`: the rdd 7.9.0 trace across all three editions.
+
+### Tests
+
+- `test/components/release-b.spec.ts` (14 tests): `canFloat` (no float on nothing, no corners, the
+  menus, the app's `floatPanel` still works), `canDock` (no group or edge targets, only corners),
+  `canDrop` (its argument, vetoed zones and edges not offered, RTL positions, tab insertion into a
+  vetoed group, rules changed mid-drag for a zone and a tab insertion, a throwing `canDrop`, no rules
+  meaning every target), and `startPointerDrag` ending on blur and on a lost capture. All 16 rules and
+  safety layers were seen failing with them broken. `api-surface.json` gains the two types.
+
 ## [1.7.0] — 2026-10-06
 
 **Parity: react-dockable-desktop 7.8.0** (vue-dockable-desktop 1.9.0 made the same port). More

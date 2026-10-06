@@ -42,6 +42,26 @@ export interface DropTarget {
   position: DropPosition;
 }
 
+/**
+ * Where a user is about to move a panel, as `canDrop` sees it (1.8.0). Positions are the ones the
+ * move applies: under RTL, a drop on the zone drawn on the screen's right is `'left'`.
+ * - `group`: into a group, on one side (a new split) or `'center'` (as a tab, also between tabs);
+ * - `edge`: along a workspace edge, as a full-width or full-height row;
+ * - `float`: into a floating window, pinned to a corner, or free (`anchor: null`, a tab dropped
+ *   on nothing).
+ */
+export type PanelDropTarget =
+  | { kind: 'group'; leafId: string; position: DropPosition }
+  | { kind: 'edge'; side: SplitDirection }
+  | { kind: 'float'; anchor: FloatAnchor | null };
+
+/** The argument `canDrop` receives: which panel, of which registered kind, is going where. (1.8.0) */
+export interface PanelDrop {
+  panelId: string;
+  component: string;
+  to: PanelDropTarget;
+}
+
 /** A split node: children laid out along one axis with relative sizes summing to 1. */
 export interface LayoutGridNode {
   type: 'branch';

@@ -288,6 +288,16 @@ vdd accounted for rdd's 26 suites; each lands in ndd through the vdd suite it be
 | `branding.browser.ts` brand-surface cases (7.3.0) — leftovers, layers, contrast, one input | `scripts/gates/browser/m17.mjs` (surfaces) |
 | `StylesheetContract.test.ts` — "corner contract" (2), "surface contract" (3) | `stylesheet.spec.ts` — the same, names kept |
 
+### rdd 7.9.0 Release B, traced
+
+| rdd 7.9.0 | vdd 1.10.0 | ndd 1.8.0 |
+|---|---|---|
+| `defaultOptions.canFloat` / `canDock` | same | same |
+| `createWorkspace({ canDrop })`, `PanelDrop` / `PanelDropTarget` | same, `core/dockRules.ts` | same, `core/dock-rules.ts`, used by `DragDock`, the zones and the menus |
+| forbidden targets not offered, asked again at release | same | same; a corner float is mirrored under RTL before `canDrop` sees it |
+| `startPointerDrag` ends on blur and lost capture, `onCancel` | lost capture added (blur since 1.5.1) | all three added: ndd's ended only on pointerup and pointercancel |
+| `dockZones.browser.ts` | M6 browser gate | already covered by the M6 browser gate, LTR and RTL |
+
 ### rdd 7.8.0 Release A, traced
 
 | rdd 7.8.0 | vdd 1.9.0 | ndd 1.7.0 |

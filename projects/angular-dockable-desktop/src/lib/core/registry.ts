@@ -25,6 +25,19 @@ export interface PanelDefaultOptions {
   canMinimize?: boolean;
   /** Allow dragging the tab, which is also what allows floating by drag. @default true */
   canDrag?: boolean;
+  /**
+   * `false`: the user can't make this panel floating. A tab drag can't end in a floating window
+   * (dropped on nothing or on a corner, it stays where it was), and "Float Window" and the taskbar's
+   * "Maximize" are hidden. A window the app floated itself can still be moved. The app's own
+   * `floatPanel` always works. @default true (1.8.0)
+   */
+  canFloat?: boolean;
+  /**
+   * `false`: the user can't dock this panel. Dragging it offers no group, tab or edge targets
+   * (corners still pin a floating window), so it stays floating. The app's own docking calls always
+   * work; give the kind `initialTarget: 'floating'` so it opens floating. @default true (1.8.0)
+   */
+  canDock?: boolean;
   /** Show a letter tile instead of a live thumbnail in the taskbar hover preview. @default false */
   disableLivePreview?: boolean;
   /**

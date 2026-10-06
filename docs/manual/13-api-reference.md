@@ -25,7 +25,7 @@ Every component and directive is standalone: import the class into your componen
 
 | Type | |
 |---|---|
-| `WorkspaceConfig` | `panels`, `initialState`, `dir`, `formatMessage`, `messages`, `defaultSplitRatio`, `defaultEdgeSplitRatio` (clamped 0.1–0.9), `zIndexBase` (default 1000), `classes`. [Ch. 1](01-getting-started.md) |
+| `WorkspaceConfig` | `panels`, `initialState`, `dir`, `formatMessage`, `messages`, `defaultSplitRatio`, `defaultEdgeSplitRatio` (clamped 0.1–0.9), `zIndexBase` (default 1000), `classes`, `canDrop` (veto where users can move panels, 1.8.0; [Ch. 4](04-layout.md#controlling-where-users-can-move-panels)). [Ch. 1](01-getting-started.md) |
 | `WorkspaceState` | The live state: `gridRoot`, `floating`, `minimized`, `panels`, `activePanelId`, `draggedPanelId`, `dir`, `isRtl`, `splitRatio`, `edgeSplitRatio`. Frozen in development. [Ch. 2](02-concepts.md) |
 | `PanelDefinition` | One catalogue entry: `{ component }` or `{ loadComponent }`, with optional `defaultOptions`. [Ch. 3](03-panels.md) |
 | `OpenPanelOptions` | `openPanel()` options: `title`, `initialTarget`, `anchor`, `focus`, `inputs`, `dedupeKey`. `inputs` is saved in the layout under `props`. [Ch. 3](03-panels.md) |
@@ -64,6 +64,8 @@ Every component and directive is standalone: import the class into your componen
 | `SplitDirection` | `'left' \| 'right' \| 'top' \| 'bottom'` — an edge, for splits and `dockPanelToWorkspaceEdge`. [Ch. 4](04-layout.md) |
 | `DropPosition` | A `SplitDirection` or `'center'` (join as a tab). [Ch. 4](04-layout.md) |
 | `DropTarget` | `{ leafId, position }`. [Ch. 4](04-layout.md) |
+| `PanelDrop` | `{ panelId, component, to }`: what `canDrop` receives (1.8.0). [Ch. 4](04-layout.md#controlling-where-users-can-move-panels) |
+| `PanelDropTarget` | `{ kind: 'group', leafId, position }`, `{ kind: 'edge', side }` or `{ kind: 'float', anchor }`: where the user is about to move a panel (1.8.0). [Ch. 4](04-layout.md#controlling-where-users-can-move-panels) |
 | `FloatingWindow` | A floating panel's box: `id`, `x`, `y`, `width`, `height`, `z`, `maximized`, `anchor`. [Ch. 4](04-layout.md) |
 | `FloatAnchor` | `'top-left' \| 'top-right' \| 'bottom-left' \| 'bottom-right'` — a corner, for floating windows and inner widgets. [Ch. 4](04-layout.md), [ch. 7](07-panel-overlay.md) |
 
@@ -382,7 +384,7 @@ panel can build resizable UI with identical behaviour. [Ch. 7](07-panel-overlay.
 
 | Export | |
 |---|---|
-| `startPointerDrag(config)` | A pointer-capture drag with automatic cleanup on release or cancel. |
+| `startPointerDrag(config)` | A pointer-capture drag with automatic cleanup on release or cancel, and (1.8.0) on window blur or a lost pointer capture (the element was removed), when `onCancel` runs instead of `onEnd`. |
 | `computeResizedRect(dir, dx, dy, start, constraints)` | The new rect for an eight-direction resize-handle drag. Pure. |
 | `clampFloatingRect(rect, view, anchored)` | Where a floating box must move to stay reachable in a shrinking view; returns the same object when nothing changed. |
 

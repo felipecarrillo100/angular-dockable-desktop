@@ -10,6 +10,7 @@ import { Component, computed, inject, input } from '@angular/core';
 import { Workspace } from '../workspace/workspace';
 import type { DropPosition } from '../core/types';
 import { DragDock } from './drag-dock';
+import { isDropAllowed } from '../core/dock-rules';
 
 const POSITIONS: DropPosition[] = ['top', 'bottom', 'left', 'right', 'center'];
 const GLYPH: Record<DropPosition, string> = { top: '▲', bottom: '▼', left: '◀', right: '▶', center: '▣' };
@@ -19,7 +20,7 @@ const GLYPH: Record<DropPosition, string> = { top: '▲', bottom: '▼', left: '
   template: `
     <div class="ndd-dock-drop-zone-overlay">
       <div class="ndd-dock-target-cross">
-        @for (position of positions; track position) {
+        @for (position of positions(); track position) {
           <div
             class="ndd-dock-target-box"
             [class.ndd-dock-target-top]="position === 'top'"
@@ -45,7 +46,17 @@ export class NddDropZones {
   readonly leafId = input.required<string>();
   protected readonly drag = inject(DragDock);
   private readonly workspace = inject(Workspace) as Workspace<never>;
-  protected readonly positions = POSITIONS;
+  /**
+   * A target the rules forbid isn't offered at all (1.8.0). Zones are drawn by screen side; the move
+   * flips left and right under RTL, and `canDrop` sees the side the move applies.
+   */
+  protected readonly positions = computed(() => {
+    const dragged = this.drag.draggedId();
+    if (dragged === null) return POSITIONS;
+    const rtl = this.workspace.isRtl();
+    const applied = (p: DropPosition): DropPosition => (rtl && (p === 'left' || p === 'right') ? (p === 'left' ? 'right' : 'left') : p);
+    return POSITIONS.filter(p => isDropAllowed(this.workspace, dragged, { kind: 'group', leafId: this.leafId(), position: applied(p) }));
+  });
   protected readonly glyph = GLYPH;
 
   protected isArmed(position: DropPosition): boolean {

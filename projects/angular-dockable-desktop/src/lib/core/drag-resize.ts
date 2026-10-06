@@ -26,6 +26,11 @@ export interface PointerDragConfig<TStart> {
   onMove: (dx: number, dy: number, start: TStart) => void;
   /** Called once when the drag ends (pointerup or pointercancel). */
   onEnd?: (start: TStart) => void;
+  /**
+   * Called instead of `onEnd` when the drag is cut short: the window loses focus, or the pointer
+   * capture is lost (the element was removed mid-drag). Without it, `onEnd` is called. (1.8.0)
+   */
+  onCancel?: (start: TStart) => void;
   /** Classes toggled on the given elements for the duration of the drag. */
   activeClasses?: { el: HTMLElement; classes: string[] }[];
 }
@@ -33,7 +38,8 @@ export interface PointerDragConfig<TStart> {
 /**
  * Starts a pointer-capture-based drag: captures the pointer on `element`, tracks
  * movement via listeners scoped to that element's own lifetime (not `window`), and
- * cleans up automatically on release or cancel.
+ * cleans up automatically on release or cancel, and (1.8.0) when the window loses focus or the
+ * capture is lost, so a drag can never outlive its element or leave its classes behind.
  */
 export function startPointerDrag<TStart>(config: PointerDragConfig<TStart>): void {
   const {
@@ -55,17 +61,29 @@ export function startPointerDrag<TStart>(config: PointerDragConfig<TStart>): voi
     onMove(e.clientX - startClientX, e.clientY - startClientY, start);
   };
 
-  const handleEnd = () => {
+  // Ends at most once: every listener is removed before the callback runs.
+  const finish = (cancelled: boolean) => {
     activeClasses?.forEach(({ el, classes }) => el.classList.remove(...classes));
     element.removeEventListener('pointermove', handleMove);
     element.removeEventListener('pointerup', handleEnd);
     element.removeEventListener('pointercancel', handleEnd);
-    onEnd?.(start);
+    doc.removeEventListener('lostpointercapture', handleLostCapture, true);
+    view?.removeEventListener('blur', handleBlur);
+    (cancelled && config.onCancel ? config.onCancel : onEnd)?.(start);
   };
+  const handleEnd = () => finish(false);
+  const handleBlur = () => finish(true);
+  // Removing a capturing element fires lostpointercapture at the document, not the element, so
+  // it is listened for there. A normal release ends the drag before the capture is let go.
+  const handleLostCapture = (e: PointerEvent) => { if (e.pointerId === pointerId) finish(true); };
 
+  const doc = element.ownerDocument;
+  const view = doc.defaultView;
   element.addEventListener('pointermove', handleMove);
   element.addEventListener('pointerup', handleEnd);
   element.addEventListener('pointercancel', handleEnd);
+  doc.addEventListener('lostpointercapture', handleLostCapture, true);
+  view?.addEventListener('blur', handleBlur);
 }
 
 // ── 8-directional resize math ────────────────────────────────────────────────

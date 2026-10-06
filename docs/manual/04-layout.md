@@ -87,6 +87,50 @@ to the workspace's split ratio. `dockTo` wins over `initialTarget` and applies o
 that isn't open yet. If the target isn't docked (not open, floating or minimised), the panel is
 placed as usual and, in development, a warning says why.
 
+## Controlling where users can move panels
+
+Two opt-in controls decide where the **user** can move a panel (1.8.0). Neither restricts your
+own calls: `floatPanel`, `dockPanelToGroup`, `openPanel` and the others always do what they say.
+
+**Per kind**, in its registration options:
+
+```ts
+createWorkspace({
+  panels: {
+    main: { component: MainView, defaultOptions: { canFloat: false } },                          // stays in the grid
+    palette: { component: Palette, defaultOptions: { canDock: false, initialTarget: 'floating' } }, // stays floating
+  },
+});
+```
+
+- `canFloat: false`: a tab drag can't end in a floating window (dropped on nothing or on a corner,
+  it stays where it was), and "Float Window" and the taskbar's "Maximize" are hidden. A window the
+  app floated itself can still be moved to another corner.
+- `canDock: false`: dragging the panel offers no group, tab or edge targets, only corners.
+
+**Across the workspace**, `canDrop` vetoes any move:
+
+```ts
+createWorkspace({
+  panels,
+  // Only tool panels in the "tools" group, and nothing along the top edge.
+  canDrop: ({ panelId, component, to }) =>
+    !(to.kind === 'group' && to.leafId === 'tools' && component !== 'tool') &&
+    !(to.kind === 'edge' && to.side === 'top'),
+});
+```
+
+`to` is `{ kind: 'group', leafId, position }` (a side for a new split, or `'center'` as a tab, which
+also covers dropping between tabs), `{ kind: 'edge', side }`, or `{ kind: 'float', anchor }` (a corner,
+or `null` for a tab dropped on nothing).
+
+A forbidden target **isn't offered**: its drop zone, edge or corner doesn't appear while the panel is
+dragged, and releasing there does nothing. The rule is asked again at release, so a rule that changes
+mid-drag still holds. Positions are the ones the move applies: under RTL, the zone drawn on the
+screen's right splits to the left, and `canDrop` sees `'left'`; a corner is mirrored the same way.
+It runs while the pointer moves, so keep it fast and pure; if it throws, the move is allowed and the
+error is logged. It runs after the kind's own `canFloat` / `canDock` and can't allow what they forbid.
+
 ## Split ratios
 
 Set the defaults once:
