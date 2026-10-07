@@ -18,6 +18,7 @@ Every component and directive is standalone: import the class into your componen
 | Export | |
 |---|---|
 | `createWorkspace(config?)` | Creates a `Workspace` outside dependency injection — at module scope, in a test, before `bootstrapApplication`. Live immediately: `openPanel()` works with nothing rendered. [Ch. 1](01-getting-started.md), [ch. 2](02-concepts.md) |
+| `definePanels(panels)` | Marks a panel map so the workspace created from it has a typed `openPanel`: registered names only, `inputs` checked (1.9.0). [Ch. 3](03-panels.md#a-typed-registry-definepanels) |
 | `provideDockableDesktop(configOrWorkspace?)` | Providers for a workspace. Given a `WorkspaceConfig`, creates one for that injector and disposes it with the injector; given a `Workspace`, provides it as-is. Plain providers, so it also works in a component's `providers`. [Ch. 1](01-getting-started.md) |
 | `Workspace` | The workspace class, and its own DI token (`inject(Workspace)`). Signal state (`state()`, `gridRoot()`, `floating()`, `minimized()`, `panels()`, `activePanelId()`, `draggedPanelId()`, `dir()`, `isRtl()`, `contextMenu()`, `activeContribution()`), every action (`openPanel`, `closePanel`, `requestClosePanel`, `focusPanel`, `floatPanel`, `dockPanel`, `dockPanelToGroup`, `dockPanelToWorkspaceEdge`, `movePanelOrder`, `minimizePanel`, `restorePanel`, `maximizePanel`, `closeLeafGroup`, `setDirection`, `saveLayout`, `loadLayout`, `showContextMenu`, `closeContextMenu`, …), the event bus (`subscribe`, `publish`), and the `registry`, `toolbar`, `contributions` and `overlays` stores. [Ch. 2](02-concepts.md) |
 | `injectWorkspace()` | `inject(Workspace)` with a directed error, instead of `NullInjectorError`, when no workspace is provided. [Ch. 2](02-concepts.md) |
@@ -27,6 +28,9 @@ Every component and directive is standalone: import the class into your componen
 |---|---|
 | `WorkspaceConfig` | `panels`, `initialState`, `dir`, `formatMessage`, `messages`, `defaultSplitRatio`, `defaultEdgeSplitRatio` (clamped 0.1–0.9), `zIndexBase` (default 1000), `classes`, `canDrop` (veto where users can move panels, 1.8.0; [Ch. 4](04-layout.md#controlling-where-users-can-move-panels)). [Ch. 1](01-getting-started.md) |
 | `WorkspaceState` | The live state: `gridRoot`, `floating`, `minimized`, `panels`, `activePanelId`, `draggedPanelId`, `dir`, `isRtl`, `splitRatio`, `edgeSplitRatio`. Frozen in development. [Ch. 2](02-concepts.md) |
+| `TypedWorkspace` | What `createWorkspace({ panels: definePanels(…) })` returns: a `Workspace` whose `openPanel` is typed from the map (1.9.0). [Ch. 3](03-panels.md#a-typed-registry-definepanels) |
+| `PanelMap` | A panel map marked by `definePanels` (1.9.0). |
+| `PanelInputsOf` | The `inputs` a registered panel accepts: its component's signal inputs, without `panelId` (1.9.0). |
 | `PanelDefinition` | One catalogue entry: `{ component }` or `{ loadComponent }`, with optional `defaultOptions`. [Ch. 3](03-panels.md) |
 | `OpenPanelOptions` | `openPanel()` options: `title`, `initialTarget`, `anchor`, `focus`, `inputs`, `dedupeKey`. `inputs` is saved in the layout under `props`. [Ch. 3](03-panels.md) |
 | `HostClasses` | Your own classes for library chrome: `window`, `windowBody`, `modal`, `modalBody`, `sidePanel`, `sidePanelBody`. [Ch. 10](10-theming.md) |
@@ -84,9 +88,12 @@ The workspace itself: grid, floating windows, taskbar, drag-and-dock. Mount one 
 | `defaultPanelIcon` | input, `NddIcon` | Fallback icon for panels that register none. |
 | `taskbarContextMenu` | output, `{ panelId, event }` | A right-click or long press on a taskbar icon, emitted after the library has opened its own menu. |
 | `NddEmptyWorkspaceTemplate` | content, `<ng-template nddEmptyWorkspace>` | Your view while no panel is docked, in place of the built-in message (1.7.0). [Ch. 10](10-theming.md#your-own-empty-workspace-view) |
+| `NddTabContentTemplate` | content, `<ng-template nddTabContent let-tab>` | Your own content for each grid tab, given a `TabContentProps` (1.9.0). [Ch. 10](10-theming.md#your-own-tab-content) |
 
 | Type | |
 |---|---|
+| `TabContentProps` | What `let-tab` is: `panelId`, `component`, `title` (formatted), `icon` (the registration's, or `undefined`), `dirty`, `selected`, `focused` (1.9.0). [Ch. 10](10-theming.md#your-own-tab-content) |
+| `TabContentContext` | The template context: `{ $implicit: TabContentProps }` (1.9.0). |
 | `TaskbarVisibility` | `'always'` (a permanent strip), `'compact'` (only while something is minimised), `'autohide'` (an overlay collapsed to a peek strip). |
 
 ## Sidebar and toolbar
@@ -410,4 +417,5 @@ one.
 | vdd's `use*()` composables | the `inject*()` functions above |
 | `UsePanelReturn`, `SidebarProps` (vdd) | `PanelRef`; the component's own inputs |
 | `version` (vdd) | `VERSION` |
+| `renderTabContent` (rdd); the `#tab-content` slot (vdd) | `<ng-template nddTabContent let-tab>` |
 | `renderContent`, `renderHeader`, `ContextMenuAdapter` (rdd); slots (vdd) | `nddSidebarTab`, `nddSidebarHeader`, `nddContextMenuTemplate`, or a `component` field |

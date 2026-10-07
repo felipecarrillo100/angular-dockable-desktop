@@ -10,6 +10,41 @@ feature-by-feature map is [docs/PARITY.md](https://github.com/felipecarrillo100/
 
 ## [Unreleased]
 
+## [1.9.0] — 2026-10-07
+
+**Parity: react-dockable-desktop 7.10.0** (vue-dockable-desktop 1.11.0 made the same port). Your own tab
+content, and an opt-in typed panel registry. Both opt-in: without them nothing changes. Same names as
+rdd and vdd.
+
+### Added
+
+- **`<ng-template nddTabContent let-tab>` inside `<ndd-desktop>`: your own tab content.** It replaces
+  what's inside every tab in the grid: the icon, the title and the dirty marker. `let-tab` is a
+  `TabContentProps`, typed in the template: `{ panelId, component, title, icon, dirty, selected,
+  focused }`, with `title` already formatted and `icon` the registration's (or `undefined`), so the
+  built-in look is one line to start from. Branch on `component` for a per-kind look. The tab itself
+  stays the library's: dragging, keyboard navigation, `role="tab"`, its context menu, state
+  attributes and classes, and the close button. Floating-window title bars and the taskbar are
+  unchanged. New: `NddTabContentTemplate`, types `TabContentProps`, `TabContentContext`.
+- **`definePanels()`: a typed panel registry, opt-in.** Wrap the `panels` map in `definePanels({…})`
+  and the workspace `createWorkspace` returns has a typed `openPanel`: only registered names are
+  accepted, and `inputs` is checked against that panel's signal inputs (`input()`, `input.required()`,
+  `model()`; a `loadComponent`'s too), without `panelId`. It returns its argument unchanged; the
+  typing is compile-time only. A component with no signal inputs stays untyped. With typed events
+  too, pass both: `createWorkspace<typeof panels, AppEvents>({ panels })`. `injectWorkspace()` stays
+  untyped. A plain map keeps its types exactly. New types: `TypedWorkspace`, `PanelMap`,
+  `PanelInputsOf`.
+
+### Tests
+
+- `test/components/release-c.spec.ts` (10 tests): the tab content (built-in without it, replaced
+  with it, every field, live updates, every group of a split, dragging by the content, floating
+  title bars unchanged) and the typed registry, whose `@ts-expect-error` checks compile with the spec.
+- **The non-vacuity sweep stubs a module with overloads.** An overload signature has no body, and
+  the stubber used to take the next function's brace for it, breaking the stubbed copy, so the
+  module was reported as unguarded. It now skips signatures that end in `;`; `gate:selftest`
+  covers it. Found on `createWorkspace`'s new overload.
+
 ## [1.8.0] — 2026-10-06
 
 **Parity: react-dockable-desktop 7.9.0** (vue-dockable-desktop 1.10.0 made the same port). Control over

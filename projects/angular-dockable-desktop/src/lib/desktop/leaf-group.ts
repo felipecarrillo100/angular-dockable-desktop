@@ -19,6 +19,7 @@ import { DragDock } from './drag-dock';
 import { NddDropZones } from './drop-zones';
 import { openMenu, panelMenu } from './menus';
 import { EmptyWorkspaceSlot } from './empty-workspace';
+import { TabContentSlot } from './tab-content';
 
 @Component({
   selector: 'ndd-leaf-group',
@@ -61,10 +62,21 @@ import { EmptyWorkspaceSlot } from './empty-workspace';
               [attr.aria-keyshortcuts]="tab.canClose ? 'Delete' : null"
             >
               <span class="ndd-text-truncate">
-                @if (tab.icon) {
-                  <span class="ndd-workspace-tab-icon"><ndd-icon [icon]="tab.icon" /></span>
+                @if (tabContent(); as content) {
+                  <!-- The app's content replaces the icon, title and marker; the tab stays ours (1.9.0). -->
+                  <ng-container
+                    [ngTemplateOutlet]="content"
+                    [ngTemplateOutletContext]="{ $implicit: {
+                      panelId: tab.id, component: tab.component, title: workspace.format(tab.title), icon: tab.icon,
+                      dirty: tab.dirty, selected: tab.id === selectedId(), focused: tab.id === activePanelId()
+                    } }"
+                  />
+                } @else {
+                  @if (tab.icon) {
+                    <span class="ndd-workspace-tab-icon"><ndd-icon [icon]="tab.icon" /></span>
+                  }
+                  <span>{{ workspace.format(tab.title) }}{{ tab.dirty ? ' *' : '' }}</span>
                 }
-                <span>{{ workspace.format(tab.title) }}{{ tab.dirty ? ' *' : '' }}</span>
               </span>
               @if (tab.canClose) {
                 <!-- A pointer affordance only. A focusable control inside role="tab" is a nested
@@ -138,6 +150,9 @@ export class NddLeafGroup {
     return id ? [id] : [];
   });
   private readonly emptySlot = inject(EmptyWorkspaceSlot, { optional: true });
+  /** The app's tab-content template, if any (1.9.0). */
+  protected readonly tabContent = computed(() => this.tabSlot?.template() ?? null);
+  private readonly tabSlot = inject(TabContentSlot, { optional: true });
   /** The app's empty-workspace template, while this group is the grid's root (1.7.0). */
   protected readonly emptyView = computed(() => {
     const root = this.workspace.gridRoot();
@@ -153,6 +168,7 @@ export class NddLeafGroup {
       return [
         {
           id,
+          component: panel.component,
           title: panel.title,
           dirty: panel.dirty === true,
           icon: options.icon,

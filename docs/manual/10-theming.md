@@ -517,6 +517,43 @@ Import `NddEmptyWorkspaceTemplate` next to `NddDesktop`. The view fills the empt
 windows still show over it, and a window can still be dropped onto it to dock. Empty groups inside a
 split keep the built-in message. To change only its text, override `emptyGroup` in `messages`.
 
+## Your own tab content
+
+An `<ng-template nddTabContent let-tab>` replaces what's inside each tab in the grid: the icon, the
+title and the dirty marker (1.9.0). Use it for a badge, a status dot, a two-line title, a different
+icon per state. It's given once, on the desktop; branch on `tab.component` for a per-kind look.
+
+```html
+<ndd-desktop>
+  <ng-template nddTabContent let-tab>
+    <ndd-icon [icon]="tab.icon" /> {{ tab.title }}
+    @if (tab.dirty) { <span class="unsaved-dot"></span> }
+    @if (tab.component === 'inbox') { <app-badge [count]="unread()" /> }
+  </ng-template>
+</ndd-desktop>
+```
+
+Import `NddTabContentTemplate` next to `NddDesktop` (and `NddIconView` for `<ndd-icon>`). `let-tab`
+is a `TabContentProps`, typed in the template:
+
+| Field | Type | |
+|---|---|---|
+| `panelId` | `string` | The panel's instance id. |
+| `component` | `string` | The panel's registered kind. |
+| `title` | `string` | The title, formatted: messages resolved, functions called. |
+| `icon` | `NddIcon \| undefined` | The registration's icon, if it has one. |
+| `dirty` | `boolean` | Has unsaved changes. |
+| `selected` | `boolean` | The tab shown in its group. |
+| `focused` | `boolean` | The workspace's active panel. |
+
+The built-in content is `<ndd-icon [icon]="tab.icon" /> {{ tab.title }}{{ tab.dirty ? ' *' : '' }}`,
+so starting from it is one line.
+
+The tab itself stays the library's: dragging, keyboard navigation, `role="tab"`, its context menu,
+its state attributes and classes, and the close button all keep working. Keep the content
+non-interactive (no buttons or links): it sits inside the tab, which is the control. Floating-window
+title bars and the taskbar are unchanged.
+
 ## Styling by state and by panel kind
 
 Two hooks let your CSS target the desktop without depending on internal class names (1.7.0).

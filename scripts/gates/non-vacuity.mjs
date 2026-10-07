@@ -82,9 +82,11 @@ export function stub(src) {
     // Find the body brace: the first `{` at bracket depth 0 that does not start a type literal.
     // A `{` right after `:`, `|`, `&`, `<`, `,`, `(`, `=` or `=>` opens a type literal
     // (`): { a: T } {`); anything else — `)`, an identifier, `>`, `]`, `}` — opens the body.
-    let j = i, depth2 = 0;
+    let j = i, depth2 = 0, overload = false;
     for (; j < src.length; j++) {
       const c = src[j];
+      // A `;` before any body: an overload signature (`function f(x: A): B;`), which has none.
+      if (c === ';' && depth2 === 0) { overload = true; break; }
       if (c === '(' || c === '[' || c === '<') depth2++;
       else if (c === ')' || c === ']' || (c === '>' && src[j - 1] !== '=')) depth2--;
       else if (c === '{') {
@@ -96,6 +98,7 @@ export function stub(src) {
         j--;
       }
     }
+    if (overload) continue;
     let k = j + 1, d = 1;
     while (k < src.length && d) {
       const c = src[k];

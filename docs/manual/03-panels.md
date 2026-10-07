@@ -138,6 +138,38 @@ and `focus` — `false` opens the panel without making it active.
 > Whether `inputs` survive `saveLayout()` depends on whether they are JSON-serialisable. See
 > [chapter 5](05-persistence.md); it is a runtime fact, not a type-level guarantee.
 
+### A typed registry: `definePanels`
+
+Wrap the map in `definePanels()` and the workspace's `openPanel` is typed from it: only registered
+names are accepted, and `inputs` is checked against that panel's signal inputs (`input()`,
+`input.required()`, `model()`), without `panelId`, which the library sets. Opt-in: a plain map keeps
+working exactly as before (1.9.0).
+
+```ts
+import { createWorkspace, definePanels } from 'angular-dockable-desktop';
+
+const panels = definePanels({
+  map:   { component: MapPanel },
+  chart: { component: ChartPanel },   // ChartPanel: readonly series = input.required<number>();
+});
+export const workspace = createWorkspace({ panels });
+
+workspace.openPanel('c1', 'chart', { inputs: { series: 3 } });    // ✓
+workspace.openPanel('m1', 'mpa');                                 // ✗ not a registered panel
+workspace.openPanel('c2', 'chart', { inputs: { series: '3' } });  // ✗ series is a number
+```
+
+`definePanels` returns its argument unchanged; the typing is all at compile time. A `loadComponent`
+entry is typed from the component it loads. Inputs are optional in the type, as at runtime; an input
+with a `transform` accepts what the transform accepts. `@Input()` decorator inputs are invisible to
+the type system, so a component with no signal inputs stays untyped. With a typed event bus as well,
+pass both type arguments: `createWorkspace<typeof panels, AppEvents>({ panels })`.
+
+The typing comes from the workspace `createWorkspace` returns. `inject(Workspace)` and
+`injectWorkspace()` return the untyped `Workspace`, so for typed calls inside components, import that
+same `workspace` (the one you passed to `provideDockableDesktop`). The typed workspace is still a
+`Workspace` and goes anywhere one does.
+
 ## Talking to the container: `injectPanel()`
 
 Call it in an injection context — a field initialiser or the constructor:

@@ -15,7 +15,7 @@
  *   - `subscribe()` made in an injection context is disposed with it (`DestroyRef`).
  */
 import { DestroyRef, computed, inject, signal, untracked } from '@angular/core';
-import type { Signal, Type, WritableSignal } from '@angular/core';
+import type { InputSignalWithTransform, ModelSignal, Signal, Type, WritableSignal } from '@angular/core';
 import type {
   DirtyStateOptions,
   DropPosition,
@@ -950,11 +950,90 @@ export class Workspace<TEvents extends Record<string, unknown> = Record<string, 
   }
 }
 
+/** The type-only mark {@link definePanels} puts on a map. No such value exists at runtime. */
+declare const panelsBrand: unique symbol;
+
+/** A panel map marked by {@link definePanels}, so `createWorkspace` types `openPanel` from it (1.9.0). */
+export type PanelMap<TPanels extends Record<string, PanelDefinition> = Record<string, PanelDefinition>> =
+  TPanels & { readonly [panelsBrand]: true };
+
+// Matched with `infer`, not `<unknown>`: Angular's signal types aren't covariant, so an
+// `InputSignal<number>` doesn't extend `InputSignalWithTransform<unknown, unknown>`.
+/** Whether a member is a signal input: `input()`, `input.required()` or `model()`. */
+type IsSignalInput<S> =
+  S extends ModelSignal<infer _T> ? true : S extends InputSignalWithTransform<infer _R, infer _W> ? true : false;
+
+/** The value an input accepts: its write type, after any transform. */
+type InputValue<S> =
+  S extends ModelSignal<infer T> ? T : S extends InputSignalWithTransform<infer _R, infer W> ? W : never;
+
+/** A component's signal inputs, each optional, without `panelId`. */
+type SignalInputsOf<C> = {
+  [K in keyof C as K extends 'panelId' ? never : IsSignalInput<C[K]> extends true ? K : never]?: InputValue<C[K]>;
+};
+
+/**
+ * Inputs that aren't typed: any, as without `definePanels`. It must be `any`, not
+ * `Record<string, unknown>`: TypeScript only accepts `TypedWorkspace` as a `Workspace` (its
+ * `openPanel` narrowing the generic one) when the untyped branches are `any`.
+ */
+// eslint-disable-next-line @typescript-eslint/no-explicit-any -- see above
+type UntypedInputs = any;
+
+/** A component class's inputs; untyped when it declares no signal inputs (`@Input()` is invisible to types). */
+type InputsOfType<T> = T extends Type<infer C>
+  ? (keyof SignalInputsOf<C> extends never ? UntypedInputs : SignalInputsOf<C>)
+  : UntypedInputs;
+
+/**
+ * The `inputs` `openPanel` passes to a registered panel: its component's signal inputs, without
+ * `panelId` (the library sets it). For a `loadComponent`, the loaded component's.
+ */
+export type PanelInputsOf<TDefinition> =
+  TDefinition extends { component: infer T } ? InputsOfType<T>
+    : TDefinition extends { loadComponent: () => Promise<infer R> }
+      ? (R extends { default: infer T } ? InputsOfType<T> : InputsOfType<R>)
+      : UntypedInputs;
+
+/**
+ * Mark a panel map for typing (1.9.0). Returns it unchanged; a workspace created from it gets a
+ * typed `openPanel`: only registered names, and `inputs` checked against that panel's inputs.
+ *
+ * ```ts
+ * const panels = definePanels({ map: { component: MapPanel }, chart: { component: ChartPanel } });
+ * const workspace = createWorkspace({ panels });
+ * workspace.openPanel('c1', 'chart', { inputs: { series: 3 } });   // checked against ChartPanel's inputs
+ * ```
+ */
+export function definePanels<const TPanels extends Record<string, PanelDefinition>>(panels: TPanels): PanelMap<TPanels> {
+  return panels as PanelMap<TPanels>;
+}
+
+/**
+ * A workspace created from {@link definePanels}: the same object, with `openPanel` typed from the
+ * registry. It goes anywhere a {@link Workspace} goes. `inject(Workspace)` and `injectWorkspace()`
+ * stay untyped; keep this one for typed calls.
+ */
+export interface TypedWorkspace<TPanels extends Record<string, PanelDefinition>, TEvents extends Record<string, unknown> = Record<string, unknown>>
+  extends Workspace<TEvents> {
+  /** `openPanel`, typed: a registered name, and that panel's inputs. */
+  openPanel<K extends keyof TPanels & string>(id: string, component: K, options?: OpenPanelOptions<PanelInputsOf<TPanels[K]>>): void;
+}
+
+/**
+ * Create a workspace from a map marked by {@link definePanels} (1.9.0): `openPanel` takes only the
+ * registered names, with `inputs` checked against each panel's inputs. To name the events as well,
+ * pass both type arguments: `createWorkspace<typeof panels, AppEvents>({ panels })`.
+ */
+export function createWorkspace<TPanels extends Record<string, PanelDefinition>, TEvents extends Record<string, unknown> = Record<string, unknown>>(
+  config: WorkspaceConfig & { panels: PanelMap<TPanels> },
+): TypedWorkspace<TPanels, TEvents>;
 /**
  * Create a workspace outside dependency injection — at module scope, in a test, or before
  * `bootstrapApplication`. It is live immediately: `openPanel()` works with nothing rendered.
  * Hand it to the app with `provideDockableDesktop(workspace)`.
  */
+export function createWorkspace<TEvents extends Record<string, unknown> = Record<string, unknown>>(config?: WorkspaceConfig): Workspace<TEvents>;
 export function createWorkspace<TEvents extends Record<string, unknown> = Record<string, unknown>>(
   config: WorkspaceConfig = {},
 ): Workspace<TEvents> {

@@ -8,8 +8,11 @@
 export { VERSION } from './lib/version';
 
 // ─── The workspace ───────────────────────────────────────────────────────────
-export { Workspace, createWorkspace } from './lib/workspace/workspace';
+export { Workspace, createWorkspace, definePanels } from './lib/workspace/workspace';
 export type {
+  TypedWorkspace,
+  PanelMap,
+  PanelInputsOf,
   WorkspaceConfig,
   WorkspaceState,
   PanelDefinition,
@@ -22,6 +25,8 @@ export type { BuiltInEvents } from './lib/core/event-bus';
 // ─── Components ──────────────────────────────────────────────────────────────
 export { NddDesktop } from './lib/desktop/desktop';
 export { NddEmptyWorkspaceTemplate } from './lib/desktop/empty-workspace';
+export { NddTabContentTemplate } from './lib/desktop/tab-content';
+export type { TabContentContext } from './lib/desktop/tab-content';
 export type { TaskbarVisibility } from './lib/desktop/taskbar';
 
 // ─── The panel's view of itself ──────────────────────────────────────────────
@@ -167,6 +172,7 @@ export type {
   DropTarget,
   PanelDrop,
   PanelDropTarget,
+  TabContentProps,
   FloatAnchor,
   FloatingWindow,
   Label,

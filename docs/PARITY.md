@@ -288,6 +288,15 @@ vdd accounted for rdd's 26 suites; each lands in ndd through the vdd suite it be
 | `branding.browser.ts` brand-surface cases (7.3.0) — leftovers, layers, contrast, one input | `scripts/gates/browser/m17.mjs` (surfaces) |
 | `StylesheetContract.test.ts` — "corner contract" (2), "surface contract" (3) | `stylesheet.spec.ts` — the same, names kept |
 
+### rdd 7.10.0 Release C, traced
+
+| rdd 7.10.0 | vdd 1.11.0 | ndd 1.9.0 |
+|---|---|---|
+| `renderTabContent` prop, `TabContentProps` | the `#tab-content` slot | `<ng-template nddTabContent let-tab>` (`NddTabContentTemplate`, typed by `ngTemplateContextGuard`), handed to every group through DI as the empty-workspace template is |
+| `icon`: runtime, else the registration's, else the default | the registration's or `undefined` | the registration's or `undefined`, as ndd's grid tabs show |
+| `definePanels`, a `createWorkspace` overload, `TypedWorkspace`, `PanelMap`, `PanelPropsOf` | same names | same, except `PanelInputsOf` for ndd's `inputs` option: signal inputs (`input()`, `model()`, write type after a transform), a `loadComponent`'s too; untyped for a component with no signal inputs |
+| type tests: a compiled fixture | in the test file, checked by `vue-tsc` | in the spec, compiled by the test build |
+
 ### rdd 7.9.0 Release B, traced
 
 | rdd 7.9.0 | vdd 1.10.0 | ndd 1.8.0 |

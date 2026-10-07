@@ -110,6 +110,9 @@ expect('docs-api.mjs', 'uses an unknown element', false, docsEnv('```html\n<ndd-
     'export const h = (x: number): number => x + 1;',
     'export const k = async <T,>(x: T): Promise<T> => x;',
     'export const DATA = { a: 1 };',
+    'export function o<T extends { k: string }>(c: { panels: T }): Map<string, T>;',
+    'export function o(c?: { k: number }): unknown;',
+    'export function o(c: object = {}): unknown { return c; }',
     '@Component({ selector: \'x-c\', imports: [A, B], template: `<b>{{ a }}</b>` })',
     'export class C {}',
     'export class W {',
@@ -122,12 +125,13 @@ expect('docs-api.mjs', 'uses an unknown element', false, docsEnv('```html\n<ndd-
     '}',
   ].join('\n');
   const { out, count } = stub(sample);
-  const ok = count === 7 && /imports: \[\], template: `<!-- non-vacuity stub -->`/.test(out) && !/\):\s*\{\s*throw/.test(out) && /export const DATA = \{ a: 1 \}/.test(out)
+  const ok = count === 8 && /\): unknown;\nexport function o\(c: object = \{\}\): unknown \{ throw new Error\('non-vacuity stub: o'\)/.test(out)
+    && /Map<string, T>;\n/.test(out) && /imports: \[\], template: `<!-- non-vacuity stub -->`/.test(out) && !/\):\s*\{\s*throw/.test(out) && /export const DATA = \{ a: 1 \}/.test(out)
     && /open<I extends object = Record<string, unknown>>\(id: string, o\?: I\): void \{ throw new Error\('non-vacuity stub: open'\)/.test(out)
     && /helper\(\): \{ a: number \} \{ throw new Error\('non-vacuity stub: helper'\)/.test(out)
     && /constructor\(private x = 1\) \{\}/.test(out)
     && /Promise<Map<string, T>> \{ throw/.test(out) && out.startsWith('// @ts-nocheck');
-  results.push({ rule: 'non-vacuity.mjs', label: 'stubs functions and class methods, not return types, calls or constructors', ok, got: ok ? 'pass' : 'fail', wanted: 'pass', out: out.replace(/\n/g, ' ⏎ ').slice(0, 300) });
+  results.push({ rule: 'non-vacuity.mjs', label: 'stubs functions and class methods, not return types, calls, constructors or overload signatures', ok, got: ok ? 'pass' : 'fail', wanted: 'pass', out: out.replace(/\n/g, ' ⏎ ').slice(0, 300) });
 }
 
 // ── non-vacuity runner: never lends one module another module's red ─────────────────
