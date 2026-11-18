@@ -541,7 +541,7 @@ is a `TabContentProps`, typed in the template:
 | `panelId` | `string` | The panel's instance id. |
 | `component` | `string` | The panel's registered kind. |
 | `title` | `string` | The title, formatted: messages resolved, functions called. |
-| `icon` | `NddIcon \| undefined` | The registration's icon, if it has one. |
+| `icon` | `NddIcon \| undefined` | The icon set with `setPanelIcon`/`setIcon` (1.10.0), else the registration's, if it has one. |
 | `dirty` | `boolean` | Has unsaved changes. |
 | `selected` | `boolean` | The tab shown in its group. |
 | `focused` | `boolean` | The workspace's active panel. |

@@ -207,14 +207,37 @@ constructor() {
 a panel *and* as a modal ([chapter 8](08-overlays.md)); this is how it adapts. A minimised panel
 reports the container it will be restored to.
 
-`setTitle()` updates the tab, the window title bar and the taskbar icon. `setIcon()` takes effect
-only in a modal or side panel; in the workspace a panel's icon is its registered one, and the
-call logs a development warning.
+`setTitle()` updates the tab, the window title bar and the taskbar icon. `setIcon()` changes the
+icon in the same places — the tab, the floating title bar and the taskbar button — or, in a modal
+or side panel, its title bar (1.10.0; before, it only worked in a modal or side panel).
 
 The actions run untracked, so `effect(() => this.panel.setTitle(this.name()))` is safe: the
 effect depends on `name` and nothing else. Outside any container — a unit test, a story, a route
 — the signals describe a `'standalone'` panel and the actions do nothing but log a development
 warning, so the component renders on its own without special-casing.
+
+### Changing the icon
+
+A panel's icon is its registration's `defaultOptions.icon` until something changes it: the panel
+itself with `injectPanel().setIcon(icon)`, or anyone with `workspace.setPanelIcon(id, icon)`
+(1.10.0). Both take any `NddIcon` — a component, a `TemplateRef` or a class string.
+
+```ts
+effect(() => this.panel.setIcon(this.connected() ? 'bi bi-wifi' : 'bi bi-wifi-off'));
+
+ws.setPanelIcon('map-1', null);  // back to the registered icon
+```
+
+The tab, the floating title bar, the taskbar button and the `icon` an `nddTabContent` template
+receives all show the runtime icon, else the registered one; the taskbar then falls back to
+`defaultPanelIcon`. `null` goes back to the registered icon, an unknown id does nothing, setting the
+icon a panel already has changes nothing, and no event is published. It is read as
+`state().panels[id].icon`.
+
+The runtime icon lives only in memory: `saveLayout()` never writes it (the JSON is byte for byte
+what it would be without one), and an `icon` in a hand-made layout is dropped on load. `loadLayout()`
+keeps it for a panel that stays open with the same component — that component isn't re-created, so
+it wouldn't set it again; a restored panel starts from its registered icon.
 
 ### Unsaved changes
 

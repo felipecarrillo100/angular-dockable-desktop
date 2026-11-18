@@ -80,7 +80,7 @@ const NONE: Placement = { left: null, top: null, bottom: null, inlineStart: null
         (contextmenu)="$event.preventDefault(); onTitleMenu($event)"
       >
         <span class="ndd-floating-window-title">
-          @if (options().icon; as icon) {
+          @if (icon(); as icon) {
             <span class="ndd-window-title-icon"><ndd-icon [icon]="icon" /></span>
           }
           <span>{{ title() }}{{ panel.dirty ? ' *' : '' }}</span>
@@ -178,6 +178,8 @@ export class NddFloatingWindow {
     const panel = this.panel();
     return (panel && this.workspace.registry.get(panel.component)?.defaultOptions) || {};
   });
+  /** The runtime icon (1.10.0), else the registration's. */
+  protected readonly icon = computed(() => this.panel()?.icon ?? this.options().icon);
   protected readonly canDrag = computed(() => this.options().canDrag !== false);
   protected readonly title = computed(() => this.workspace.format(this.panel()?.title));
   protected readonly isFocused = computed(() => this.workspace.activePanelId() === this.window().id);

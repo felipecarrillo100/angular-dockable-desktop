@@ -60,6 +60,7 @@ export interface PanelRef {
   /** Unsaved changes. */
   readonly dirty: Signal<boolean>;
   setTitle(title: Label): void;
+  /** In a workspace panel, sets its tab, window and taskbar icon (1.10.0); in a modal or side panel, its title-bar icon. */
   setIcon(icon: NddIcon): void;
   setDirty(dirty: boolean, options?: DirtyStateOptions): void;
   /** Close, honouring dirty state and any `onBeforeClose` guard. */
@@ -141,6 +142,7 @@ export function injectPanel(): PanelRef {
     }),
     setIcon: icon => untracked(() => {
       if (ctx?.setIcon) ctx.setIcon(icon);
+      else if (workspace && isKnown()) workspace.setPanelIcon(id, icon ?? null);
       else warnStandalone('setIcon');
     }),
     setDirty: (dirty, options) => untracked(() => {

@@ -137,7 +137,8 @@ export class NddTaskbar {
   protected readonly items = computed(() =>
     this.workspace.minimized().map(entry => ({
       ...entry,
-      icon: this.workspace.registry.get(entry.component)?.defaultOptions?.icon,
+      // The runtime icon (1.10.0), else the registration's; the template falls back to the default.
+      icon: this.workspace.panels()[entry.id]?.icon ?? this.workspace.registry.get(entry.component)?.defaultOptions?.icon,
     })),
   );
   protected readonly visible = computed(() => this.visibility() === 'always' || this.items().length > 0);

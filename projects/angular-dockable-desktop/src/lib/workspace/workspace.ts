@@ -52,6 +52,7 @@ import { DEFAULT_FLOAT_RECT, LAYOUT_VERSION, parseInitialState } from '../core/s
 import { isSerializable } from '../core/serializable';
 import { PanelRegistry } from '../core/registry';
 import type { PanelDefaultOptions, PanelLoader } from '../core/registry';
+import type { NddIcon } from '../core/icon';
 import { EventBus } from '../core/event-bus';
 import type { BuiltInEvents } from '../core/event-bus';
 import { menuInitialFocus, menuPosition } from '../core/context-menu';
@@ -742,6 +743,18 @@ export class Workspace<TEvents extends Record<string, unknown> = Record<string, 
     }
   }
 
+  /**
+   * Sets an open panel's tab, window and taskbar icon; `null` restores its registration's icon.
+   * Not saved by `saveLayout()`. Publishes no event. An unknown id does nothing (1.10.0).
+   */
+  setPanelIcon(id: string, icon: NddIcon | null): void {
+    const panel = this.s.panels[id];
+    if (!panel) return;
+    const next = icon ?? undefined;
+    if (panel.icon === next) return;
+    this.setPanel(id, { ...panel, icon: next });
+  }
+
   setDirection(dir: 'ltr' | 'rtl'): void {
     if (this.s.dir === dir) return;
     this.set({ dir, isRtl: dir === 'rtl' });
@@ -779,8 +792,10 @@ export class Workspace<TEvents extends Record<string, unknown> = Record<string, 
       const dynamic = provider?.();
       const hasDynamic = provider !== undefined && dynamic !== undefined;
       const ok = hasDynamic ? isSerializable(dynamic) : info.serializable;
-      // A function title (1.3.0) can't be saved; the restored panel takes its registered default.
-      const saved = typeof info.title === 'function' ? ((({ title: _t, ...rest }) => rest)(info) as PanelInfo) : info;
+      // The runtime icon (1.10.0) is a component, template or class string: never part of a saved
+      // layout. A function title (1.3.0) can't be saved; the restored panel takes its registered default.
+      const { icon: _icon, ...saved } = info;
+      if (typeof saved.title === 'function') delete (saved as Partial<PanelInfo>).title;
       if (ok) included[id] = hasDynamic ? { ...saved, props: dynamic as Record<string, unknown>, serializable: true } : saved;
       else excluded.push(id);
     }
@@ -823,11 +838,18 @@ export class Workspace<TEvents extends Record<string, unknown> = Record<string, 
       return false;
     }
     const previous = this.s.activePanelId;
+    // A panel that stays open keeps its runtime icon: the component that set it isn't re-created,
+    // so it wouldn't set it again (1.10.0).
+    const panels: Record<string, PanelInfo> = {};
+    for (const [id, info] of Object.entries(parsed.panels)) {
+      const was = this.s.panels[id];
+      panels[id] = was?.icon !== undefined && was.component === info.component ? { ...info, icon: was.icon } : info;
+    }
     this.set({
       gridRoot: parsed.gridRoot,
       floating: parsed.floating,
       minimized: parsed.minimized,
-      panels: parsed.panels,
+      panels,
       draggedPanelId: null,
       activePanelId: parsed.activePanelId,
     });
@@ -927,7 +949,9 @@ export class Workspace<TEvents extends Record<string, unknown> = Record<string, 
    */
   private withTitles<T extends { panels: Record<string, PanelInfo>; minimized: { id: string; title: PanelInfo['title']; component: string }[] }>(parsed: T): T {
     const panels: Record<string, PanelInfo> = {};
-    for (const [id, info] of Object.entries(parsed.panels)) {
+    for (const [id, loaded] of Object.entries(parsed.panels)) {
+      // A layout can't hold a runtime icon (1.10.0): one in hand-made JSON is dropped.
+      const { icon: _icon, ...info } = loaded;
       panels[id] = info.title ? info : { ...info, title: this.registry.get(info.component)?.defaultOptions?.title || id };
     }
     const minimized = parsed.minimized.map(m => (m.title ? m : { ...m, title: panels[m.id]?.title || m.id }));

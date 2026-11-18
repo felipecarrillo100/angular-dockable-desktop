@@ -26,7 +26,7 @@ The concepts are the same; the surface is Angular's.
 ### Actions — unchanged in name and signature
 
 `openPanel`, `closePanel`, `requestClosePanel`, `focusPanel`, `floatPanel`, `dockPanel`,
-`dockPanelToGroup`, `minimizePanel`, `restorePanel`, `maximizePanel`, `setDirection`,
+`dockPanelToGroup`, `minimizePanel`, `restorePanel`, `maximizePanel`, `setPanelIcon` (1.10.0), `setDirection`,
 `saveLayout`, `loadLayout`, `showContextMenu`, `closeContextMenu`, the `overlays.*` methods and
 the `toolbar`/`contributions` stores. One option is renamed for Angular: `openPanel(…, { inputs })`
 where vdd has `props` (panel inputs are applied with `setInput`). The saved layout keeps the
@@ -287,6 +287,19 @@ vdd accounted for rdd's 26 suites; each lands in ndd through the vdd suite it be
 | `tests/browser/radius.browser.ts` (7.3.0) — corner baseline, scale 0 and 1.5 | `scripts/gates/browser/m17.mjs` (corners; baseline `fixtures/m17-radius-baseline.json`, captured from 1.1.0), both schedulers |
 | `branding.browser.ts` brand-surface cases (7.3.0) — leftovers, layers, contrast, one input | `scripts/gates/browser/m17.mjs` (surfaces) |
 | `StylesheetContract.test.ts` — "corner contract" (2), "surface contract" (3) | `stylesheet.spec.ts` — the same, names kept |
+
+### rdd per-panel icons, traced (ndd 1.10.0)
+
+rdd has had a runtime panel icon since 7.1.0; vdd ported it in 1.12.0, ndd in 1.10.0. Same names.
+
+| rdd 7.10.0 | vdd 1.12.0 | ndd 1.10.0 |
+|---|---|---|
+| `setPanelIcon(id, icon \| null)`: unknown id no-op, same icon no change, `null` the registered icon, no event | the same | the same (`NddIcon \| null`) |
+| the panel handle's `setIcon` → `setPanelIcon(id, icon ?? null)` in the workspace | `usePanel().setIcon` | `injectPanel().setIcon`, untracked like `setTitle`; no standalone warning in a workspace panel |
+| `PanelInfo.icon`, runtime only | the same | the same |
+| shown as runtime ?? registered ?? default in the tab, floating title bar, taskbar and `TabContentProps.icon` | the same, `#tab-content` | the same, `nddTabContent` (completes the 1.9.0 row below) |
+| never written by `saveLayout`; kept by `loadLayout` for a panel still open with the same component | the same; a hand-made `icon` is dropped | the same, dropped on load and in `initialState` |
+| — | `test/components/panelIcon.test.ts` (10) | `test/components/panel-icon.spec.ts` (10) |
 
 ### rdd 7.10.0 Release C, traced
 

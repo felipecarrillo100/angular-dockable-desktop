@@ -171,7 +171,7 @@ export class NddLeafGroup {
           component: panel.component,
           title: panel.title,
           dirty: panel.dirty === true,
-          icon: options.icon,
+          icon: panel.icon ?? options.icon,
           canClose: options.canClose !== false,
           canDrag: options.canDrag !== false,
           tabClassName: options.tabClassName ?? '',

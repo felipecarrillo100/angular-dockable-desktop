@@ -76,7 +76,7 @@ export interface TabContentProps {
   component: string;
   /** The title, formatted: messages resolved, functions called. */
   title: string;
-  /** The registration's icon, if it has one. */
+  /** The icon the built-in content shows: the one set at runtime (1.10.0), else the registration's. */
   icon: NddIcon | undefined;
   /** Has unsaved changes; the built-in content shows ` *`. */
   dirty: boolean;
@@ -192,6 +192,10 @@ export interface PanelInfo {
   /** Dedup key: opening the same `component` with the same key focuses this panel instead
    *  of creating another. */
   dedupeKey?: string;
+  /** An icon set at runtime with `setPanelIcon` or `injectPanel().setIcon`, shown instead of the
+   *  registration's (1.10.0). Runtime only: never saved by `saveLayout()`, and dropped from a
+   *  loaded layout. */
+  icon?: NddIcon;
 }
 
 /** The on-disk shape of a saved workspace. Compatible with react-dockable-desktop at `version: 2`. */
