@@ -20,7 +20,7 @@ Every component and directive is standalone: import the class into your componen
 | `createWorkspace(config?)` | Creates a `Workspace` outside dependency injection — at module scope, in a test, before `bootstrapApplication`. Live immediately: `openPanel()` works with nothing rendered. [Ch. 1](01-getting-started.md), [ch. 2](02-concepts.md) |
 | `definePanels(panels)` | Marks a panel map so the workspace created from it has a typed `openPanel`: registered names only, `inputs` checked (1.9.0). [Ch. 3](03-panels.md#a-typed-registry-definepanels) |
 | `provideDockableDesktop(configOrWorkspace?)` | Providers for a workspace. Given a `WorkspaceConfig`, creates one for that injector and disposes it with the injector; given a `Workspace`, provides it as-is. Plain providers, so it also works in a component's `providers`. [Ch. 1](01-getting-started.md) |
-| `Workspace` | The workspace class, and its own DI token (`inject(Workspace)`). Signal state (`state()`, `gridRoot()`, `floating()`, `minimized()`, `panels()`, `activePanelId()`, `draggedPanelId()`, `dir()`, `isRtl()`, `contextMenu()`, `activeContribution()`), every action (`openPanel`, `closePanel`, `requestClosePanel`, `focusPanel`, `floatPanel`, `dockPanel`, `dockPanelToGroup`, `dockPanelToWorkspaceEdge`, `movePanelOrder`, `minimizePanel`, `restorePanel`, `maximizePanel`, `closeLeafGroup`, `setDirection`, `saveLayout`, `loadLayout`, `showContextMenu`, `closeContextMenu`, …), the event bus (`subscribe`, `publish`), and the `registry`, `toolbar`, `contributions` and `overlays` stores. [Ch. 2](02-concepts.md) |
+| `Workspace` | The workspace class, and its own DI token (`inject(Workspace)`). Signal state (`state()`, `gridRoot()`, `floating()`, `minimized()`, `panels()`, `activePanelId()`, `draggedPanelId()`, `dir()`, `isRtl()`, `contextMenu()`, `activeContribution()`), every action (`openPanel`, `closePanel`, `requestClosePanel`, `focusPanel`, `floatPanel`, `dockPanel`, `dockPanelToGroup`, `dockPanelToWorkspaceEdge`, `movePanelOrder`, `minimizePanel`, `restorePanel`, `maximizePanel`, `closeLeafGroup`, `updatePanelTitle`, `setPanelDirty`, `setPanelIcon` (a panel's runtime icon, `null` for the registered one; 1.10.0, [Ch. 3](03-panels.md#changing-the-icon)), `setDirection`, `saveLayout`, `loadLayout`, `showContextMenu`, `closeContextMenu`, …), the event bus (`subscribe`, `publish`), and the `registry`, `toolbar`, `contributions` and `overlays` stores. [Ch. 2](02-concepts.md) |
 | `injectWorkspace()` | `inject(Workspace)` with a directed error, instead of `NullInjectorError`, when no workspace is provided. [Ch. 2](02-concepts.md) |
 | `VERSION` | The package version, as a string. |
 
@@ -50,7 +50,7 @@ Every component and directive is standalone: import the class into your componen
 | `PanelRegistryEntry` | A registered panel kind: `component` or `loadComponent`, plus `defaultOptions`. [Ch. 3](03-panels.md) |
 | `PanelDefaultOptions` | Per-kind defaults: `title`, `icon`, `initialTarget`, `favoritePosition`, `defaultAnchor`, `canClose`, `canMinimize`, `canDrag`, `disableLivePreview`, `preserveScroll`. [Ch. 3](03-panels.md) |
 | `PanelLoader` | A lazy panel loader, `() => Promise<Type \| { default: Type }>` — the router's `loadComponent` shape. [Ch. 3](03-panels.md) |
-| `PanelInfo` | Everything the workspace knows about one open panel: `id`, `title`, `component`, `state`, `props`, `serializable`, `dirty`, restore targets, `dedupeKey`. [Ch. 2](02-concepts.md) |
+| `PanelInfo` | Everything the workspace knows about one open panel: `id`, `title`, `component`, `state`, `props`, `serializable`, `dirty`, restore targets, `dedupeKey`, `icon` (the runtime icon from `setPanelIcon`, never saved; 1.10.0). [Ch. 2](02-concepts.md) |
 | `PanelState` | `'docked' \| 'floating' \| 'minimized'`. |
 | `ContainerType` | Where a panel is rendered: `'dockable-panel'`, `'floating-window'`, `'modal'`, `'left-panel'`, `'right-panel'`, `'standalone'`. [Ch. 3](03-panels.md) |
 | `DirtyStateOptions` | Customises the unsaved-changes dialog: `title`, `message`, `alert`, `alertType`. [Ch. 3](03-panels.md) |
@@ -92,7 +92,7 @@ The workspace itself: grid, floating windows, taskbar, drag-and-dock. Mount one 
 
 | Type | |
 |---|---|
-| `TabContentProps` | What `let-tab` is: `panelId`, `component`, `title` (formatted), `icon` (the registration's, or `undefined`), `dirty`, `selected`, `focused` (1.9.0). [Ch. 10](10-theming.md#your-own-tab-content) |
+| `TabContentProps` | What `let-tab` is: `panelId`, `component`, `title` (formatted), `icon` (the runtime one, else the registration's, or `undefined`; 1.10.0), `dirty`, `selected`, `focused` (1.9.0). [Ch. 10](10-theming.md#your-own-tab-content) |
 | `TabContentContext` | The template context: `{ $implicit: TabContentProps }` (1.9.0). |
 | `TaskbarVisibility` | `'always'` (a permanent strip), `'compact'` (only while something is minimised), `'autohide'` (an overlay collapsed to a peek strip). |
 

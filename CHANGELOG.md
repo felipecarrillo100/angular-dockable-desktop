@@ -10,6 +10,44 @@ feature-by-feature map is [docs/PARITY.md](docs/PARITY.md).
 
 ## [Unreleased]
 
+## [1.10.0] — 2026-11-18
+
+**Parity: react-dockable-desktop 7.10.1** (rdd 7.10.1 was internal and brought rdd in line with what
+ndd already did, so it needs nothing here; vue-dockable-desktop 1.12.0 made the same port).
+Adds rdd's per-panel icons: a docked or floating panel can change its icon. Same names as rdd and vdd.
+
+### Added
+
+- **`injectPanel().setIcon(icon)` now works in docked and floating panels.** It changes the panel's
+  tab, floating title bar and taskbar button, and the `icon` an `nddTabContent` template receives;
+  until now it only worked in modals and side panels, and warned "outside a panel container"
+  elsewhere. It runs untracked, like `setTitle`, so calling it from an `effect()` is safe.
+- **`workspace.setPanelIcon(id, icon | null)`** does the same from outside the panel; `null` goes
+  back to the registration's `defaultOptions.icon`. An unknown id does nothing, setting the icon a
+  panel already has changes nothing, and it publishes no event.
+- **`PanelInfo.icon`**: the runtime icon, readable as `state().panels[id].icon`. It is never written by
+  `saveLayout()` (the saved JSON is byte for byte what it was without one), and `loadLayout()` keeps
+  it for a panel that stays open with the same component. An `icon` in a hand-made layout, loaded or
+  given as `initialState`, is dropped.
+- The taskbar's fallback is unchanged: runtime icon, else the registered one, else
+  `defaultPanelIcon`. Tabs and title bars still show no icon for a panel that has neither.
+
+### Docs
+
+- Panels (Chapter 3): **Changing the icon**. Theming (Chapter 10) and the API reference: the new
+  `icon` meaning in `TabContentProps`, `setPanelIcon`, `PanelInfo.icon`. `PARITY.md`: the trace, and
+  `setPanelIcon` in the actions list.
+
+### Tests
+
+- `test/components/panel-icon.spec.ts` (10 tests): the tab, floating title bar and taskbar icon
+  change and `null` restores the registered one; a panel with no registered icon gets one;
+  `nddTabContent` receives it; an unknown id and the same icon change no state;
+  `injectPanel().setIcon` in a workspace panel, with no standalone warning; `saveLayout` writes no
+  icon and is byte-identical; `loadLayout` keeps it for a panel still open with the same component
+  and drops it when the component changed; a hand-made `icon` is dropped. All 10 mutations of the
+  code they cover fail them.
+
 ## [1.9.0] — 2026-10-07
 
 **Parity: react-dockable-desktop 7.10.0** (vue-dockable-desktop 1.11.0 made the same port). Your own tab
