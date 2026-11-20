@@ -6,6 +6,7 @@ import { HostilePanel } from './app/hostile-panel';
 import { EditorPanel } from './app/editor-panel';
 import { OverlayPanel } from './app/overlay-panel';
 import { ContributorPanel } from './app/contributor-panel';
+import { EmbedFrame } from './app/embed-frame';
 import { pgFormatMessage } from './app/locale';
 
 /**
@@ -51,6 +52,9 @@ bootstrapApplication(App, {
         editor: { component: EditorPanel, defaultOptions: { title: 'Editor' } },
         overlay: { component: OverlayPanel, defaultOptions: { title: 'Overlay' } },
         contributor: { component: ContributorPanel, defaultOptions: { title: 'Contributor' } },
+        // M11 gate (7.11): an iframe in a panel type with preserveEmbeds, and one without.
+        embedKept: { component: EmbedFrame, defaultOptions: { title: 'Kept', preserveEmbeds: true } },
+        embedBare: { component: EmbedFrame, defaultOptions: { title: 'Bare' } },
       },
       initialState: params.get('layout') === 'two-leaf' ? TWO_LEAF : null,
       formatMessage: pgFormatMessage,

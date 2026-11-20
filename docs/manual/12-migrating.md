@@ -33,6 +33,7 @@ This chapter maps concepts in both directions from ndd. The authoritative, line-
 | `[data-workspace-skin="…"]` in your skin CSS | `[data-vdd-skin="…"]` | `[data-ndd-skin="…"]` ([chapter 10](10-theming.md#defining-your-own)) |
 | partly prefixed classes and tokens (rdd's migration left `--sidebar-*`, `--tab-*`, `--toolbar-*` unprefixed) | `vdd-`-prefixed classes and custom properties | `ndd-`-prefixed classes and custom properties — the names after the prefix match vdd's |
 | `--rdd-brand-accent`, `--rdd-brand-on-accent`, `--rdd-skin-font-family` (rdd 7.2.0) | none in vdd 1.1.1 | `--ndd-brand-accent`, `--ndd-brand-on-accent`, `--ndd-skin-font-family` (1.1.0), with the same meaning ([chapter 10](10-theming.md#brand-your-app)) |
+| `useFloatingWidgets().move()` / `.location()` / `.placement()`, `useWidget()` (rdd 7.11.0) | the same names (vdd 1.13.0) | `injectFloatingWidgets()`'s `move()` / `location()` / `placement()`, `injectWidget()` (1.11.0); a widget's content is `component` + `inputs`, and `injectWidget()`'s `location` and `panelId` are signals ([chapter 14](14-widgets-out-of-the-panel.md#coming-from-react-dockable-desktop-or-vue-dockable-desktop)) |
 
 Every workspace action keeps its name and signature: `openPanel`, `closePanel`,
 `requestClosePanel`, `focusPanel`, `floatPanel`, `dockPanel`, `dockPanelToGroup`,

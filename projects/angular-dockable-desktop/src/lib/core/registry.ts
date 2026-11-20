@@ -62,6 +62,13 @@ export interface PanelDefaultOptions {
    * @see docs/decisions/0018-opt-in-unmount-while-hidden.md
    */
   keepAlive?: boolean;
+  /**
+   * An `<iframe>` (or other embedded document or media) in the panel doesn't reload when the panel
+   * moves: docked, floated, minimised, restored, or the grid changing around it. Uses `moveBefore()`
+   * in Chrome and Edge 133+ and Firefox 144+; in Safari it reloads as before. (rdd 7.11.0)
+   * @default false
+   */
+  preserveEmbeds?: boolean;
 }
 
 /** A lazily loaded panel component — the same shape as the router's `loadComponent`. */

@@ -83,6 +83,12 @@ The grid tree, floating window rects, z-order and anchors, the minimised list, p
 metadata (registry key, title, state, the leaf or rect it came from, dirty flag, `props`), and
 which panel was active.
 
+A managed widget's own panel (`'<ownerId>/<widgetId>'`, 1.11.0) is never saved, and isn't
+reported as excluded: `loadLayout()` sends such a widget back into its panel. Restore widgets
+from their owner panel with `placement()`; see
+[Chapter 14](14-widgets-out-of-the-panel.md#saving-and-restoring-placement). A layout that names
+one, which only a hand-made JSON can, loads without it, as does an `initialState` that names one.
+
 `props` is the family's name for per-panel data. In ndd you supply it as
 `openPanel(id, key, { inputs })`; it is saved under `props`, and on restore each key the
 component declares as an input (by public name or alias) is applied with `setInput`. Keys the

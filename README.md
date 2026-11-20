@@ -120,6 +120,9 @@ anywhere, for menus, the unsaved-changes question, drawers and notifications
   `[( )]`, with per-panel contributions that follow the active panel
 - **Panel overlay** — toolbars on a panel's own edges and floating widgets inside it, opened
   declaratively or from data
+- **Widgets out of the panel** — a widget opened from data can dock beside its panel, become a
+  tab or float as a window of its own, and come back, without being re-created; its placement
+  saves and restores (see [Widgets out of the panel](docs/manual/14-widgets-out-of-the-panel.md))
 - **Overlays** — a modal stack with `NddModalRef.afterClosed()`, side drawers, a confirm dialog,
   toasts callable from anywhere, and context menus with a typed custom template
 - **Layout serialisation** — the whole workspace as one JSON string, byte-compatible with rdd
@@ -160,7 +163,7 @@ anywhere, for menus, the unsaved-changes question, drawers and notifications
 | | |
 |---|---|
 | [Live demo](https://felipecarrillo100.github.io/angular-dockable-desktop/) | Every capability in one application, published from `projects/demo` by GitHub Pages on each push to `main` |
-| [`docs/manual/`](docs/manual/) | The users manual — 13 chapters, starting with [Getting started](docs/manual/01-getting-started.md) |
+| [`docs/manual/`](docs/manual/) | The users manual — 14 chapters, starting with [Getting started](docs/manual/01-getting-started.md) |
 | [`docs/manual/12-migrating.md`](docs/manual/12-migrating.md) | Coming from react-dockable-desktop or vue-dockable-desktop |
 | [`docs/decisions/`](docs/decisions/) | Architecture decision records |
 | [`docs/PARITY.md`](docs/PARITY.md) | The API map to vdd, the test map, and every deliberate divergence (D1–D16, N1–N17) |

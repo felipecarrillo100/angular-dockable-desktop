@@ -4,9 +4,10 @@
  * @internal
  */
 import type { Workspace } from '../workspace/workspace';
-import { buildPanelMenu, buildTaskbarMenu } from '../core/panel-menu';
+import { buildMoreActionsMenu, buildPanelMenu, buildTaskbarMenu } from '../core/panel-menu';
 import type { PanelMenuActions } from '../core/panel-menu';
 import type { ContextMenuItem } from '../core/context-menu';
+import { optionsFor } from '../core/panel-options';
 
 function actionsFor(ws: Workspace<never>, id: string): PanelMenuActions {
   return {
@@ -18,21 +19,22 @@ function actionsFor(ws: Workspace<never>, id: string): PanelMenuActions {
   };
 }
 
-const optionsFor = (ws: Workspace<never>, id: string) => {
-  const panel = ws.state().panels[id];
-  return (panel && ws.registry.get(panel.component)?.defaultOptions) || {};
-};
-
 /** The menu for a docked tab or a floating window. */
 export function panelMenu(ws: Workspace<never>, id: string): ContextMenuItem[] {
   if (!ws.state().panels[id]) return [];
-  return buildPanelMenu(ws, id, optionsFor(ws, id), actionsFor(ws, id));
+  return buildPanelMenu(ws, id, optionsFor(ws.registry, ws.state().panels[id]) ?? {}, actionsFor(ws, id));
+}
+
+/** A floating window's ⋮ menu: the panel's own items; a hosted panel's end with Close (7.11). */
+export function moreActionsMenu(ws: Workspace<never>, id: string): ContextMenuItem[] {
+  if (!ws.state().panels[id]) return [];
+  return buildMoreActionsMenu(ws, id, optionsFor(ws.registry, ws.state().panels[id]) ?? {}, () => void ws.requestClosePanel(id));
 }
 
 /** The menu for a minimised panel's taskbar icon (vdd D1: its Maximize works). */
 export function taskbarMenu(ws: Workspace<never>, id: string): ContextMenuItem[] {
   if (!ws.state().panels[id]) return [];
-  return buildTaskbarMenu(ws, id, optionsFor(ws, id), actionsFor(ws, id));
+  return buildTaskbarMenu(ws, id, optionsFor(ws.registry, ws.state().panels[id]) ?? {}, actionsFor(ws, id));
 }
 
 /**

@@ -106,13 +106,18 @@ export function mergeSidebarTabs(
   return [...staticTabs, ...sections.map(s => sectionToTab(s, fallbackIcon))];
 }
 
-/** @internal — the workspace exposes the active contribution as a signal. */
+/**
+ * @internal — the workspace exposes the active contribution as a signal. `ownerOf` names the
+ * owner of a panel that shows a managed widget out of its panel (rdd 7.11): that panel brings its
+ * owner's contribution. `activePanelId` stays the only source of which panel is active.
+ */
 export function activeContributionSignal(
   contributions: Contributions,
   activePanelId: () => string | null,
+  ownerOf: (id: string) => string | undefined = () => undefined,
 ): Signal<PanelContribution | null> {
   return computed(() => {
     const id = activePanelId();
-    return id ? contributions.get(id) : null;
+    return id ? contributions.get(ownerOf(id) ?? id) : null;
   });
 }

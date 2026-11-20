@@ -139,6 +139,11 @@ outside an injection context, read `workspace.activeContribution()` directly.
 `mergeToolbarItems(items, contribution)` and `mergeSidebarTabs(tabs, contribution, icon?)` are
 the plain functions the merged helpers wrap, if you want the same shape somewhere else.
 
+When the active panel shows a managed widget moved out of its owner panel (1.11.0), the result is
+the **owner's** contribution: a docked results table keeps its map's tools on screen. Which panel
+is active still comes from `activePanelId` alone. See
+[Chapter 14](14-widgets-out-of-the-panel.md#things-to-know).
+
 ## Why "only while active" is trustworthy
 
 A contribution is read from the workspace's `activePanelId`. The thing that makes the feature

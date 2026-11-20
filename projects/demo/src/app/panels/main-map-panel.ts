@@ -7,6 +7,7 @@ import {
 } from 'angular-dockable-desktop';
 import type { PanelFloatPlacement } from 'angular-dockable-desktop';
 import { CameraWidgets } from './camera-widgets';
+import { CamerasTableToggle } from './cameras-table-toggle';
 
 const CAMERAS = [
   { id: 'cam-north', name: 'North Gate', colour: '#38bdf8', at: [51.515, -0.09] as [number, number] },
@@ -38,7 +39,7 @@ const TILE_URL = 'https://tile.openstreetmap.org/{z}/{x}/{y}.png';
 @Component({
   selector: 'dd-main-map-panel',
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [NddPanelOverlay, NddPanelToolbar, NddToolbarButton, NddToolbarSeparator, NddToolbarSpacer, NddToolbarToggle, NddFloatingWidget, CameraWidgets],
+  imports: [NddPanelOverlay, NddPanelToolbar, NddToolbarButton, NddToolbarSeparator, NddToolbarSpacer, NddToolbarToggle, NddFloatingWidget, CameraWidgets, CamerasTableToggle],
   template: `
     <ndd-panel-overlay>
       <!-- A toolbar on the panel's own edge. Docked widgets keep clear of it, and cannot be
@@ -49,6 +50,8 @@ const TILE_URL = 'https://tile.openstreetmap.org/{z}/{x}/{y}.png';
         <ndd-toolbar-separator />
         <ndd-toolbar-button title="Recentre" (click)="recentre()"><span aria-hidden="true">◎</span></ndd-toolbar-button>
         <ndd-toolbar-toggle title="Graticule" [(active)]="grid"><span aria-hidden="true">#</span></ndd-toolbar-toggle>
+        <!-- A managed widget that can leave the map: docked below it, a tab, or floating (1.11.0). -->
+        <dd-cameras-table-toggle [cameras]="cameras" [panTo]="panTo" />
         <ndd-toolbar-spacer />
         <span style="font: 0.68rem ui-monospace, monospace; opacity: 0.7; padding-inline-end: 0.4rem">{{ readout() }}</span>
       </ndd-panel-toolbar>
@@ -126,6 +129,11 @@ export class MainMapPanel {
   protected zoom(by: number): void {
     this.map?.setZoom(this.map.getZoom() + by);
   }
+
+  /** The cameras table's rows pan this map, wherever the table is shown (1.11.0). */
+  protected readonly panTo = (at: [number, number]): void => {
+    this.map?.setView(at, 15);
+  };
 
   protected recentre(): void {
     this.map?.setView([51.505, -0.09], 13);

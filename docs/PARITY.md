@@ -26,9 +26,10 @@ The concepts are the same; the surface is Angular's.
 ### Actions — unchanged in name and signature
 
 `openPanel`, `closePanel`, `requestClosePanel`, `focusPanel`, `floatPanel`, `dockPanel`,
-`dockPanelToGroup`, `minimizePanel`, `restorePanel`, `maximizePanel`, `setPanelIcon` (1.10.0), `setDirection`,
-`saveLayout`, `loadLayout`, `showContextMenu`, `closeContextMenu`, the `overlays.*` methods and
-the `toolbar`/`contributions` stores. One option is renamed for Angular: `openPanel(…, { inputs })`
+`dockPanelToGroup`, `minimizePanel`, `restorePanel`, `maximizePanel`, `setPanelIcon` (1.10.0),
+`updatePanelProps` (1.11.0), `setDirection`, `saveLayout`, `loadLayout`, `showContextMenu`,
+`closeContextMenu`, the `overlays.*` methods and the `toolbar`/`contributions` stores.
+`focusPanel(id, { restore })` is a second overload since 1.11.0, as in rdd 7.11.0 and vdd 1.13.0. One option is renamed for Angular: `openPanel(…, { inputs })`
 where vdd has `props` (panel inputs are applied with `setInput`). The saved layout keeps the
 family's `props` key.
 
@@ -79,6 +80,32 @@ Every template's context is typed through `ngTemplateContextGuard`.
 `injectModals()` / `injectSidePanels()` / `injectFloatingWidgets()` / `injectSidebar()` /
 `injectSidebarTab()` / `injectToolbar()` / `injectContextMenu()` / `injectMerged*()`; lazy panels
 through `registerLazy`; server-side rendering and hydration (§4.2 N12).
+
+### Widgets out of the panel (1.11.0, from rdd 7.11.0 / vdd 1.13.0)
+
+Same names as rdd and vdd; the shapes differ only where an Angular rule applies (content is a
+component with `inputs`, state is a signal). Traced in §3, *rdd 7.11.0 widgets out of the panel,
+traced*; divergences in §4.4.
+
+| rdd 7.11.0 | vdd 1.13.0 | ndd 1.11.0 | Note |
+|---|---|---|---|
+| `useFloatingWidgets().move(id, to)` → `MoveResult` | the same | `injectFloatingWidgets().move(id, to)` | `panel-overlay/overlay-store.ts` (types), `panel-overlay/widget-hosting.ts` (the moves) |
+| `useFloatingWidgets().location(id)` → `WidgetLocation \| null` | the same, a lookup | the same, reactive | reads the overlay's and the workspace's signals |
+| `useFloatingWidgets().placement(id)` → `WidgetPlacement \| null` | the same | the same | the same JSON in all three (`core/widget-placement.ts`, rdd's values kept in its spec) |
+| `ManagedWidget.canDock`, `.canFloat` | the same | the same | the hosted panel's options, through `core/panel-options.ts` `optionsFor` |
+| `ManagedWidget.titleMenu(w)`, `WidgetMenuContext` | the same | the same | |
+| `ManagedWidget.placement` | the same | the same | |
+| `ManagedWidget.preserveEmbeds`, `defaultOptions.preserveEmbeds` | the same | the same | `core/dom-move.ts` |
+| `ManagedWidget.content: ReactNode` | `component` + `props` | `component` + `inputs` | as for every managed widget since 1.0 |
+| `useWidget()`, `WidgetHandle` | the same | `injectWidget()`, `WidgetHandle` | `id`, `ownerPanelId` plain; `panelId`, `location` `Signal`s; `onWillMove` / `onMoved` return the unsubscribe and are also unsubscribed through the injecting context's `DestroyRef` (`panel-overlay/widget-handle.ts`) |
+| `WidgetTarget`, `WidgetLocation`, `MoveResult`, `WidgetPlacement` | the same | the same | |
+| `PanelInfo.owner`, `PanelOwner` | the same | the same | |
+| `'rdd:widget'` (reserved component key) | `'vdd:widget'` | `'ndd:widget'` | `core/panel-options.ts` `HOSTED_COMPONENT` |
+| `workspace.focusPanel(id, { restore })` | the same | the same | a second overload on `Workspace` |
+| `workspace.updatePanelProps(id, props \| fn)` | the same | the same | the panel's inputs are set again with `setInput` |
+| `.rdd-panel-float__content`, `.rdd-hosted-widget` | `.vdd-…` | `.ndd-panel-float__content`, `.ndd-hosted-widget` | plus `.ndd-widget-store`, each overlay's hidden store |
+| `.rdd-workspace-tab-icon--menu`, `.rdd-window-title-icon--menu` | `.vdd-…` | `.ndd-workspace-tab-icon--menu`, `.ndd-window-title-icon--menu` | plus `.ndd-panel-float__menu` on the in-panel title button |
+| `HostedPanels` actions (`openHostedPanel`, …) | `@internal` on `Workspace` | the same, `@internal`, plus `onStateChange` | not in `api-surface.json` |
 
 ### Two workspaces on one page (1.6.1, from rdd 7.7.1 / vdd 1.8.1)
 
@@ -288,6 +315,37 @@ vdd accounted for rdd's 26 suites; each lands in ndd through the vdd suite it be
 | `branding.browser.ts` brand-surface cases (7.3.0) — leftovers, layers, contrast, one input | `scripts/gates/browser/m17.mjs` (surfaces) |
 | `StylesheetContract.test.ts` — "corner contract" (2), "surface contract" (3) | `stylesheet.spec.ts` — the same, names kept |
 
+### rdd 7.11.0 widgets out of the panel, traced (ndd 1.11.0)
+
+rdd 7.11.0 is 7.11.0-next.0 (the feature), 7.11.0-next.1 (feedback fixes) and two fixes; vdd 1.13.0
+and ndd 1.11.0 port all three at once.
+
+| rdd 7.11.0 | vdd 1.13.0 | ndd 1.11.0 |
+|---|---|---|
+| a managed widget's content rendered once into `div.rdd-panel-float__content` (next.0, Changed) | teleported once into `div.vdd-panel-float__content` | created once, imperatively, on `div.ndd-panel-float__content` with the overlay's injector plus a per-widget child injector carrying the handle, and attached to `ApplicationRef` (`panel-overlay/widget-content.ts`, `widget-content-slot.ts`); `open()` creates it synchronously |
+| the whole placement in the overlay (next.0, Changed) | `ManagedPlacement` in the overlay store | the same; the size is seeded once from `width` / `height` |
+| a pointerdown anywhere in the content brings the widget to the front | the same (PO39) | the same: a capture-phase listener on the content slot (PO39) |
+| hosted panels: `'rdd:widget'`, `PanelInfo.owner`, never saved, never reported as excluded, dropped from a hand-made layout | `'vdd:widget'`, the same rules | `'ndd:widget'`, the same rules (`workspace/workspace.ts`, `core/serialize.ts` `withoutHostedPanels`), `initialState` included |
+| `move()` / `location()`, the four refusals | the same | the same (`widget-hosting.ts`) |
+| `canDock` / `canFloat`, `titleMenu`; hosted tab menu: items, then Minimize and Close, no Float; ⋮ menu: items, then Close | the same | the same (`core/panel-menu.ts` `buildPanelMenu`, `buildMoreActionsMenu`) |
+| `useWidget()`, `onWillMove` / `onMoved` | the same | `injectWidget()`; a user's move is heard through the workspace's synchronous `onStateChange`, before anything renders |
+| `placement()` / `open({ placement })` | the same JSON | the same JSON; a free position waits for a size through the overlay's `ResizeObserver` |
+| `focusPanel(id, { restore })`, `updatePanelProps`, `preserveEmbeds` | the same; each cache parks in its own store | the same; parking is driven from the workspace's state writes (§4.4) |
+| next.1: `useWidget().panelId` | a `ComputedRef` | a `Signal` |
+| next.1: the tab / title-bar icon opens the widget's menu | the same | the same, with the differences in §4.4 |
+| next.1: a widget's panel brings its owner's contribution | the same | the same (`activeContributionSignal` maps the hosted id to its owner; the M12 rule accepts the optional argument) |
+| next.1: a title set with `updatePanelTitle` kept across moves out of the panel | the same | the same |
+| 7.11.0: `onMoved` after floating → floating and tab → tab in the same group | the same | the same (`settled()` after every `move()`) |
+| 7.11.0: `move({ to: 'floating' })` without a rect, out of the panel, opens where its panel is | the same | the same (`frameRect`) |
+| `HostedPanels.test.tsx` (HP1–HP7) | `test/store/hostedPanels.test.ts` (19) | `test/store/hosted-panels.spec.ts` (23), names kept, plus HP8 (the standard menu reads a hosted panel's own options) |
+| `WidgetsOut.test.tsx` (WO1–WO8, WO17–WO19, WO21) | `test/components/widgetsOut.test.ts` (40) | `test/components/widgets-out.spec.ts` (42), names kept |
+| `WidgetsOut.test.tsx` (WO9–WO16, WO20, WO22, WO23) | `test/components/widgetsOutMenus.test.ts` (33) | `test/components/widgets-out-menus.spec.ts` (37), names kept |
+| `WidgetPlacement.test.ts` (WP1–WP6) | `test/core/widgetPlacement.test.ts` (11) | `test/core/widget-placement.spec.ts` (11), names and values kept |
+| `FocusPropsEmbeds.test.tsx` (FE1–FE4) | `test/components/focusPropsEmbeds.test.ts` (17) | `test/components/focus-props-embeds.spec.ts` (19), names kept; FE4 counts real detaches with a custom element's `disconnectedCallback` |
+| `PanelOverlay.test.tsx` PO36–PO39 | `panelOverlay.test.ts` PO36–PO39 | `panel-overlay.spec.ts` PO36–PO39 (11 tests, 71 → 82), plus a detach probe in PO37 |
+| `tests/browser/widgetsOut.browser.ts` | `scripts/gates/browser/m11.mjs`, five 7.11 sections | `scripts/gates/browser/m11.mjs`, six 7.11 sections: the content fills its body and a press in it raises the widget (M2); out of the panel and back with the same element and state (M3); the title menu in the panel, on the hosted tab and on the floating title bar, by pointer and by keyboard (M4); `onWillMove` sees the old size and `onMoved` the new one (M5); placement saved and re-opened (M6); an iframe that keeps its document (M7) |
+| — | the M13 browser tour renders the new classes | `scripts/gates/browser/m13.mjs`: the tour opens a managed widget with a `titleMenu`, tabs it and floats it, so `.ndd-panel-float__content`, `.ndd-widget-store`, `.ndd-panel-float__menu`, `.ndd-hosted-widget` and both `--menu` icon classes are rendered, swept and axe-checked |
+
 ### rdd per-panel icons, traced (ndd 1.10.0)
 
 rdd has had a runtime panel icon since 7.1.0; vdd ported it in 1.12.0, ndd in 1.10.0. Same names.
@@ -404,6 +462,25 @@ These change how something is written, not what it does:
 - Every action — workspace, `PanelRef`, toast — runs untracked, so calling one from an `effect()`
   is safe ([ADR 0013](decisions/0013-actions-are-untracked.md)). vdd's watchers never had the
   question; in Angular an unguarded read inside an action made the calling effect loop.
+
+### 4.4 Widgets out of the panel (1.11.0)
+
+Where ndd 1.11.0 differs from rdd 7.11.0 and vdd 1.13.0. None changes what an app can do.
+
+| rdd 7.11.0 | vdd 1.13.0 | ndd 1.11.0 |
+|---|---|---|
+| a widget's content is a `ReactNode` (`content`) | `component` + `props` | `component` + `inputs`, created imperatively with the overlay's injector and a per-widget child injector carrying `injectWidget()`'s handle. `injectPanel()` inside it is still the owner. It can no longer inject the frame (`NddFloatingWidget`): under `*ngComponentOutlet` (before 1.11.0) it was created with the frame's injector |
+| — | — | `open()` creates the component synchronously; before 1.11.0 `*ngComponentOutlet` created it on the next render |
+| `useWidget()` re-renders on a change of `location` | `ComputedRef`s | `Signal`s; `onWillMove` / `onMoved` return the unsubscribe and are also unsubscribed through the injecting context's `DestroyRef` |
+| `location` read in `onWillMove` is where the widget was | for a user's move, already the new location | the same as vdd: during a user's move the synchronous `onStateChange` listener runs after the state write, so `location()` already shows the new location; during the app's own `move()` it is still the old one |
+| `useFloatingWidgets().location()` is a lookup | a lookup | reactive: it reads signals, so it can drive a `computed()` or a template |
+| a re-open that adds a `titleMenu` to a floating widget's panel shows its ⋮ menu on the next re-render | at once | at once: the items are read from signals |
+| a widget's tab icon opens its menu; rdd's tabs always have an icon | vdd's tabs have no fallback icon, so a widget's tab with none shows the menu glyph | the same as vdd, on the tab, and on the floating title bar with a `titleMenu`. The icon spans are `aria-hidden` pointer affordances, as the tab's × is (N4); the keyboard's way is the window's ⋮ button and the tab's menu key |
+| — | — | the managed size is seeded once from `width` / `height`; before 1.11.0 a re-open with new values resized a widget the user had not resized |
+| one hidden store for parked elements | each cache parks in its own hidden store | the same as vdd (`PanelDomCache`, `WidgetContentCache`, one `.ndd-widget-store` per overlay). Angular removes a destroyed view's DOM before any destroy hook runs (ADR 0002), so `preserveEmbeds` can't park in a slot's destroy hook as rdd's layout cleanup and vdd's `onBeforeUnmount` do: `PanelHost` watches the workspace's state writes and parks the marked elements after the action's writes and before change detection, and puts them back after the render. Known hole: an app that calls `ApplicationRef.tick()` synchronously in the same task renders before the park, and the iframe reloads |
+| — | — | an ordinary (unmarked) panel's element is still detached when a drag between groups destroys its slot: unchanged (ADR 0002 finding 1): briefly detached, its scroll and focus carried by the live record. `preserveEmbeds` avoids it for marked elements |
+| — | — | `closePanel` on a panel whose `canClose` refuses publishes nothing, as before; a hosted panel can always close |
+| an overlay outside a `DockableDesktopProvider`: `move()` refuses with `no-workspace` | a modal, a side panel or outside any panel | a modal, a side panel, or outside any `<ndd-desktop>` |
 
 ## 5. Known gaps
 

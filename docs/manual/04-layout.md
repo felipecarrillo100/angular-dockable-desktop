@@ -52,9 +52,17 @@ ws.minimizePanel('map-1');
 ws.restorePanel('map-1');                                 // focuses it
 ws.restorePanel('map-1', { focus: false });               // restores without stealing focus
 ws.focusPanel('map-1');                                   // select its tab, or raise its window
+ws.focusPanel('map-1', { restore: true });                // …restoring it first if minimised (1.11.0)
 ws.closeLeafGroup('console');                             // remove an empty leaf
 ws.updateFloatingPosition('map-1', { x: 20, y: 20 });
 ```
+
+`focusPanel` on a minimised panel makes it the active panel and leaves it minimised; with
+`{ restore: true }` (1.11.0) it is restored first (through `restorePanel`, with its events), then
+focused.
+
+`ws.getOpenPanelIds()` lists every open panel. While a managed widget is out of its panel, its own
+panel is listed too: `'map-1/results'` ([Chapter 14](14-widgets-out-of-the-panel.md)).
 
 Leaf ids are generated as the user splits the layout; read the current ones from
 `ws.gridRoot()`. `dockPanelToGroup` and `movePanelOrder` ignore, with a development warning, a
@@ -130,6 +138,10 @@ mid-drag still holds. Positions are the ones the move applies: under RTL, the zo
 screen's right splits to the left, and `canDrop` sees `'left'`; a corner is mirrored the same way.
 It runs while the pointer moves, so keep it fast and pure; if it throws, the move is allowed and the
 error is logged. It runs after the kind's own `canFloat` / `canDock` and can't allow what they forbid.
+
+A managed widget moved out of its panel (1.11.0) has no kind: its own panel takes the widget's
+`canFloat` and `canDock`, both `false` unless the widget sets them, and `canDrop` sees it with
+`component: 'ndd:widget'` ([Chapter 14](14-widgets-out-of-the-panel.md#moving-it-move-and-location)).
 
 ## Split ratios
 
@@ -217,8 +229,14 @@ directive or service constructor or field initialiser — it also unsubscribes b
 context is destroyed, as `takeUntilDestroyed()` does. Called elsewhere, from an event handler
 for instance, the returned function is yours to call.
 
+`panel:opened` also fires when a managed widget moves out of its panel, with
+`component: 'ndd:widget'`, and `panel:closed` when it goes back or closes (1.11.0). A `move()`
+from one place out of the panel to another is a `panel:closed` then a `panel:opened` for the same
+id. A `loadLayout()` that sends a widget home publishes no `panel:closed` for its panel.
+
 `layout:changed` is the coalesced signal for autosave: it covers open, close, minimise, restore,
-dedupe redirects and every placement change (dock, float, reorder, edge-dock, split resize). It
+dedupe redirects, every placement change (dock, float, reorder, edge-dock, split resize),
+`updatePanelProps()`, and a managed widget moving out of its panel or back (1.11.0). It
 does **not** fire when an `onSaveState` provider's return value changes on its own — that is a
 pull, and nothing can observe it changing. If your panel's state matters for autosave, save on
 your own trigger too.

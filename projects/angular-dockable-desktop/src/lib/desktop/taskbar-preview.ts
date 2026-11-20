@@ -15,6 +15,7 @@ import { Workspace } from '../workspace/workspace';
 import { PanelHost } from '../panel/panel-host';
 import { NddPortal } from '../common/portal';
 import type { PanelInfo } from '../core/types';
+import { optionsFor } from '../core/panel-options';
 
 /** The thumbnail never exceeds this box; the panel's real aspect ratio is preserved. */
 const MAX_W = 220;
@@ -96,13 +97,14 @@ export class NddTaskbarPreview implements AfterViewInit, OnDestroy {
   private readonly host = inject(PanelHost);
   private readonly hostEl = viewChild<ElementRef<HTMLElement>>('host');
   private mine: HTMLElement | null = null;
+  private unregister: () => void = () => undefined;
 
   // Typed with `undefined`: a Record index reads as always-present, but a closed panel is not.
   protected readonly panel = computed<PanelInfo | undefined>(() => this.workspace.panels()[this.panelId()]);
   protected readonly title = computed(() => this.workspace.format(this.panel()?.title));
   protected readonly live = computed(() => {
     const panel = this.panel();
-    const options = panel ? this.workspace.registry.get(panel.component)?.defaultOptions : undefined;
+    const options = optionsFor(this.workspace.registry, panel);
     // A panel that is destroyed while hidden (keepAlive: false) has nothing to show while minimised.
     return options?.disableLivePreview !== true && options?.keepAlive !== false;
   });
@@ -123,6 +125,9 @@ export class NddTaskbarPreview implements AfterViewInit, OnDestroy {
     const el = this.hostEl()?.nativeElement;
     if (!el) return;
     this.mine = el;
+    // A slot for the panel: one that keeps its embeds and is parked while the preview shows goes
+    // back here after the render (7.11, `PanelHost`).
+    this.unregister = this.host.dom.registerSlot(this.panelId(), el);
     this.host.dom.moveTo(this.panelId(), el, { refocus: false });
   }
 
@@ -133,6 +138,7 @@ export class NddTaskbarPreview implements AfterViewInit, OnDestroy {
    */
   ngOnDestroy(): void {
     const id = this.panelId();
+    this.unregister();
     if (this.mine && this.host.dom.has(id) && this.host.dom.hostOf(id) === this.mine) this.host.dom.moveTo(id, null, { refocus: false });
     this.mine = null;
   }

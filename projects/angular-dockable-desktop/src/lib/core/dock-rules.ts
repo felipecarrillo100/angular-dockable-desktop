@@ -4,13 +4,14 @@
  */
 import type { PanelDropTarget } from './types';
 import type { Workspace } from '../workspace/workspace';
+import { optionsFor } from './panel-options';
 
 type RuleHost = Pick<Workspace<never>, 'panels' | 'registry' | 'config'>;
 
 export function isDropAllowed(ws: RuleHost, panelId: string, to: PanelDropTarget): boolean {
   const panel = ws.panels()[panelId];
   if (!panel) return false;
-  const options = ws.registry.get(panel.component)?.defaultOptions;
+  const options = optionsFor(ws.registry, panel);
   if (to.kind === 'float') {
     // Blocks *becoming* floating; a window that already floats may still change corner.
     if (options?.canFloat === false && panel.state !== 'floating') return false;

@@ -1,7 +1,7 @@
 # 13. API reference
 
 Every public export of `angular-dockable-desktop`, with the chapter that explains it. The
-package has **56 runtime exports** and **91 exported types**. `api-surface.json` at the
+package has **61 runtime exports** and **107 exported types**. `api-surface.json` at the
 repository root is the machine-readable list, and a standing gate fails if it and
 `public-api.ts` disagree; this chapter was checked against it.
 
@@ -20,7 +20,7 @@ Every component and directive is standalone: import the class into your componen
 | `createWorkspace(config?)` | Creates a `Workspace` outside dependency injection — at module scope, in a test, before `bootstrapApplication`. Live immediately: `openPanel()` works with nothing rendered. [Ch. 1](01-getting-started.md), [ch. 2](02-concepts.md) |
 | `definePanels(panels)` | Marks a panel map so the workspace created from it has a typed `openPanel`: registered names only, `inputs` checked (1.9.0). [Ch. 3](03-panels.md#a-typed-registry-definepanels) |
 | `provideDockableDesktop(configOrWorkspace?)` | Providers for a workspace. Given a `WorkspaceConfig`, creates one for that injector and disposes it with the injector; given a `Workspace`, provides it as-is. Plain providers, so it also works in a component's `providers`. [Ch. 1](01-getting-started.md) |
-| `Workspace` | The workspace class, and its own DI token (`inject(Workspace)`). Signal state (`state()`, `gridRoot()`, `floating()`, `minimized()`, `panels()`, `activePanelId()`, `draggedPanelId()`, `dir()`, `isRtl()`, `contextMenu()`, `activeContribution()`), every action (`openPanel`, `closePanel`, `requestClosePanel`, `focusPanel`, `floatPanel`, `dockPanel`, `dockPanelToGroup`, `dockPanelToWorkspaceEdge`, `movePanelOrder`, `minimizePanel`, `restorePanel`, `maximizePanel`, `closeLeafGroup`, `updatePanelTitle`, `setPanelDirty`, `setPanelIcon` (a panel's runtime icon, `null` for the registered one; 1.10.0, [Ch. 3](03-panels.md#changing-the-icon)), `setDirection`, `saveLayout`, `loadLayout`, `showContextMenu`, `closeContextMenu`, …), the event bus (`subscribe`, `publish`), and the `registry`, `toolbar`, `contributions` and `overlays` stores. [Ch. 2](02-concepts.md) |
+| `Workspace` | The workspace class, and its own DI token (`inject(Workspace)`). Signal state (`state()`, `gridRoot()`, `floating()`, `minimized()`, `panels()`, `activePanelId()`, `draggedPanelId()`, `dir()`, `isRtl()`, `contextMenu()`, `activeContribution()`), every action (`openPanel`, `closePanel`, `requestClosePanel`, `focusPanel` (`{ restore: true }` restores a minimised panel first; 1.11.0, [Ch. 4](04-layout.md#programmatic-equivalents)), `floatPanel`, `dockPanel`, `dockPanelToGroup`, `dockPanelToWorkspaceEdge`, `movePanelOrder`, `minimizePanel`, `restorePanel`, `maximizePanel`, `closeLeafGroup`, `updatePanelTitle`, `updatePanelProps` (replace or derive an open panel's inputs; 1.11.0, [Ch. 3](03-panels.md#per-instance-data)), `setPanelDirty`, `setPanelIcon` (a panel's runtime icon, `null` for the registered one; 1.10.0, [Ch. 3](03-panels.md#changing-the-icon)), `setDirection`, `saveLayout`, `loadLayout`, `showContextMenu`, `closeContextMenu`, …), the event bus (`subscribe`, `publish`), and the `registry`, `toolbar`, `contributions` and `overlays` stores. [Ch. 2](02-concepts.md) |
 | `injectWorkspace()` | `inject(Workspace)` with a directed error, instead of `NullInjectorError`, when no workspace is provided. [Ch. 2](02-concepts.md) |
 | `VERSION` | The package version, as a string. |
 
@@ -48,9 +48,10 @@ Every component and directive is standalone: import the class into your componen
 |---|---|
 | `PanelRef` | What `injectPanel()` returns: `id`; signals `title`, `isActive`, `isMinimized`, `isFloating`, `containerType`, `size`, `dirty`; `setTitle`, `setIcon`, `setDirty`, `close`, `minimize`, `onBeforeClose`, `onSaveState`, `trackDirty`. [Ch. 3](03-panels.md) |
 | `PanelRegistryEntry` | A registered panel kind: `component` or `loadComponent`, plus `defaultOptions`. [Ch. 3](03-panels.md) |
-| `PanelDefaultOptions` | Per-kind defaults: `title`, `icon`, `initialTarget`, `favoritePosition`, `defaultAnchor`, `canClose`, `canMinimize`, `canDrag`, `disableLivePreview`, `preserveScroll`. [Ch. 3](03-panels.md) |
+| `PanelDefaultOptions` | Per-kind defaults: `title`, `icon`, `initialTarget`, `favoritePosition`, `defaultAnchor`, `canClose`, `canMinimize`, `canDrag`, `disableLivePreview`, `preserveScroll`, `preserveEmbeds` (an iframe in it doesn't reload when it moves; 1.11.0). [Ch. 3](03-panels.md#keeping-an-iframe-alive-preserveembeds) |
 | `PanelLoader` | A lazy panel loader, `() => Promise<Type \| { default: Type }>` — the router's `loadComponent` shape. [Ch. 3](03-panels.md) |
-| `PanelInfo` | Everything the workspace knows about one open panel: `id`, `title`, `component`, `state`, `props`, `serializable`, `dirty`, restore targets, `dedupeKey`, `icon` (the runtime icon from `setPanelIcon`, never saved; 1.10.0). [Ch. 2](02-concepts.md) |
+| `PanelInfo` | Everything the workspace knows about one open panel: `id`, `title`, `component`, `state`, `props`, `serializable`, `dirty`, restore targets, `dedupeKey`, `icon` (the runtime icon from `setPanelIcon`, never saved; 1.10.0), `owner` (set on a managed widget's own panel; 1.11.0). [Ch. 2](02-concepts.md) |
+| `PanelOwner` | `{ panelId, widgetId }`: whose a managed widget's own panel is, as `PanelInfo.owner`; its `component` is the reserved `'ndd:widget'` (1.11.0). [Ch. 14](14-widgets-out-of-the-panel.md#things-to-know) |
 | `PanelState` | `'docked' \| 'floating' \| 'minimized'`. |
 | `ContainerType` | Where a panel is rendered: `'dockable-panel'`, `'floating-window'`, `'modal'`, `'left-panel'`, `'right-panel'`, `'standalone'`. [Ch. 3](03-panels.md) |
 | `DirtyStateOptions` | Customises the unsaved-changes dialog: `title`, `message`, `alert`, `alertType`. [Ch. 3](03-panels.md) |
@@ -286,7 +287,8 @@ Toolbars and floating widgets *inside* one panel. [Ch. 7](07-panel-overlay.md)
 ### `NddPanelOverlay` — `<ndd-panel-overlay>`
 
 The root for one panel's own toolbars and widgets; also renders the widgets opened through
-`injectFloatingWidgets()`. No inputs.
+`injectFloatingWidgets()`, and moves them out of the panel and back (1.11.0,
+[Ch. 14](14-widgets-out-of-the-panel.md)). No inputs.
 
 ### `NddPanelToolbar` — `<ndd-panel-toolbar>`
 
@@ -323,12 +325,19 @@ The root for one panel's own toolbars and widgets; also renders the widgets open
 
 | Export | |
 |---|---|
-| `injectFloatingWidgets()` | Open and close widgets by id from data (one per selected feature, say): `openIds`, `open(id, ManagedWidget)`, `close`, `closeAll`, `isOpen`. Needs the overlay's injector. |
+| `injectFloatingWidgets()` | Open and close widgets by id from data (one per selected feature, say): `openIds`, `open(id, ManagedWidget)`, `close`, `closeAll`, `isOpen`; and (1.11.0) `move(id, WidgetTarget)` → `MoveResult`, `location(id)` (reactive) and `placement(id)`, which take one out of its panel and back and save where it is. Needs the overlay's injector. [Ch. 7](07-panel-overlay.md#widgets-from-data), [Ch. 14](14-widgets-out-of-the-panel.md) |
+| `injectWidget()` | Inside a managed widget's content: a `WidgetHandle`, or `null` elsewhere (1.11.0). [Ch. 14](14-widgets-out-of-the-panel.md#the-widgets-own-side-injectwidget) |
 
 | Type | |
 |---|---|
 | `FloatingWidgetsApi` | What `injectFloatingWidgets()` returns. |
-| `ManagedWidget` | A widget opened from data: `title`, `icon`, `component`, `inputs`, and first-open seeds `anchor`, `width`, `height`, `stretch`. |
+| `ManagedWidget` | A widget opened from data: `title`, `icon`, `component`, `inputs`, and first-open seeds `anchor`, `width`, `height`, `stretch`; and (1.11.0) `canDock`, `canFloat`, `titleMenu`, `placement`, `preserveEmbeds`. |
+| `WidgetTarget` | Where `move()` takes a widget: `{ to: 'docked', position, size? }`, `{ to: 'tabbed' }`, `{ to: 'floating', rect? }`, `{ to: 'panel' }` (1.11.0). [Ch. 14](14-widgets-out-of-the-panel.md#moving-it-move-and-location) |
+| `WidgetLocation` | `'panel' \| 'docked' \| 'tabbed' \| 'floating' \| 'minimized'` (1.11.0). |
+| `MoveResult` | `{ ok: true }` or `{ ok: false, reason: 'not-open' \| 'owner-not-docked' \| 'owner-not-kept-alive' \| 'no-workspace' }` (1.11.0). |
+| `WidgetMenuContext` | What a `titleMenu` receives: `id`, `location`, `canDock`, `canFloat`, `move`, `close` (1.11.0). |
+| `WidgetPlacement` | A widget's saved placement, opaque versioned JSON shared with rdd and vdd: `{ v: 1 } & Record<string, unknown>` (1.11.0). [Ch. 14](14-widgets-out-of-the-panel.md#saving-and-restoring-placement) |
+| `WidgetHandle` | What `injectWidget()` returns: `id`, `ownerPanelId`; signals `panelId`, `location`; `onWillMove`, `onMoved` (1.11.0). |
 | `PanelFloatPlacement` | `{ anchor: FloatAnchor, stretch: Stretch \| null }`. |
 | `Stretch` | `'width' \| 'height' \| 'both'` — the axes a widget spans. |
 | `ToolbarVariant` | `'transparent' \| 'frosted' \| 'solid'`. |

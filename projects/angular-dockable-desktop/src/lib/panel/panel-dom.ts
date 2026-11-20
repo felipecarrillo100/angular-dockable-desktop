@@ -12,6 +12,19 @@
  *
  * One instance per `<ndd-desktop>`, never module-level: two workspaces must not share DOM.
  */
+import { signal, untracked } from '@angular/core';
+import { moveInto, preservesEmbeds, setPreserveEmbeds } from '../core/dom-move';
+
+/**
+ * What a hosted panel shows (7.11, widgets out of the panel): the content element of the managed
+ * widget it hosts, owned by the widget's overlay, and that overlay's content cache, which moves
+ * the element in and out and keeps its scroll offsets. rdd's `setHostedContent(id, el)`, vdd's
+ * `HostedContent`.
+ */
+export interface HostedContent {
+  el: HTMLElement;
+  cache: { attach(el: HTMLElement, host: HTMLElement): void; leave(el: HTMLElement, host: Element): void };
+}
 
 interface Preserved {
   scrolls: { el: Element; top: number; left: number }[];
@@ -42,6 +55,18 @@ export class PanelDomCache {
   private readonly sizes = new Map<string, { width: number; height: number }>();
   private hidden: HTMLElement | null = null;
   private moving = false;
+  /**
+   * Each hosted panel's content, by panel id (7.11), registered by the widget's overlay
+   * **before** it opens the panel and cleared after it removes it. A signal, so a hosted panel's
+   * slot follows it: a widget closed and re-opened in one tick under the same panel id is a new
+   * element under an unchanged id.
+   */
+  private readonly hosted = signal<ReadonlyMap<string, HostedContent>>(new Map());
+  /**
+   * The slots alive for each panel, in the order they were created (7.11, `preserveEmbeds`): where
+   * a parked element that keeps its embeds goes back to after a render. See `PanelHost`.
+   */
+  private readonly slots = new Map<string, HTMLElement[]>();
 
   constructor(private readonly doc: Document) {}
 
@@ -102,6 +127,21 @@ export class PanelDomCache {
     return this.contents.values();
   }
 
+  /** A hosted panel's content, or `undefined` (an ordinary panel, or none registered). Reactive. */
+  hostedContent(id: string): HostedContent | undefined {
+    return this.hosted().get(id);
+  }
+
+  /** Register (or, with `null`, clear) the content a hosted panel shows. */
+  setHostedContent(id: string, content: HostedContent | null): void {
+    const current = untracked(this.hosted);
+    if (content === null && !current.has(id)) return;
+    const next = new Map(current);
+    if (content) next.set(id, content);
+    else next.delete(id);
+    this.hosted.set(next);
+  }
+
   has(id: string): boolean {
     return this.elements.has(id);
   }
@@ -133,11 +173,64 @@ export class PanelDomCache {
     if (preserve) this.remember(id, el);
     this.moving = true;
     try {
-      target.appendChild(el);
+      // With moveBefore() for an element that keeps its embeds (see ../core/dom-move.ts).
+      moveInto(target, el);
     } finally {
       this.moving = false;
     }
     if (preserve) this.apply(id, el, options?.refocus === true);
+  }
+
+  /**
+   * Marks a panel's element as keeping its embeds alive when it moves (rdd 7.11.0): a panel type
+   * with `preserveEmbeds`, and, for a widget with it, its owner panel's element and its hosted
+   * panel's. Only switches on, for the element's life.
+   */
+  preserveEmbeds(id: string): void {
+    setPreserveEmbeds(this.elementFor(id), true);
+  }
+
+  /** Whether this panel's element keeps its embeds alive (`false` for an unknown id). */
+  preservesEmbeds(id: string): boolean {
+    const el = this.elements.get(id);
+    return !!el && preservesEmbeds(el);
+  }
+
+  /** The ids of the open panels whose elements keep their embeds alive. */
+  preservingIds(): string[] {
+    return [...this.elements].filter(([, el]) => preservesEmbeds(el)).map(([id]) => id);
+  }
+
+  /** Whether this panel's element is in the off-screen store. */
+  isParked(id: string): boolean {
+    const el = this.elements.get(id);
+    return !!el && !!this.hidden && el.parentElement === this.hidden;
+  }
+
+  /** A slot for this panel was created (`[nddPanelSlot]`). Returns its unregister function. */
+  registerSlot(id: string, host: HTMLElement): () => void {
+    const list = this.slots.get(id) ?? [];
+    list.push(host);
+    this.slots.set(id, list);
+    return () => {
+      const now = this.slots.get(id);
+      if (!now) return;
+      const rest = now.filter(h => h !== host);
+      if (rest.length > 0) this.slots.set(id, rest);
+      else this.slots.delete(id);
+    };
+  }
+
+  /** The newest slot alive for this panel, in the document or not, or `null`. */
+  newestSlot(id: string): HTMLElement | null {
+    return this.slots.get(id)?.at(-1) ?? null;
+  }
+
+  /** The newest slot alive for this panel that is in the document, or `null`. */
+  liveSlot(id: string): HTMLElement | null {
+    const list = this.slots.get(id) ?? [];
+    for (let i = list.length - 1; i >= 0; i--) if (list[i]!.isConnected) return list[i]!;
+    return null;
   }
 
   /** Forget a panel entirely. Called when the panel closes. */
@@ -156,6 +249,8 @@ export class PanelDomCache {
     this.contents.clear();
     this.preserved.clear();
     this.sizes.clear();
+    this.hosted.set(new Map());
+    this.slots.clear();
     this.hidden?.remove();
     this.hidden = null;
   }

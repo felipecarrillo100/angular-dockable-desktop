@@ -7,19 +7,19 @@
  * widget stacks and its own z-order — nothing here is global. Ported from vdd
  * `VddPanelOverlay.vue`, `VddPanelToolbar.vue` and `usePanelOverlay.ts`.
  */
-import { NgComponentOutlet } from '@angular/common';
-import { Component, DestroyRef, ElementRef, afterRenderEffect, computed, inject, input } from '@angular/core';
+import { Component, DestroyRef, ElementRef, afterRenderEffect, computed, effect, inject, input, untracked } from '@angular/core';
 import type { Signal } from '@angular/core';
 import { ANCHORS } from '../core/panel-overlay';
 import type { ButtonVariant, ToolbarPosition, ToolbarVariant } from '../core/panel-overlay';
-import type { PanelFloatPlacement } from '../core/stretch';
 import { NddFloatingWidget } from './floating-widget';
 import { PANEL_OVERLAY, createPanelOverlayStore } from './overlay-store';
-import type { ManagedWidget, PanelOverlayStore } from './overlay-store';
+import { Workspace } from '../workspace/workspace';
+import { openMenu } from '../desktop/menus';
+import type { ManagedWidget, MoveResult, PanelOverlayStore, WidgetLocation, WidgetPlacement, WidgetTarget } from './overlay-store';
 
 @Component({
   selector: 'ndd-panel-overlay',
-  imports: [NddFloatingWidget, NgComponentOutlet],
+  imports: [NddFloatingWidget],
   providers: [{ provide: PANEL_OVERLAY, useFactory: createPanelOverlayStore }],
   host: {
     class: 'ndd-panel-overlay-root',
@@ -40,26 +40,26 @@ import type { ManagedWidget, PanelOverlayStore } from './overlay-store';
       }
     }
     <!--
-      A managed widget's placement is bound to the store's own record and written straight back.
-      An Angular model re-syncs from its input only when the bound value changes, and the record
-      is replaced exactly when the widget reports a new placement — so an unrelated render (a drop
-      zone lighting up, another widget opening) can never reset a gesture. vdd 1.0.0 shipped the
-      opposite: a fresh object literal, which reset the widget on every render.
+      A managed widget's frame. Its content is not a child here: the store created the widget's
+      component once, on the widget's own element (\`div.ndd-panel-float__content\`), and the frame's
+      body only shows that element (7.11). Its placement is the store's record, which the frame
+      reads and writes itself, so the frame can be destroyed and created again (\`framesHidden\`)
+      with the content's state and DOM untouched, and come back where it was. vdd 1.0.0 bound a
+      fresh placement literal here, which reset the widget on every render (PARITY R1).
     -->
-    @for (item of managed(); track item.id) {
+    @for (item of frames(); track item.id) {
       <ndd-floating-widget
         [widgetId]="item.id"
         [title]="item.widget.title"
         [icon]="item.widget.icon"
         [open]="true"
-        [placement]="item.placement"
         [width]="item.widget.width ?? 320"
         [height]="item.widget.height ?? 240"
+        [contentEl]="item.el"
+        [hasTitleMenu]="!!item.widget.titleMenu"
+        (titleMenuOpen)="openTitleMenu(item.id, $event)"
         (openChange)="!$event && store.closeManaged(item.id)"
-        (placementChange)="store.setManagedPlacement(item.id, $event)"
-      >
-        <ng-container *ngComponentOutlet="item.widget.component; inputs: item.widget.inputs ?? {}" />
-      </ndd-floating-widget>
+      />
     }
   `,
 })
@@ -68,19 +68,68 @@ export class NddPanelOverlay {
   protected readonly anchors = ANCHORS;
   /** Drop zones are only shown while something is being dragged. */
   protected readonly dragging = computed(() => this.store.draggingId() !== null);
-  /** Widgets opened through `injectFloatingWidgets()`, rather than placed in a template. */
-  protected readonly managed = computed(() => {
-    const placements = this.store.managedPlacements();
-    return [...this.store.managed()].map(([id, widget]) => ({
-      id,
-      widget,
-      // Present for every open id: `openManaged` seeds it first.
-      placement: placements[id] as PanelFloatPlacement,
-    }));
+  private readonly root = inject<ElementRef<HTMLElement>>(ElementRef).nativeElement;
+  /**
+   * The frames of the widgets opened through `injectFloatingWidgets()`, rather than placed in a
+   * template: every open one but those in `framesHidden`.
+   */
+  protected readonly frames = computed(() => {
+    const hidden = this.store.framesHidden();
+    const elements = this.store.content.elements();
+    return [...this.store.managed()]
+      .filter(([id]) => !hidden.has(id))
+      // Present for every open id: `openManaged` creates it first.
+      .map(([id, widget]) => ({ id, widget, el: elements.get(id)! }));
   });
 
+  private readonly workspace = inject(Workspace, { optional: true }) as Workspace<never> | null;
+
+  /**
+   * A managed widget's `titleMenu`, from its title icon in the panel (7.11). A click from the
+   * keyboard opens on the first item, as every menu button does.
+   */
+  protected openTitleMenu(id: string, event: MouseEvent): void {
+    if (this.workspace) openMenu(this.workspace, event, this.store.hosting.menuItems(id));
+  }
+
   constructor() {
-    this.store.container.set(inject<ElementRef<HTMLElement>>(ElementRef).nativeElement);
+    this.store.container.set(this.root);
+    /**
+     * A frame about to go away while its widget stays open gives its content element back to the
+     * hidden store **first**. Angular removes a destroyed view's DOM before any destroy hook runs
+     * (ADR 0002), so a frame that let go in its own `ngOnDestroy` would take the element out of
+     * the document with it, and an embedded map or video would lose its state. This is a view
+     * effect, created here, so it runs before this component's template is checked: before the
+     * `@for` above removes the frame. Only an element still inside this overlay is taken, so one
+     * another slot has already claimed (a hosted panel's, later) stays where it is.
+     */
+    effect(() => {
+      const hidden = this.store.framesHidden();
+      untracked(() => {
+        for (const id of hidden) {
+          const el = this.store.content.get(id);
+          if (el?.parentElement && this.root.contains(el)) this.store.content.leave(el, el.parentElement);
+        }
+      });
+    });
+    /**
+     * Restored free positions wait for the panel to have a size (7.11): a panel in a background
+     * tab, or not laid out yet, measures 0×0. Observed only while one is waiting.
+     */
+    effect(onCleanup => {
+      if (this.store.pendingCount() === 0) return;
+      untracked(() => this.store.applyPending());
+      if (typeof ResizeObserver === 'undefined') return;
+      const ro = new ResizeObserver(() => this.store.applyPending());
+      ro.observe(this.root);
+      onCleanup(() => ro.disconnect());
+    });
+    // The owner closed (or this overlay is otherwise going): its widgets' hosted panels go first,
+    // then each widget's component. Angular has already removed the overlay's own DOM.
+    inject(DestroyRef).onDestroy(() => {
+      this.store.hosting.dispose();
+      this.store.content.dispose();
+    });
   }
 }
 
@@ -190,6 +239,28 @@ export interface FloatingWidgetsApi {
   closeAll(): void;
   /** Reactive. */
   isOpen(id: string): boolean;
+  /**
+   * Moves a widget out of its panel or back (7.11), without re-creating its content: docked
+   * beside its owner panel, a tab in the owner's group, a floating window, or back into the panel
+   * where it last was. Out of the panel it is a workspace panel of its own, which the user can
+   * move, minimise and close like any other; closing it closes the widget. It never goes into a
+   * saved layout. Returns a result rather than throwing; a refusal changes nothing.
+   *
+   * ```ts
+   * widgets.move('table', { to: 'docked', position: 'bottom', size: 0.35 });
+   * widgets.move('table', { to: 'panel' });
+   * ```
+   */
+  move(id: string, to: WidgetTarget): MoveResult;
+  /** Where a widget is shown (7.11), or `null` if it isn't open. Reactive. */
+  location(id: string): WidgetLocation | null;
+  /**
+   * Where a widget is now, as plain JSON to save with your own state (7.11), or `null` if it isn't
+   * open: where it is in the panel (corner, stretch, free position, size), and, out of the panel,
+   * whether it is docked, tabbed or floating there. Give it back as `open(id, { …, placement })`.
+   * Not reactive: read it when you save.
+   */
+  placement(id: string): WidgetPlacement | null;
 }
 
 /**
@@ -211,5 +282,8 @@ export function injectFloatingWidgets(): FloatingWidgetsApi {
     close: id => store.closeManaged(id),
     closeAll: () => store.closeAllManaged(),
     isOpen: id => store.managed().has(id),
+    move: (id, to) => store.hosting.move(id, to),
+    location: id => store.hosting.location(id),
+    placement: id => store.placementOf(id),
   };
 }

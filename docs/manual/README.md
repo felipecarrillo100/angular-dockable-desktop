@@ -27,6 +27,7 @@ that the theming chapter's token tables match the stylesheet in both directions.
 | 11 | [Internationalisation](11-i18n.md) |
 | 12 | [Coming from react-dockable-desktop or vue-dockable-desktop](12-migrating.md) |
 | 13 | [API reference](13-api-reference.md) |
+| 14 | [Widgets out of the panel](14-widgets-out-of-the-panel.md) (1.11.0) |
 
 ## The one thing to know first
 

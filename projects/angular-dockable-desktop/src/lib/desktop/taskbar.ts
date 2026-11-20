@@ -14,7 +14,9 @@
  */
 import { Component, DestroyRef, ElementRef, computed, effect, inject, input, output, signal, untracked, viewChild } from '@angular/core';
 import { Workspace } from '../workspace/workspace';
+import { PanelHost } from '../panel/panel-host';
 import type { NddIcon } from '../core/icon';
+import { optionsFor } from '../core/panel-options';
 import { NddIconView } from '../common/icon';
 import { CANCEL_MOVE_PX, LONG_PRESS_MS } from './drag-dock';
 import { NddTaskbarPreview } from './taskbar-preview';
@@ -123,6 +125,7 @@ export class NddTaskbar {
   readonly contextMenu = output<{ panelId: string; event: PointerEvent | MouseEvent }>();
 
   protected readonly workspace = inject(Workspace) as Workspace<never>;
+  private readonly panelHost = inject(PanelHost);
   private readonly strip = viewChild<ElementRef<HTMLElement>>('strip');
   protected readonly expanded = signal(false);
   private readonly hovered = signal<Hovered | null>(null);
@@ -138,7 +141,7 @@ export class NddTaskbar {
     this.workspace.minimized().map(entry => ({
       ...entry,
       // The runtime icon (1.10.0), else the registration's; the template falls back to the default.
-      icon: this.workspace.panels()[entry.id]?.icon ?? this.workspace.registry.get(entry.component)?.defaultOptions?.icon,
+      icon: this.workspace.panels()[entry.id]?.icon ?? optionsFor(this.workspace.registry, this.workspace.panels()[entry.id], entry.component)?.icon,
     })),
   );
   protected readonly visible = computed(() => this.visibility() === 'always' || this.items().length > 0);
@@ -162,7 +165,7 @@ export class NddTaskbar {
       const ids = this.workspace.minimized().map(m => m.id);
       untracked(() => {
         const h = this.hovered();
-        if (h && !ids.includes(h.id)) this.hovered.set(null);
+        if (h && !ids.includes(h.id)) this.setHovered(null);
       });
     });
     inject(DestroyRef).onDestroy(() => {
@@ -185,16 +188,31 @@ export class NddTaskbar {
     this.collapseTimer = setTimeout(() => this.expanded.set(false), COLLAPSE_DELAY_MS);
   }
 
+  /**
+   * Shows a preview, or none. A panel that keeps its embeds (7.11) is taken out of the preview
+   * that is going **first**, back to the store with `moveBefore()`: Angular removes the preview's
+   * DOM (portalled into the body) before its destroy hook could give the panel back, and an
+   * iframe in it would reload.
+   */
+  private setHovered(next: Hovered | null): void {
+    const now = untracked(this.hovered);
+    if (now && now.id !== next?.id) {
+      const { dom } = this.panelHost;
+      if (dom.preservesEmbeds(now.id) && !dom.isParked(now.id)) dom.moveTo(now.id, null, { refocus: false });
+    }
+    this.hovered.set(next);
+  }
+
   private showPreview(id: string, el: HTMLElement, fromTouch: boolean): void {
     clearTimeout(this.dismissTimer);
     const r = el.getBoundingClientRect();
-    this.hovered.set({ id, anchor: { left: r.left, top: r.top, width: r.width }, fromTouch });
+    this.setHovered({ id, anchor: { left: r.left, top: r.top, width: r.width }, fromTouch });
   }
 
   /** A short grace period, so the pointer can travel from the icon to the preview. */
   protected dismissPreview(): void {
     clearTimeout(this.dismissTimer);
-    this.dismissTimer = setTimeout(() => this.hovered.set(null), 150);
+    this.dismissTimer = setTimeout(() => this.setHovered(null), 150);
   }
 
   protected keepPreview(): void {
@@ -212,12 +230,12 @@ export class NddTaskbar {
   }
 
   protected restoreFromTaskbar(id: string): void {
-    this.hovered.set(null);
+    this.setHovered(null);
     this.workspace.restorePanel(id);
   }
 
   protected closeFromPreview(id: string): void {
-    this.hovered.set(null);
+    this.setHovered(null);
     void this.workspace.requestClosePanel(id);
   }
 
