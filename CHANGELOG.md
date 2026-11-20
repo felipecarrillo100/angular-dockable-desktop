@@ -10,6 +10,27 @@ feature-by-feature map is [docs/PARITY.md](docs/PARITY.md).
 
 ## [Unreleased]
 
+## [1.11.1] — 2026-11-20
+
+**Parity: react-dockable-desktop 7.11.0** (vue-dockable-desktop 1.13.0). An Angular-only fix; rdd and
+vdd don't create components on a library element, so they have nothing to port.
+
+### Fixed
+
+- **A panel or managed widget whose component declares static host classes kept its full size.**
+  The component is created on a library element (`createComponent(…, { hostElement })`), and
+  Angular writes a static `host: { class: '…' }` as that element's `class` attribute, replacing
+  what was there. So the content element lost `ndd-panel-float__content` (since 1.11.0) or
+  `ndd-panel-content` and the kind's `className` (since 1.7.0), and with them
+  `width: 100%; height: 100%`: content that fills its widget or panel no longer did. The library's
+  class and the kind's are now added after the component is created, beside the component's own.
+  Reported by MapEvolution.
+
+### Documentation
+
+- Chapter 14: the content element is the component's host, so the component's own tag is not in
+  the page; tests and styles that found the content by its selector should use the class.
+
 ## [1.11.0] — 2026-11-20
 
 **Parity: react-dockable-desktop 7.11.0** (vue-dockable-desktop 1.13.0 made the same port). Widgets

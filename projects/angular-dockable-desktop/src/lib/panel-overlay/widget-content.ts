@@ -82,6 +82,9 @@ export class WidgetContentCache {
       if (live) this.release(id);
       const el = this.createElement();
       const ref = this.factory(id, type, el);
+      // Angular writes a component's static `host: { class }` as the class attribute, replacing
+      // the element's own class (1.11.1): add it back, beside the component's.
+      el.classList.add('ndd-panel-float__content');
       const entry: Entry = { el, ref, type, applied: {} };
       this.applyInputs(entry, inputs);
       this.entries.set(id, entry);

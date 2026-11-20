@@ -45,5 +45,6 @@
   "widgets-out.spec.ts": 42,
   "widgets-out-menus.spec.ts": 37,
   "widget-placement.spec.ts": 11,
-  "focus-props-embeds.spec.ts": 19
+  "focus-props-embeds.spec.ts": 19,
+  "host-classes.spec.ts": 3
 }
