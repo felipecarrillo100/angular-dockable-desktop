@@ -10,7 +10,8 @@
  *             button opens its drawer; Delete on the focused tab closes it (N4)
  *   ticks     change detection runs only when something changed: 0 ticks idle, ≤ 2 for 40 moves
  *             over an idle tab bar or a panel body, and about one per move while dragging a window
- *   classes   every class rendered anywhere in the tour has a rule, is a declared consumer hook,
+ *   classes   every class rendered anywhere in the tour (7.11: a managed widget with a titleMenu,
+ *             in its panel, tabbed and floating out of it, included) has a rule, is a declared consumer hook,
  *             or takes a caller's value — the half of the class↔rule sweep a static scan can miss
  *
  * `--control`: inject an unlabelled `aria-label` on a generic element and a document-level
@@ -157,6 +158,23 @@ await runBrowserGate(control ? 'M13-control' : 'M13', {}, async (page, { fail, o
   await page.waitForTimeout(250);
   await collect();
   await axe('toolbar flyout');
+
+  // ── 7.11 widgets out of the panel: a managed widget with a titleMenu, in its panel and out ──
+  await page.evaluate(() => window.__pg.ws.openPanel('ov', 'overlay'));
+  await page.waitForFunction(() => !!window.__overlayWidgets, null, { timeout: 5000 });
+  await page.evaluate(() => window.__overlayWidgets.openFill(true));
+  await page.waitForTimeout(300);
+  await collect(); // its content element, the widget store, the title-menu button
+  await page.evaluate(() => window.__overlayWidgets.move('wo', { to: 'tabbed' }));
+  await page.waitForTimeout(300);
+  await collect(); // the hosted panel's content, the tab's menu icon
+  await page.evaluate(() => window.__overlayWidgets.move('wo', { to: 'floating', rect: { x: 360, y: 120, width: 280, height: 200 } }));
+  await page.waitForTimeout(300);
+  await collect(); // the floating title bar's menu icon
+  await axe('widget out of its panel');
+  for (const c of ['ndd-panel-float__content', 'ndd-widget-store', 'ndd-panel-float__menu', 'ndd-hosted-widget', 'ndd-workspace-tab-icon--menu', 'ndd-window-title-icon--menu']) {
+    if (!seen.has(c)) fail(`classes: the tour never rendered .${c}, so its rule is not checked`);
+  }
 
   // ── live class sweep ──
   const openEnded = c => OPEN_ENDED_PREFIXES.some(p => c.startsWith(p));

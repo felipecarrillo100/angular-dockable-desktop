@@ -5,7 +5,9 @@ toolbars on its edges and small floating widgets over its content, such as a lay
 map, a timeline strip or an inspector card.
 
 It is scoped to the panel. Each `<ndd-panel-overlay>` has its own toolbars, its own widget
-stacks and its own z-order, and nothing here reaches outside the panel it belongs to.
+stacks and its own z-order, and nothing here reaches outside the panel it belongs to. (The one
+exception is deliberate: a widget opened from data can be moved out of its panel, and still
+belongs to it; see [Chapter 14](14-widgets-out-of-the-panel.md).)
 
 ```ts
 import { Component, signal } from '@angular/core';
@@ -369,9 +371,38 @@ widgets.closeAll();
 `openIds` is a signal of the open ids, in the order they were opened, and `isOpen(id)` is a
 reactive question about one. The second argument is a `ManagedWidget`: `title` and
 `component` are required; `icon`, `inputs`, `anchor` (default `top-right`), `stretch`, `width`
-(default 320) and `height` (default 240) are optional. `inputs` go to `component` through
-`NgComponentOutlet`. A widget written in the template is the simpler option where you can
-write one.
+(default 320) and `height` (default 240) are optional. `open()` creates `component` at once, on
+an element of its own, with the overlay's injector, so `injectPanel()` inside it is the panel the
+overlay is in; `inputs` are set on it with `setInput`, and an `open()` on a live id sets only the
+inputs that changed (one left out is set to `undefined`). A widget written in the template is the
+simpler option where you can write one.
+
+A managed widget can do more than a template one (1.11.0, react-dockable-desktop 7.11.0): it can
+**leave the panel**, docked beside it, as a tab in its group or floating, and come back without
+being re-created. All of it is in [Chapter 14](14-widgets-out-of-the-panel.md); in short:
+
+```ts
+widgets.open('results', {
+  title: 'Results', component: ResultsTable,
+  canDock: true,            // the user may dock it or make it a tab out of the panel; default false
+  canFloat: true,           // the user may float it out of the panel; default false
+  titleMenu: w => [ /* ContextMenuItem[]: the title icon's menu, in your own words */ ],
+  placement: saved,         // open where it was saved (first open of an id only)
+  preserveEmbeds: true,     // an iframe inside doesn't reload when it moves; default false
+});
+widgets.move('results', { to: 'docked', position: 'bottom' });   // → MoveResult
+widgets.location('results');                                    // 'panel' | 'docked' | … | null, reactive
+widgets.placement('results');                                   // WidgetPlacement | null, to save
+```
+
+The widget's component lives on its own element, `div.ndd-panel-float__content`, the full width
+and height of the frame's body, so it can move out of the panel and back without being
+re-created. Content laid out with `height: 100%` fills the widget as before, and the body still
+scrolls; CSS on the body's direct child (`.ndd-panel-float__body > …`) no longer matches the
+content (1.11.0). Inside the content, `injectWidget()` says where the widget is and calls you
+around each move ([Chapter 14](14-widgets-out-of-the-panel.md#the-widgets-own-side-injectwidget)).
+A pointerdown anywhere in the content brings the widget to the front, even when the content stops
+the event (a map canvas often does).
 
 ### Call it from a component inside the overlay
 
@@ -430,9 +461,14 @@ the placement, so closing and reopening is how you reset it. vdd 1.0.0 discarded
 gestures on every render (its R1); ndd binds each managed widget to the overlay's own record,
 so that cannot occur.
 
-The consequence worth knowing: a managed widget's placement is not readable, so it cannot be
-persisted the way a template widget's `[(placement)]` can. If you need to restore widgets
-where the user left them, declare them in the template and own the model.
+`width` and `height` seed its size the same way, once (1.11.0): before, a re-open with new values
+resized a widget the user had not resized yet.
+
+To restore managed widgets where the user left them, save `widgets.placement(id)` for each open
+id and give it back as `open(id, { …, placement })` after a reload (1.11.0; see
+[Saving and restoring](14-widgets-out-of-the-panel.md#saving-and-restoring-placement)). Before
+1.11.0 a managed widget's placement could not be read, and only a template widget's
+`[(placement)]` could be persisted.
 
 ### Titles that follow the language
 
@@ -470,8 +506,10 @@ already-resolved text.
 | `open` + `onClose` | `v-model:open` | `[(open)]` |
 | `defaultAnchor` + `defaultStretch` + `stretch` + `onPlacementChange` | one `v-model:placement` | one `[(placement)]` |
 | `usePanelFloatingWindow()` | a `ref` plus `v-model:open` | a signal plus `[(open)]` |
-| `usePanelFloatingWindowManager()` | `useFloatingWidgets()` | `injectFloatingWidgets()`, from inside the overlay |
+| `usePanelFloatingWindowManager()` | `useFloatingWidgets()` | `injectFloatingWidgets()`, from inside the overlay; `move`, `location` and `placement` keep rdd 7.11.0's names (1.11.0) |
 | widget `props` | `props` | `inputs` |
+| `ManagedWindowConfig.content` (rdd 7.11.0) | `component` + `props` | `component` + `inputs` |
+| `useWidget()` (rdd 7.11.0) | `useWidget()` | `injectWidget()` (1.11.0) |
 
 Two things behave better than rdd rather than differently, as in vdd:
 

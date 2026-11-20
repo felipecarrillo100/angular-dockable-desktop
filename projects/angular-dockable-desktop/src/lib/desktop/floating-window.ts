@@ -17,10 +17,11 @@ import { Workspace } from '../workspace/workspace';
 import { computeResizedRect, startPointerDrag } from '../core/drag-resize';
 import type { ResizeDir } from '../core/drag-resize';
 import type { FloatingWindow } from '../core/types';
+import { optionsFor } from '../core/panel-options';
 import { NddIconView } from '../common/icon';
 import { NddPanelSlot } from '../panel/panel-slot';
 import { DragDock } from './drag-dock';
-import { openMenu, panelMenu } from './menus';
+import { moreActionsMenu, openMenu, panelMenu } from './menus';
 
 /** Inset from the workspace edge, and the gap between windows stacked in one corner. */
 const CORNER_INSET = 8;
@@ -80,7 +81,28 @@ const NONE: Placement = { left: null, top: null, bottom: null, inlineStart: null
         (contextmenu)="$event.preventDefault(); onTitleMenu($event)"
       >
         <span class="ndd-floating-window-title">
-          @if (icon(); as icon) {
+          @if (iconOpensMenu()) {
+            <!-- A widget's panel opens its ⋮ menu from the title icon too, as in its owner panel
+                 (7.11), with the menu glyph when it has no icon. Stopped: pointerdown would start
+                 a window drag, dblclick maximise it, and a click reach the menu's window-click
+                 dismissal in the click that opened it. -->
+            <!-- A pointer affordance only, like the tab's ×: the ⋮ button is the keyboard's way. -->
+            <span
+              class="ndd-window-title-icon ndd-window-title-icon--menu"
+              aria-hidden="true"
+              (pointerdown)="$event.stopPropagation()"
+              (dblclick)="$event.stopPropagation()"
+              (click)="$event.stopPropagation(); onMoreActions($event)"
+            >
+              @if (icon(); as icon) {
+                <ndd-icon [icon]="icon" />
+              } @else {
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+                  <circle cx="12" cy="5" r="2" /><circle cx="12" cy="12" r="2" /><circle cx="12" cy="19" r="2" />
+                </svg>
+              }
+            </span>
+          } @else if (icon(); as icon) {
             <span class="ndd-window-title-icon"><ndd-icon [icon]="icon" /></span>
           }
           <span>{{ title() }}{{ panel.dirty ? ' *' : '' }}</span>
@@ -175,8 +197,7 @@ export class NddFloatingWindow {
 
   protected readonly panel = computed(() => this.workspace.panels()[this.window().id]);
   protected readonly options = computed(() => {
-    const panel = this.panel();
-    return (panel && this.workspace.registry.get(panel.component)?.defaultOptions) || {};
+    return optionsFor(this.workspace.registry, this.panel()) ?? {};
   });
   /** The runtime icon (1.10.0), else the registration's. */
   protected readonly icon = computed(() => this.panel()?.icon ?? this.options().icon);
@@ -224,9 +245,15 @@ export class NddFloatingWindow {
     openMenu(this.workspace, event, panelMenu(this.workspace, this.window().id));
   }
 
-  /** The more-actions button offers only what the panel contributed. */
+  /**
+   * A hosted panel (a widget out of its panel, 7.11) with menu items opens them from its title
+   * icon as well. Reactive: a re-open that adds a `titleMenu` shows it at once.
+   */
+  protected readonly iconOpensMenu = computed(() => !!this.panel()?.owner && this.contributed().length > 0);
+
+  /** The more-actions button offers what the panel contributed; a hosted panel's ends with Close. */
   protected onMoreActions(event: MouseEvent): void {
-    openMenu(this.workspace, event, this.workspace.panelMenuItems(this.window().id));
+    openMenu(this.workspace, event, moreActionsMenu(this.workspace, this.window().id));
   }
 
   protected onTitlePointerDown(event: PointerEvent): void {

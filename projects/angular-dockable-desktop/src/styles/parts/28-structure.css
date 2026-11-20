@@ -54,8 +54,10 @@
 }
 
 
-/* The off-screen store a panel waits in while minimised, or before its first host. */
-.ndd-panel-store {
+/* The off-screen store a panel waits in while minimised, or before its first host; and each
+   overlay's own, where a managed widget's content element waits while nothing shows it (7.11). */
+.ndd-panel-store,
+.ndd-widget-store {
   display: none !important;
 }
 

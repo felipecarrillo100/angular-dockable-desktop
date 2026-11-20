@@ -18,6 +18,7 @@ import {
   DestroyRef,
   EnvironmentInjector,
   Injector,
+  afterNextRender,
   computed,
   createComponent,
   effect,
@@ -28,12 +29,15 @@ import {
 } from '@angular/core';
 import type { ComponentRef, Signal, Type, WritableSignal } from '@angular/core';
 import { Workspace } from '../workspace/workspace';
-import type { ContainerType } from '../core/types';
+import type { WorkspaceState } from '../workspace/workspace';
+import type { ContainerType, LayoutNode } from '../core/types';
 import { PanelDomCache } from './panel-dom';
 import { PANEL_CONTEXT } from './panel-ref';
 import type { PanelContext } from './panel-ref';
 import { NddUnregisteredPanel, NddPanelLoading } from './panel-placeholders';
+import { NddHostedWidget } from './hosted-widget';
 import { findLeaf, findLeafForPanel } from '../core/layout-tree';
+import { optionsFor } from '../core/panel-options';
 
 interface HostedPanel {
   ref: ComponentRef<unknown> | null;
@@ -59,6 +63,10 @@ export class PanelHost {
   private readonly hosted = new Map<string, HostedPanel>();
   /** Bumped when a panel's component is created, so previews and tests can observe it. */
   readonly created = signal(0);
+  /** A park of the preserving panels is queued for this task (`preserveEmbeds`). */
+  private parkQueued = false;
+  /** Preserving panels parked before a render, to put back in their slots after it. */
+  private readonly parked = new Set<string>();
 
   constructor(doc: Document) {
     this.dom = new PanelDomCache(doc);
@@ -79,7 +87,69 @@ export class PanelHost {
       this.created(); // re-apply to newly created content
       for (const content of this.dom.allContents()) content.dir = dir;
     });
-    inject(DestroyRef).onDestroy(() => this.dispose());
+    // preserveEmbeds (rdd 7.11.0): park the panels that keep their embeds before a render can
+    // destroy their slots. See `beforeLayoutRender`.
+    const unlisten = this.workspace.onStateChange((next, previous) => this.beforeLayoutRender(next, previous));
+    inject(DestroyRef).onDestroy(() => {
+      unlisten();
+      this.dispose();
+    });
+  }
+
+  /**
+   * `preserveEmbeds`, the Angular part (rdd 7.11.0). Angular removes a destroyed view's DOM before
+   * any destroy hook runs (ADR 0002): a slot (`[nddPanelSlot]`) in a leaf, a window or the grid
+   * around them that a render destroys takes the panel's element out of the document with it, and
+   * an iframe in it reloads. rdd parks in a layout cleanup and vdd in `onBeforeUnmount`, both of
+   * which run before the node goes; Angular has no such hook. So the owner of every such
+   * destruction, the workspace's state, is watched instead: a write that can re-create slots (the
+   * grid's structure, the floating windows, the taskbar) queues a
+   * park of every preserving panel, which runs in a microtask, after the action's synchronous
+   * writes (so a widget's `onWillMove` still sees its element in place) and before any change
+   * detection (zone.js runs it once the microtask queue is empty, the zoneless scheduler on a
+   * timer or a frame). Parked, connected, in the store, with `moveBefore()`; after the render each
+   * goes back to the newest slot alive for it, again with `moveBefore()`, before the browser
+   * paints. A panel whose slot survived goes back where it was; one with a new slot moves there;
+   * a minimised one stays parked. Only a synchronous `ApplicationRef.tick()` in the same task as
+   * the action would render before the park.
+   */
+  private beforeLayoutRender(next: Readonly<WorkspaceState>, previous: Readonly<WorkspaceState>): void {
+    if (this.parkQueued) return;
+    if (this.dom.preservingIds().length === 0 || !mayRecreateSlots(next, previous)) return;
+    this.parkQueued = true;
+    queueMicrotask(() => {
+      this.parkQueued = false;
+      this.parkPreserving();
+    });
+  }
+
+  private parkPreserving(): void {
+    for (const id of this.dom.preservingIds()) {
+      // One already parked (minimised, or taken out of a preview) is put in its slot all the same.
+      if (!this.dom.isParked(id)) this.dom.moveTo(id, null, { preserveScroll: this.preservesScroll(id) });
+      this.parked.add(id);
+    }
+    if (this.parked.size === 0) return;
+    afterNextRender({ write: () => this.reclaim() }, { injector: this.injector });
+    // A fallback, should no render follow: two frames, by when any render has happened.
+    if (typeof requestAnimationFrame === 'function') requestAnimationFrame(() => requestAnimationFrame(() => this.reclaim()));
+  }
+
+  /** Puts each parked preserving panel back in the newest slot alive for it. */
+  private reclaim(): void {
+    if (this.parked.size === 0) return;
+    const active = untracked(this.workspace.activePanelId);
+    for (const id of [...this.parked]) {
+      this.parked.delete(id);
+      // Gone, or a slot has taken it already.
+      if (!this.dom.has(id) || !this.dom.isParked(id)) continue;
+      const slot = this.dom.liveSlot(id);
+      if (slot) this.dom.moveTo(id, slot, { refocus: active === id, preserveScroll: this.preservesScroll(id) });
+    }
+  }
+
+  private preservesScroll(id: string): boolean {
+    return optionsFor(this.workspace.registry, untracked(this.workspace.state).panels[id])?.preserveScroll !== false;
   }
 
   /** The component instance for a panel, once created. For tests and diagnostics. */
@@ -111,8 +181,17 @@ export class PanelHost {
     };
     this.hosted.set(id, hosted);
     this.dom.elementFor(id); // exists from open, so a slot can take it before content loads
+    // Marked from the start, so its first move into a slot already keeps its embeds (7.11).
+    if (optionsFor(this.workspace.registry, untracked(this.workspace.panels)[id])?.preserveEmbeds === true) this.dom.preserveEmbeds(id);
     this.observeSize(id, hosted);
 
+    // A hosted panel (7.11) shows a managed widget's content element, which its overlay created
+    // and owns: no registration to look up, nothing "unregistered" to report.
+    if (this.workspace.panels()[id]?.owner) {
+      hosted.type = NddHostedWidget;
+      this.mount(id, hosted, NddHostedWidget, { dom: this.dom });
+      return;
+    }
     const entry = this.workspace.registry.get(component);
     if (!entry) {
       this.mount(id, hosted, NddUnregisteredPanel, { panelKey: component });
@@ -150,7 +229,7 @@ export class PanelHost {
 
     const content = this.dom.contentFor(id);
     // Per kind (1.7.0); applied on every mount, since a reset content element starts bare.
-    const kindClass = this.workspace.registry.get(this.workspace.panels()[id]?.component ?? '')?.defaultOptions?.className;
+    const kindClass = optionsFor(this.workspace.registry, this.workspace.panels()[id])?.className;
     if (kindClass) content.classList.add(...kindClass.split(/\s+/).filter(Boolean));
     const ref = createComponent(type, {
       environmentInjector: this.environmentInjector,
@@ -172,7 +251,7 @@ export class PanelHost {
   private shouldBeMounted(id: string): boolean {
     const panel = this.workspace.panels()[id];
     if (!panel) return false;
-    if (this.workspace.registry.get(panel.component)?.defaultOptions?.keepAlive !== false) return true;
+    if (optionsFor(this.workspace.registry, panel)?.keepAlive !== false) return true;
     if (panel.state === 'floating') return true;
     if (panel.state !== 'docked') return false;
     const root = this.workspace.gridRoot();
@@ -239,4 +318,26 @@ export class PanelHost {
     for (const id of [...this.hosted.keys()]) this.destroy(id);
     this.dom.dispose();
   }
+}
+
+/**
+ * The parts of the state a slot's existence depends on, without what only restyles one (split
+ * sizes, a window's position): the grid's shape, each group's panels and selection.
+ */
+function shapeOf(node: LayoutNode): string {
+  if (node.type === 'leaf') return `L${node.id}:${node.activePanelId ?? ''}:${node.panels.join(',')}`;
+  return `B${node.orientation}(${node.children.map(shapeOf).join('|')})`;
+}
+
+/**
+ * Whether a state write can destroy a slot: the grid changed shape (a group's panels or selection
+ * included), or a window or a taskbar entry (its preview) came, went or moved in its list. Every
+ * change of where a panel is changes one of these. A split resize or a window drag can't destroy
+ * a slot, and parks nothing.
+ */
+function mayRecreateSlots(next: Readonly<WorkspaceState>, previous: Readonly<WorkspaceState>): boolean {
+  const ids = (list: readonly { id: string }[]) => list.map(x => x.id).join('|');
+  if (next.gridRoot !== previous.gridRoot && shapeOf(next.gridRoot) !== shapeOf(previous.gridRoot)) return true;
+  if (next.floating !== previous.floating && ids(next.floating) !== ids(previous.floating)) return true;
+  return next.minimized !== previous.minimized && ids(next.minimized) !== ids(previous.minimized);
 }

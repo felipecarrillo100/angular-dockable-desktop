@@ -90,3 +90,18 @@ panel may be detached for an instant, and the live scroll/focus record carries i
 What M0 proved is unchanged: panels are created once by `PanelHost` on a library-owned element
 and attached to `ApplicationRef`; only the trigger for a move differs. The M4 browser gate
 re-asserts every M0 property through the real library, under both schedulers.
+
+## Addendum (1.11.0) — `preserveEmbeds`
+
+The first consequence above ("an `<iframe>` reloads on every re-parent") is now opt-in avoidable
+where the browser has `Element.moveBefore()` (Chrome and Edge 133+, Firefox 144+): a panel type or
+a managed widget with `preserveEmbeds: true` has its element moved with it, and never detached.
+Finding 1 is why that can't be done from a slot's destroy hook: Angular has already removed the
+slot's DOM by then. So `PanelHost` listens to the workspace's state writes and, when one can
+destroy a slot, parks the marked elements in the (connected) store after the action's writes and
+before change detection, then puts each back in the newest live slot after the render. A
+synchronous `ApplicationRef.tick()` in the same task as the change renders first, and the iframe
+reloads. Unmarked panels move exactly as before: still briefly detached when a drag between
+groups destroys their slot, carried across by the live scroll/focus record. See
+[chapter 3](../manual/03-panels.md#keeping-an-iframe-alive-preserveembeds) and
+[chapter 14](../manual/14-widgets-out-of-the-panel.md#iframes-and-media-preserveembeds).

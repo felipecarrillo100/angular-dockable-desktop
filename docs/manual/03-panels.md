@@ -45,6 +45,7 @@ panels: {
       tabClassName: 'app-notes-tab',  // on its tab (1.7.0)
       keepAlive: true,                // false: destroyed while hidden, see below (1.7.0)
       preserveScroll: true,           // restore scroll offsets after a move
+      preserveEmbeds: false,          // true: an <iframe> in it doesn't reload when it moves (1.11.0)
     },
   },
 }
@@ -59,6 +60,10 @@ An icon (`NddIcon`) takes three forms, so no icon library is imposed: a string o
 (Bootstrap Icons, Font Awesome), a component class rendered with no inputs, or a `TemplateRef`
 for an inline `<svg>`. `<ndd-desktop [defaultPanelIcon]="…">` is the fallback for panels that
 register none.
+
+The keys of `panels` are what `openPanel` and saved layouts name, so keep them stable. Keys
+starting with `ndd:` are the library's: `'ndd:widget'` is the kind of a managed widget's own panel
+([Chapter 14](14-widgets-out-of-the-panel.md)), which `saveLayout()` never saves.
 
 ### Freeing a hidden panel (`keepAlive: false`)
 
@@ -76,6 +81,28 @@ panel's own content element (`.ndd-panel-content`), which moves with the panel.
   instead of a live preview while it is minimised.
 - A floating window is always shown, so a floating panel keeps its component. A lazy kind loads
   its chunk once; creating it again needs no second load.
+
+### Keeping an iframe alive (`preserveEmbeds`)
+
+1.11.0. A panel's element is moved, never re-created, when the panel docks, floats, minimises or the grid
+changes around it. A moved `<iframe>` (or `<video>`, or an embedded map) still reloads, because
+the browser re-inserts it. `preserveEmbeds: true` moves the panel with `Element.moveBefore()`
+instead, which keeps the embedded document: Chrome and Edge 133+ and Firefox 144+. In a browser
+without it (Safari today), the iframe reloads as before. Use it for a panel whose content is an
+embed whose state matters; it costs a little more on every layout change, so leave it off
+elsewhere. A managed widget has its own `preserveEmbeds`
+([chapter 14](14-widgets-out-of-the-panel.md#iframes-and-media-preserveembeds)), which also marks
+its owner panel.
+
+Angular removes a destroyed view's DOM before any destroy hook runs, so a group, window or taskbar
+preview that a render destroys would take the panel's element with it. A state change that can
+destroy one therefore parks the marked panels in the workspace's hidden store first (after the
+action's own writes, before change detection), and puts each back in its new place after the
+render, both with `moveBefore()`. An application that calls `ApplicationRef.tick()` synchronously
+in the same task as the change renders before the park, and the iframe reloads. An ordinary
+panel's element (one without `preserveEmbeds`) is still briefly detached when a drag between
+groups destroys its slot, as it always was ([ADR 0002](../decisions/0002-zero-unmount-via-host-element.md),
+finding 1): harmless for everything but an embed.
 
 ### Lazy panels
 
@@ -134,6 +161,13 @@ without opening anything.
 
 The other `openPanel` options are `initialTarget` and `anchor` (overriding the registration),
 and `focus` — `false` opens the panel without making it active.
+
+To change an open panel's data, `ws.updatePanelProps(id, props)` replaces its inputs, or derives
+them from the current ones with a function (`ws.updatePanelProps('doc-42', prev => ({ ...prev,
+path: '/notes/done.md' }))`). Every key the component declares is set again, as on open;
+`saveLayout()`'s serialisability check is re-run on the new values, and `layout:changed` is
+emitted. A panel that isn't open, and a managed widget's own panel (a widget moved out of its
+panel has no inputs of its own), are left alone (1.11.0).
 
 > Whether `inputs` survive `saveLayout()` depends on whether they are JSON-serialisable. See
 > [chapter 5](05-persistence.md); it is a runtime fact, not a type-level guarantee.
@@ -361,3 +395,7 @@ title bar and taskbar icon (Float / Minimize / Close; the items a panel's regist
 are absent). The getter is re-read each time the menu opens, so `disabled` and friends track
 state. Call it in an injection context; it is disposed with the component. Menus are rendered by
 `<ndd-context-menu>` ([chapter 1](01-getting-started.md#the-overlay-hosts)).
+
+**A managed widget's own panel** (1.11.0) is the exception: its `titleMenu` items come first, and
+there is no built-in Float, because those items are what move it. Its tab icon and its floating
+title-bar icon open the same menu. See [Chapter 14](14-widgets-out-of-the-panel.md#things-to-know).

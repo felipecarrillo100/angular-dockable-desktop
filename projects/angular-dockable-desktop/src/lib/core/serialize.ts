@@ -9,10 +9,12 @@ import type { FloatAnchor, FloatingWindow, LayoutNode, PanelInfo, SerializedLayo
 import {
   deriveActivePanelId,
   isVisibleActiveTarget,
+  removePanelFromTree,
   repairLayoutTree,
   EMPTY_LEAF,
 } from './layout-tree';
 import type { ActiveTargetScope } from './layout-tree';
+import { HOSTED_COMPONENT } from './panel-options';
 
 /** A validated payload, with `activePanelId` already resolved. */
 export interface ParsedLayout {
@@ -132,6 +134,36 @@ export function parseLayoutPayload(
   };
 }
 
+/**
+ * A layout without hosted panels (`'ndd:widget'`, rdd 7.11.0): `saveLayout()` never writes one, so
+ * one here was made by hand. Each is dropped with its place in the tree, its floating window and
+ * its taskbar entry, `activePanelId` is re-derived if it named one, and an `owner` on any other
+ * panel is stripped: only a live hosted panel has one.
+ */
+export function withoutHostedPanels(payload: ParsedLayout): ParsedLayout {
+  const hosted = new Set([
+    ...Object.values(payload.panels).filter(p => p?.component === HOSTED_COMPONENT).map(p => p.id),
+    ...payload.minimized.filter(m => m?.component === HOSTED_COMPONENT).map(m => m.id),
+  ]);
+  const owned = Object.values(payload.panels).some(p => p && typeof p === 'object' && 'owner' in p);
+  if (hosted.size === 0 && !owned) return payload;
+  const panels: Record<string, PanelInfo> = {};
+  for (const [id, info] of Object.entries(payload.panels)) {
+    if (hosted.has(id)) continue;
+    if (!info || typeof info !== 'object') { panels[id] = info; continue; }   // not this function's to repair
+    const { owner: _owner, ...rest } = info;
+    panels[id] = rest;
+  }
+  let gridRoot: LayoutNode = payload.gridRoot;
+  for (const id of hosted) gridRoot = removePanelFromTree(gridRoot, id) ?? { ...EMPTY_LEAF, panels: [] };
+  const floating = payload.floating.filter(w => !hosted.has(w.id));
+  const minimized = payload.minimized.filter(m => !hosted.has(m.id));
+  const activePanelId = payload.activePanelId !== null && hosted.has(payload.activePanelId)
+    ? deriveActivePanelId({ gridRoot, floating, panels })
+    : payload.activePanelId;
+  return { gridRoot, floating, minimized, panels, activePanelId };
+}
+
 /** Parse a layout string, falling back to an empty workspace. Never throws. */
 export function parseInitialState(
   json: string | null | undefined,
@@ -140,7 +172,7 @@ export function parseInitialState(
   if (json) {
     try {
       const payload = parseLayoutPayload(JSON.parse(json), onWarn);
-      if (payload) return payload;
+      if (payload) return withoutHostedPanels(payload);
     } catch {
       if (typeof ngDevMode === 'undefined' || ngDevMode) onWarn?.('initialState is not valid JSON; starting from an empty workspace.');
     }

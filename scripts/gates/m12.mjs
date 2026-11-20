@@ -35,7 +35,9 @@ const store = code('src/lib/panel-overlay/overlay-store.ts');
 const widget = code('src/lib/panel-overlay/floating-widget.ts');
 
 // ── 1. The invariant ────────────────────────────────────────────────────────
-must(/activeContributionSignal\(this\.contributions, \(\) => this\._state\(\)\.activePanelId\)/.test(workspace), 'the active contribution must be read from activePanelId, the single resolution point');
+// 7.11: an optional third argument resolves a hosted panel (a widget out of its panel) to its
+// owner's id; which panel is active still comes from activePanelId alone.
+must(/activeContributionSignal\(this\.contributions, \(\) => this\._state\(\)\.activePanelId(?:, id => this\.panels\(\)\[id\]\?\.owner\?\.panelId)?\)/.test(workspace), 'the active contribution must be read from activePanelId, the single resolution point');
 must(!/Object\.keys\([^)]*panels\)\[0\]/.test(workspace), 'nothing may seed or read an active panel from insertion order (D2)');
 must(!/from '\.\.\/workspace/.test(contributions), 'the contribution store must not import the workspace — it is handed the active id');
 

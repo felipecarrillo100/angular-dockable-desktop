@@ -13,6 +13,7 @@ import { NgTemplateOutlet } from '@angular/common';
 import { Component, DestroyRef, ElementRef, NgZone, afterNextRender, computed, inject, input, viewChild } from '@angular/core';
 import { Workspace } from '../workspace/workspace';
 import type { LayoutLeafNode } from '../core/types';
+import { optionsFor } from '../core/panel-options';
 import { NddIconView } from '../common/icon';
 import { NddPanelSlot } from '../panel/panel-slot';
 import { DragDock } from './drag-dock';
@@ -72,7 +73,28 @@ import { TabContentSlot } from './tab-content';
                     } }"
                   />
                 } @else {
-                  @if (tab.icon) {
+                  @if (tab.hosted) {
+                    <!-- A widget's panel opens its menu from the icon, as in its owner panel (7.11),
+                         with the menu glyph when it has no icon: the same menu as a right-click on
+                         the tab. Not a separate control, like the ×: the menu key on the tab is
+                         the keyboard's way. pointerdown is stopped so it doesn't start a tab drag;
+                         click so it doesn't focus the tab or reach the menu's window-click
+                         dismissal in the click that opened it. -->
+                    <span
+                      class="ndd-workspace-tab-icon ndd-workspace-tab-icon--menu"
+                      aria-hidden="true"
+                      (pointerdown)="$event.stopPropagation()"
+                      (click)="$event.stopPropagation(); openTabMenu(tab.id)($event)"
+                    >
+                      @if (tab.icon) {
+                        <ndd-icon [icon]="tab.icon" />
+                      } @else {
+                        <svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+                          <circle cx="12" cy="5" r="2" /><circle cx="12" cy="12" r="2" /><circle cx="12" cy="19" r="2" />
+                        </svg>
+                      }
+                    </span>
+                  } @else if (tab.icon) {
                     <span class="ndd-workspace-tab-icon"><ndd-icon [icon]="tab.icon" /></span>
                   }
                   <span>{{ workspace.format(tab.title) }}{{ tab.dirty ? ' *' : '' }}</span>
@@ -164,7 +186,7 @@ export class NddLeafGroup {
     return this.leaf().panels.flatMap(id => {
       const panel = panels[id];
       if (!panel) return [];
-      const options = this.workspace.registry.get(panel.component)?.defaultOptions ?? {};
+      const options = optionsFor(this.workspace.registry, panel) ?? {};
       return [
         {
           id,
@@ -175,6 +197,8 @@ export class NddLeafGroup {
           canClose: options.canClose !== false,
           canDrag: options.canDrag !== false,
           tabClassName: options.tabClassName ?? '',
+          /** A widget out of its panel (7.11): its icon opens its menu. */
+          hosted: !!panel.owner,
         },
       ];
     });

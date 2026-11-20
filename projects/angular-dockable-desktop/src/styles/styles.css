@@ -3980,6 +3980,33 @@ html.ndd-no-animations [class*="ndd-"]::after {
   color: var(--ndd-panel-float-title-color-active, rgba(255, 255, 255, 0.9));
 }
 
+/* A managed widget's title icon with a titleMenu is a button (7.11): same size and colour. */
+.ndd-panel-float__menu {
+  background: none;
+  border: 0;
+  padding: 0;
+  margin: 0;
+  font: inherit;
+  cursor: pointer;
+  border-radius: calc(3px * var(--ndd-radius-scale, 1));
+}
+.ndd-panel-float__menu:hover {
+  opacity: 1;
+  background-color: var(--ndd-custom-btn-hover-bg, rgba(255, 255, 255, 0.12));
+}
+
+/* The same, out of the panel: a widget's panel opens its menu from its tab or title-bar icon
+   (7.11). */
+.ndd-workspace-tab-icon--menu,
+.ndd-window-title-icon--menu {
+  cursor: pointer;
+  border-radius: calc(3px * var(--ndd-radius-scale, 1));
+}
+.ndd-workspace-tab-icon--menu:hover,
+.ndd-window-title-icon--menu:hover {
+  background-color: var(--ndd-custom-btn-hover-bg, rgba(255, 255, 255, 0.12));
+}
+
 .ndd-panel-float__close {
   display: inline-flex;
   align-items: center;
@@ -4008,6 +4035,22 @@ html.ndd-no-animations [class*="ndd-"]::after {
   flex: 1;
   overflow: auto;
   min-height: 0;
+}
+
+/* A managed widget's content element (7.11), the body's only child. The body is a block, so the
+   element takes its full size, as .ndd-panel-content does for workspace panels: content with
+   height: 100% fills the body exactly as it did when it was the body's own child. */
+.ndd-panel-float__content {
+  width: 100%;
+  height: 100%;
+}
+
+/* A hosted panel's content (7.11): a managed widget moved out of its panel. Its content element
+   is the only child and takes its full size, as in the frame's body; it scrolls as that body does. */
+.ndd-hosted-widget {
+  width: 100%;
+  height: 100%;
+  overflow: auto;
 }
 
 /* A `.ndd-panel-float__resize` rule lived here in rdd and was dead: nothing rendered that
@@ -4215,8 +4258,10 @@ html.ndd-no-animations [class*="ndd-"]::after {
 }
 
 
-/* The off-screen store a panel waits in while minimised, or before its first host. */
-.ndd-panel-store {
+/* The off-screen store a panel waits in while minimised, or before its first host; and each
+   overlay's own, where a managed widget's content element waits while nothing shows it (7.11). */
+.ndd-panel-store,
+.ndd-widget-store {
   display: none !important;
 }
 

@@ -23,7 +23,7 @@
  * `stubGeometry` supplies just enough for the pointer arithmetic to mean something, exactly as
  * rdd's and vdd's suites do; the geometry that cannot be faked is the browser gate's job (D5).
  */
-import { Component, input, signal } from '@angular/core';
+import { Component, DestroyRef, ElementRef, InjectionToken, inject, input, signal } from '@angular/core';
 import type { Type, WritableSignal } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
 import type { ComponentFixture } from '@angular/core/testing';
@@ -1308,7 +1308,10 @@ describe('PO31–PO35: a managed widget owns its placement', () => {
       await render(ApiHost);
       openBottomRight();
       await stable();
-      expect(store.managedPlacements()['w1']).toEqual({ anchor: 'bottom-right', stretch: null });
+      // The whole placement since 7.11 (M2): docked or free, position and size as well.
+      expect(store.managedPlacements()['w1']).toEqual({
+        anchor: 'bottom-right', stretch: null, mode: 'docked', freePos: null, size: { w: 260, h: 220 },
+      });
 
       api.close('w1');
       await stable();
@@ -1320,6 +1323,303 @@ describe('PO31–PO35: a managed widget owns its placement', () => {
       expect(widgets()).toHaveLength(0);
     } finally {
       restore();
+    }
+  });
+});
+
+// ─── PO36–PO39 ───────────────────────────────────────────────────────────────
+
+/**
+ * 7.11 (rdd), milestone M2 of "widgets out of the panel": a managed widget's component is
+ * created once, for the widget's whole life, on its own element (`div.ndd-panel-float__content`),
+ * which the frame's body only shows; and the overlay keeps the whole placement. So the frame can
+ * be destroyed and created again (a widget moved out of its panel has none) with the content's
+ * state and DOM untouched, and come back where it was. Ported from vdd's PO36–PO39.
+ *
+ * ndd adds the detach probe (PO37): Angular removes a destroyed view's DOM before any destroy
+ * hook runs (ADR 0002), so a frame letting go of the element in its own `ngOnDestroy` would leave
+ * it back in the hidden store, connected, *after* it had been out of the document — state an
+ * embedded map or video would lose. A MutationObserver cannot see a detach followed by a
+ * re-attach; a custom element's `disconnectedCallback` can: it runs after the DOM operation, so
+ * a plain move (still connected) and a real detach (not connected) are told apart.
+ */
+const HOST_TOKEN = new InjectionToken<string>('po36-host');
+const lifecycle = { created: 0, destroyed: 0, detaches: 0, connectedAtCreation: null as boolean | null };
+
+class DetachProbe extends HTMLElement {
+  disconnectedCallback(): void {
+    if (!this.isConnected) lifecycle.detaches += 1;
+  }
+}
+if (!customElements.get('ndd-test-detach-probe')) customElements.define('ndd-test-detach-probe', DetachProbe);
+
+/** Stateful content that records its lifecycle, reads injections from above it, and carries the probe. */
+@Component({
+  selector: 'ndd-test-counter',
+  template: `<button id="po-count" [attr.data-host]="host" [attr.data-has-overlay]="hasOverlay" [attr.data-label]="label()" (click)="n.set(n() + 1)">{{ n() }}</button>`,
+})
+class Counter {
+  readonly label = input('');
+  readonly n = signal(0);
+  protected readonly host = inject(HOST_TOKEN, { optional: true }) ?? 'none';
+  protected readonly hasOverlay = String(Array.isArray(injectFloatingWidgets().openIds()));
+  constructor() {
+    lifecycle.created += 1;
+    lifecycle.connectedAtCreation = inject<ElementRef<HTMLElement>>(ElementRef).nativeElement.isConnected;
+    inject(DestroyRef).onDestroy(() => (lifecycle.destroyed += 1));
+    inject<ElementRef<HTMLElement>>(ElementRef).nativeElement.appendChild(document.createElement('ndd-test-detach-probe'));
+  }
+}
+
+@Component({ selector: 'ndd-test-other', template: '<i data-other></i>' })
+class Other {}
+
+@Component({
+  selector: 'ndd-test-content-host',
+  imports: [NddPanelOverlay, NddFloatingWidget, ApiProbe],
+  providers: [{ provide: HOST_TOKEN, useValue: 'the-panel' }],
+  template: `
+    <ndd-panel-overlay>
+      <ndd-test-api-probe />
+      <ndd-floating-widget widgetId="decl" title="Decl" [width]="100" [height]="80"><span id="decl-content"></span></ndd-floating-widget>
+    </ndd-panel-overlay>
+  `,
+})
+class ContentHost {}
+
+describe('PO36–PO39: a managed widget renders its content once, into its own element', () => {
+  const open = (inputs?: Record<string, unknown>) =>
+    api.open('box', { title: 'Box', component: Counter, anchor: 'top-left', width: 260, height: 180, ...(inputs ? { inputs } : {}) });
+  const win = () => byId('box');
+  const body = () => win().querySelector('.ndd-panel-float__body') as HTMLElement;
+  const count = () => document.querySelector('#po-count') as HTMLElement;
+
+  beforeEach(() => {
+    lifecycle.created = 0;
+    lifecycle.destroyed = 0;
+    lifecycle.detaches = 0;
+  });
+
+  it("PO36: the content sits in div.ndd-panel-float__content, the body's only child", async () => {
+    await render(ContentHost);
+    open();
+    await stable();
+    expect(body().children).toHaveLength(1);
+    const el = body().firstElementChild as HTMLElement;
+    expect(el.classList.contains('ndd-panel-float__content')).toBe(true);
+    // The element is the component's own host: created on it, not inside a wrapper.
+    expect(el).toBe(store.content.get('box'));
+    expect(store.content.instance('box')).toBeInstanceOf(Counter);
+    // Created already in the document (the hidden store), never on a detached element.
+    expect(lifecycle.connectedAtCreation).toBe(true);
+    expect(el.querySelector('#po-count')).not.toBeNull();
+    // Created with the overlay's injector: providers above the overlay, and the overlay's own,
+    // still resolve inside the content.
+    expect(count().getAttribute('data-host')).toBe('the-panel');
+    expect(count().getAttribute('data-has-overlay')).toBe('true');
+    // A template widget is unchanged: its children are the body's own.
+    const declBody = byId('decl').querySelector('.ndd-panel-float__body')!;
+    expect(declBody.firstElementChild!.id).toBe('decl-content');
+  });
+
+  it('PO36: re-opening a live id keeps its instance and updates its inputs', async () => {
+    await render(ContentHost);
+    open({ label: 'a' });
+    await stable();
+    count().click();
+    await stable();
+    const el = store.content.get('box');
+    open({ label: 'b' });
+    await stable();
+    expect(lifecycle.created).toBe(1);
+    expect(store.content.get('box')).toBe(el);
+    expect(count().getAttribute('data-label')).toBe('b');
+    expect(count().textContent).toBe('1');
+    // An input dropped from the record is cleared, as *ngComponentOutlet did.
+    open();
+    await stable();
+    expect(count().getAttribute('data-label')).toBe(null);
+  });
+
+  it('PO36: re-opening a live id with another component replaces the content, and the frame shows the new one', async () => {
+    await render(ContentHost);
+    open();
+    await stable();
+    const el = store.content.get('box')!;
+    api.open('box', { title: 'Box', component: Other });
+    await stable();
+    expect(lifecycle.destroyed).toBe(1);
+    expect(el.isConnected).toBe(false);
+    expect(body().children).toHaveLength(1);
+    expect(body().firstElementChild).toBe(store.content.get('box'));
+    expect(body().querySelector('[data-other]')).not.toBeNull();
+  });
+
+  it('PO38: closing destroys the content and drops its element; a re-open starts fresh', async () => {
+    await render(ContentHost);
+    open();
+    await stable();
+    const el = body().firstElementChild as HTMLElement;
+    count().click();
+    await stable();
+    expect(count().textContent).toBe('1');
+
+    api.close('box');
+    await stable();
+    expect(lifecycle.destroyed).toBe(1);
+    expect(el.isConnected).toBe(false);
+    expect(document.querySelector('.ndd-panel-float__content')).toBeNull();
+
+    open();
+    await stable();
+    expect(body().firstElementChild).not.toBe(el);
+    expect(count().textContent).toBe('0');
+    const second = body().firstElementChild;
+
+    api.closeAll();
+    await stable();
+    expect(lifecycle.destroyed).toBe(2);
+    expect(document.querySelector('.ndd-panel-float__content')).toBeNull();
+    open();
+    await stable();
+    expect(body().firstElementChild).not.toBe(second);
+  });
+
+  it('PO38: a close and a re-open in one tick still start fresh', async () => {
+    await render(ContentHost);
+    open();
+    await stable();
+    count().click();
+    await stable();
+    const el = store.content.get('box');
+    api.close('box');
+    open();
+    await stable();
+    expect(lifecycle.created).toBe(2);
+    expect(lifecycle.destroyed).toBe(1);
+    expect(store.content.get('box')).not.toBe(el);
+    expect(body().firstElementChild).toBe(store.content.get('box'));
+    expect(count().textContent).toBe('0');
+  });
+
+  it("PO38: the overlay's destruction destroys its widgets' content and the hidden store", async () => {
+    await render(ContentHost);
+    open();
+    await stable();
+    fixture!.destroy();
+    fixture = null;
+    expect(lifecycle.destroyed).toBe(1);
+    expect(document.querySelector('.ndd-panel-float__content')).toBeNull();
+    expect(document.querySelector('.ndd-widget-store')).toBeNull();
+  });
+
+  it('PO39: a pointerdown in the content brings the widget to the front', async () => {
+    await render(ContentHost);
+    open();
+    await stable();
+    byId('decl').dispatchEvent(pointer('pointerdown'));
+    await stable();
+    expect(win().classList.contains('ndd-panel-float--active')).toBe(false);
+    count().dispatchEvent(pointer('pointerdown'));
+    await stable();
+    expect(win().classList.contains('ndd-panel-float--active')).toBe(true);
+  });
+
+  it('PO39: content that stops the pointerdown (a map canvas) still brings it to the front', async () => {
+    await render(ContentHost);
+    open();
+    await stable();
+    byId('decl').dispatchEvent(pointer('pointerdown'));
+    await stable();
+    expect(win().classList.contains('ndd-panel-float--active')).toBe(false);
+    count().addEventListener('pointerdown', e => e.stopPropagation());
+    count().dispatchEvent(pointer('pointerdown'));
+    await stable();
+    expect(win().classList.contains('ndd-panel-float--active')).toBe(true);
+  });
+});
+
+describe('PO37: a managed placement and its content survive the frame going away', () => {
+  it('keeps free mode, position, size, the content element and its state; the element is never detached', async () => {
+    const restore = stubGeometry({ overlay: domRect(0, 0, 800, 600), widget: domRect(8, 0, 260, 180) });
+    try {
+      lifecycle.created = 0;
+      lifecycle.detaches = 0;
+      await render(ContentHost);
+      api.open('m', { title: 'M', component: Counter, anchor: 'top-left', width: 260, height: 180 });
+      await stable();
+      const el = store.content.get('m')!;
+      const win = () => byId('m');
+      const frameBody = () => win().querySelector('.ndd-panel-float__body');
+      const counter = () => el.querySelector('#po-count') as HTMLElement;
+      expect(el.parentElement).toBe(frameBody());
+      counter().click();
+      await stable();
+
+      // Drag it free: from (8,0) by (+150,+100), away from every drop zone.
+      await pressHeader(win(), { x: 200, y: 150 }, 'up');
+      // Then widen it by 40 from its east edge.
+      await dragHandle(win(), 'e', { x: 418, y: 150 }, { x: 458, y: 150 });
+      expect(store.managedPlacements()['m']).toMatchObject({ mode: 'free', freePos: { x: 158, y: 100 }, size: { w: 300, h: 180 } });
+      const placed = () => ({ left: win().style.left, top: win().style.top, width: win().style.width, height: win().style.height });
+      expect(placed()).toEqual({ left: '158px', top: '100px', width: '300px', height: '180px' });
+
+      store.framesHidden.set(new Set(['m']));
+      await stable();
+      expect(win()).toBeNull();
+      // Back in the hidden store, in the document, with its content alive — and it never left
+      // the document on the way: the overlay took it out of the frame before Angular removed it.
+      expect(el.parentElement?.className).toBe('ndd-widget-store');
+      expect(el.isConnected).toBe(true);
+      expect(lifecycle.detaches).toBe(0);
+
+      store.framesHidden.set(new Set());
+      await stable();
+      expect(placed()).toEqual({ left: '158px', top: '100px', width: '300px', height: '180px' });
+      expect(store.content.get('m')).toBe(el);
+      expect(el.parentElement).toBe(frameBody());
+      expect(counter().textContent).toBe('1');
+      expect(lifecycle.created).toBe(1);
+      expect(lifecycle.detaches).toBe(0);
+
+      // The probe does see a real detach: a close takes the element out of the document.
+      api.close('m');
+      await stable();
+      expect(lifecycle.detaches).toBe(1);
+    } finally {
+      restore();
+    }
+  });
+
+  it('a hidden frame stays hidden for a re-open, and a close forgets it', async () => {
+    await render(ContentHost);
+    api.open('m', { title: 'M', component: Counter });
+    await stable();
+    store.framesHidden.set(new Set(['m']));
+    await stable();
+    api.open('m', { title: 'M2', component: Counter });
+    await stable();
+    expect(byId('m')).toBeNull();
+    api.close('m');
+    expect(store.framesHidden().has('m')).toBe(false);
+  });
+
+  it('an element another slot has already claimed stays there when the frame goes away', async () => {
+    await render(ContentHost);
+    api.open('m', { title: 'M', component: Counter });
+    await stable();
+    const el = store.content.get('m')!;
+    // A slot outside this overlay (a hosted panel's, later) takes the element in the same turn.
+    const elsewhere = document.createElement('div');
+    document.body.appendChild(elsewhere);
+    try {
+      store.framesHidden.set(new Set(['m']));
+      store.content.attach(el, elsewhere);
+      await stable();
+      expect(byId('m')).toBeNull();
+      expect(el.parentElement).toBe(elsewhere);
+    } finally {
+      elsewhere.remove();
     }
   });
 });

@@ -554,6 +554,10 @@ its state attributes and classes, and the close button all keep working. Keep th
 non-interactive (no buttons or links): it sits inside the tab, which is the control. Floating-window
 title bars and the taskbar are unchanged.
 
+A managed widget's own tab (1.11.0) arrives with `component: 'ndd:widget'`. Its built-in icon opens
+the widget's menu; with your content in its place, a right-click on the tab and the menu key still
+do.
+
 ## Styling by state and by panel kind
 
 Two hooks let your CSS target the desktop without depending on internal class names (1.7.0).
@@ -574,6 +578,14 @@ that kind and to its tab ([Chapter 3](03-panels.md#registration-options)).
 [data-ndd-tab][data-ndd-dirty] { box-shadow: inset 0 -2px 0 #f59e0b; }
 [data-ndd-window][data-ndd-focused] { outline: 2px solid var(--ndd-brand-accent); }
 ```
+
+**A managed widget's own panel** (1.11.0, see [Chapter 14](14-widgets-out-of-the-panel.md)) has no
+panel type, so `className` and `tabClassName` don't reach it. Target it by id,
+`[data-ndd-tab="<ownerId>/<widgetId>"]` or `[data-ndd-window="<ownerId>/<widgetId>"]`, or its body,
+`.ndd-hosted-widget`. Inside, the widget's content sits in `.ndd-panel-float__content`, wherever it
+is. Its tab icon, and its title-bar icon when it has a `titleMenu`, open its menu and carry
+`.ndd-workspace-tab-icon--menu` / `.ndd-window-title-icon--menu`; in the panel, the widget's title
+icon is a button, `.ndd-panel-float__menu`.
 
 ## Using it with Angular Material, PrimeNG, Bootstrap or Tailwind
 

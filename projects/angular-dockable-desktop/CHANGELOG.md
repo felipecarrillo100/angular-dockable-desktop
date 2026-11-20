@@ -10,6 +10,146 @@ feature-by-feature map is [docs/PARITY.md](https://github.com/felipecarrillo100/
 
 ## [Unreleased]
 
+## [1.11.0] — 2026-11-20
+
+**Parity: react-dockable-desktop 7.11.0** (vue-dockable-desktop 1.13.0 made the same port). Widgets
+that can leave their panel: a managed floating widget (`injectFloatingWidgets()`) can be docked
+beside its panel, become a tab in its group, or float as a window of its own, and come back, without
+its component being re-created: its state, a canvas and its WebGL context, and a playing `<video>`
+all survive. It stays owned by its panel (`injectPanel()` inside it is still the owner). Its
+placement can be saved and restored, and iframes can be kept from reloading as panels and widgets
+move. rdd 7.11.0 is its two pre-releases (next.0, next.1) plus two fixes; this release ports all of
+it at once. Same names as rdd and vdd, with `ndd` where they say `rdd` / `vdd`. Guide:
+[Widgets out of the panel](https://github.com/felipecarrillo100/angular-dockable-desktop/blob/main/docs/manual/14-widgets-out-of-the-panel.md). Additions only: an app that
+uses none of it sees no change, apart from the points under **Changed**.
+
+### Added
+
+- **`injectFloatingWidgets().move(id, to)` and `.location(id)`: a managed widget can leave its panel
+  and come back.** `to` is a `WidgetTarget`: `{ to: 'docked', position, size? }` beside its owner
+  panel, `{ to: 'tabbed' }` in the owner's group, `{ to: 'floating', rect? }` (without a `rect`,
+  where the widget is on screen, at its size), or `{ to: 'panel' }` back to where it last was in the
+  panel. `location()` reads signals, so it is reactive.
+  - Out of the panel it is a workspace panel of its own, `'<ownerId>/<widgetId>'`, with the widget's
+    title and icon: the user can move, minimise and close it like any other, and it appears in
+    `getOpenPanelIds()`, the taskbar and the panel events, but never in `saveLayout()`.
+  - The component is created once, on its own element, with the overlay's injector, so it keeps
+    its state and every injection from its owner wherever the element goes.
+  - **`move()` returns a `MoveResult`** instead of throwing; a refusal (`not-open`,
+    `owner-not-docked`, `owner-not-kept-alive`, `no-workspace`) changes nothing.
+  - **Closing it in the page closes the widget:** the × on its tab or title bar, its menu's Close,
+    or `closePanel()` on it. So do `close(id)`, `closeAll()` and the owner panel closing. The owner
+    hidden or minimised leaves it out and on screen; `loadLayout()` sends it back into its panel.
+  - New types: `WidgetTarget`, `WidgetLocation` (`'panel' | 'docked' | 'tabbed' | 'floating' |
+    'minimized'`) and `MoveResult`.
+- **`ManagedWidget.canDock` and `.canFloat`:** whether the user may dock or float the widget out of
+  its panel; out of it, they are its panel's rules for drags and drops (with your `canDrop`). Both
+  default to `false`, restrict the user only (`move()` always works), and change with another
+  `open()`.
+- **`ManagedWidget.titleMenu(w)`:** the widget's menu, in your own words. It is given a
+  `WidgetMenuContext` (`{ id, location, canDock, canFloat, move, close }`) and returns
+  `ContextMenuItem[]`, built each time the menu opens.
+  - In the panel, the title icon becomes a button that opens it (`.ndd-panel-float__menu`; a menu
+    glyph without an icon). From the keyboard it opens on the first item.
+  - Out of the panel, the items lead its tab's menu (before Minimize and Close) and its floating ⋮
+    menu (before Close). The built-in Float isn't offered there: your items replace it.
+  - The tab's icon opens the same menu as a right-click on the tab (`.ndd-workspace-tab-icon--menu`,
+    a menu glyph when it has no icon); floating, with a `titleMenu`, so does the title bar's icon
+    (`.ndd-window-title-icon--menu`). Both are `aria-hidden` pointer affordances, like the tab's ×;
+    the keyboard has the tab's menu key and the window's ⋮ button. With your own `nddTabContent`,
+    the tab's icon is yours.
+  - New type: `WidgetMenuContext`.
+- **`injectWidget()`:** inside a managed widget's content (and anything created inside it), the
+  widget's own side; `null` elsewhere. It returns a `WidgetHandle`: `id` and `ownerPanelId`, plain
+  values; `panelId` (its own panel's id while it is out of the panel, else `null`) and `location`,
+  both `Signal`s; `onWillMove(cb)`, just before its element moves to another container, and
+  `onMoved(cb)`, once it is there at its new size. Both return their unsubscribe function and are
+  also unsubscribed when the injecting component or context is destroyed. Neither runs for a close
+  or a refused move. New type: `WidgetHandle`.
+- **`injectFloatingWidgets().placement(id)` and `open(id, { placement })`: a widget opens where it
+  was after a reload.** A `WidgetPlacement` is opaque, versioned, plain JSON, the same as rdd's and
+  vdd's. It records where the widget is in the panel (corner, stretch, docked or free, size) or out
+  of it, with where it goes back to. A free position is kept from its nearest corner and mirrors in
+  RTL. It applies on the first open of an id only; a value that can't be read uses the config's
+  `anchor`, size and `stretch`; a valid one is clamped into the panel, and in a panel with no size
+  yet a free position waits until it is shown. Out of the panel, the widget moves out after it
+  opens; refused, it stays in. `placement()` is `null` for a widget that isn't open. New type:
+  `WidgetPlacement`.
+- **`focusPanel(id, { restore: true })`:** also restores a minimised panel before focusing it, with
+  `restorePanel`'s events. A second overload; `focusPanel(id)` behaves as before.
+- **`updatePanelProps(id, props | (prev) => next)`:** replaces an open panel's props, or derives
+  them. Every input the component declares is set again, `serializable` is re-checked, and
+  `layout:changed` is published. Nothing for a panel that isn't open, or for a managed widget's own
+  panel.
+- **`preserveEmbeds`**, on a panel type's `defaultOptions` and on a managed widget: an `<iframe>`
+  inside doesn't reload when the panel or widget moves. The element is moved with `moveBefore()` in
+  Chrome and Edge 133+ and Firefox 144+; in Safari an iframe reloads as before. Off by default. A
+  widget with it also moves its owner panel's element this way. Because Angular removes a destroyed
+  view's DOM before any destroy hook runs, a state change that can destroy a slot parks the marked
+  elements first (after the action's writes, before change detection) and puts them back after the
+  render; an app that calls `ApplicationRef.tick()` synchronously in the same task renders before
+  the park, and the iframe reloads.
+- **`PanelInfo.owner` and the `PanelOwner` type** (`{ panelId, widgetId }`), on a widget's own
+  panel. Its component is the reserved `'ndd:widget'`: it exists only at runtime, is never written
+  by `saveLayout()` (nor reported as excluded), and a hand-made layout or `initialState` naming one
+  loads without it.
+- **A widget's panel brings its owner's contribution:** while it is the active panel,
+  `injectActiveContribution()` gives the owner's, so the owner's toolbar items and sidebar tabs stay.
+
+### Changed
+
+- **A widget opened with `injectFloatingWidgets().open()` is created by the overlay, at once, on its
+  own element:** `div.ndd-panel-float__content`, the only child of `.ndd-panel-float__body`, with
+  `width: 100%; height: 100%`, instead of by `*ngComponentOutlet` inside the frame on the next
+  render. `open()` now creates the component synchronously. Content laid out with `height: 100%`
+  fills the widget as before, and the body still scrolls. CSS that targets the body's direct child
+  (`.ndd-panel-float__body > …`) no longer matches; drop the `>` or target your own class. The
+  content can no longer inject the frame (`NddFloatingWidget`); `injectPanel()`, the overlay's
+  providers and everything above them resolve as before. Inputs are still set only when they
+  change, and one left out of a re-open is set to `undefined`. `<ndd-floating-widget>` in a
+  template is unchanged.
+- **A managed widget's whole placement now lives in the overlay's store:** docked or free, its free
+  position and its size, as well as the anchor and stretch it held already. Its size is seeded once
+  from `width` / `height`: a re-open with other values no longer resizes a widget the user had not
+  resized.
+- **A pointerdown anywhere in a managed widget's content brings it to the front,** even when the
+  content stops the event's propagation (a map canvas often does).
+- `'panel:opened'` and `'layout:changed'` also fire when a widget moves out of its panel
+  (`component: 'ndd:widget'`), and `'layout:changed'` for `updatePanelProps()`.
+
+### Docs
+
+- A new chapter, **[14. Widgets out of the panel](https://github.com/felipecarrillo100/angular-dockable-desktop/blob/main/docs/manual/14-widgets-out-of-the-panel.md)**,
+  including "Content with its own view" (a map keeps its camera through the move hooks; a chart
+  keeps its visible range on every size change) and the `<video>` note. Updated: the overlay (7),
+  panels (3: `preserveEmbeds`, `updatePanelProps`, reserved `ndd:` keys, a widget's panel menu),
+  layout (4: `focusPanel` restore, `getOpenPanelIds`, the user's rules out of the panel, events),
+  persistence (5), contributions (9), theming (10: a widget's tab content, styling a widget's
+  panel), migration (12) and API reference (13) chapters; the manual index and the README. The M15
+  gate now expects 14 chapters.
+- `PARITY.md`: the rdd 7.11.0 API map, trace and test map, and where ndd differs (§4.4): content
+  created imperatively with the overlay's injector; signals on `WidgetHandle`; a reactive
+  `location()`; `location` inside `onWillMove` during a user's move; the menu glyph on a tab with no
+  icon; the size seeded once; each cache's own hidden store and when `preserveEmbeds` parks.
+- The demo's main map has a **Cameras** table toggle: a managed widget whose title menu docks it
+  below the map, opens it as a tab or floats it, and brings it back; its rows pan the map wherever
+  it is.
+
+### Tests
+
+- Ported from rdd 7.11.0 through vdd 1.13.0, names kept: `test/store/hosted-panels.spec.ts`
+  (HP1–HP8, 23 tests), `test/components/widgets-out.spec.ts` (WO1–WO8, WO17–WO19, WO21; 42),
+  `test/components/widgets-out-menus.spec.ts` (WO9–WO16, WO20, WO22, WO23; 37),
+  `test/core/widget-placement.spec.ts` (WP1–WP6; 11), `test/components/focus-props-embeds.spec.ts`
+  (FE1–FE4; 19), and PO36–PO39 in `test/components/panel-overlay.spec.ts` (11, with a detach probe
+  in PO37). 1,093 tests in all.
+- The M11 browser gate gains six 7.11 sections in real Chrome: managed content fills its body and a
+  press in it raises the widget; out of the panel and back with the same element and state; the
+  title menu in the panel, on the hosted tab and on the floating title bar; `onWillMove` sees the
+  old size and `onMoved` the new one; placement; and `preserveEmbeds` (an iframe that keeps its
+  document). The M13 tour renders a widget out of its panel, so its new classes are swept and
+  axe-checked. The M12 rule accepts the owner lookup on the active contribution.
+
 ## [1.10.0] — 2026-11-18
 
 **Parity: react-dockable-desktop 7.10.1** (rdd 7.10.1 was internal and brought rdd in line with what

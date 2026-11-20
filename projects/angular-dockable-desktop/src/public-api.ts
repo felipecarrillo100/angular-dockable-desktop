@@ -108,7 +108,9 @@ export type {
 export { NddPanelOverlay, NddPanelToolbar, injectFloatingWidgets } from './lib/panel-overlay/panel-overlay';
 export type { FloatingWidgetsApi } from './lib/panel-overlay/panel-overlay';
 export { NddFloatingWidget } from './lib/panel-overlay/floating-widget';
-export type { ManagedWidget } from './lib/panel-overlay/overlay-store';
+export type { ManagedWidget, MoveResult, WidgetLocation, WidgetMenuContext, WidgetPlacement, WidgetTarget } from './lib/panel-overlay/overlay-store';
+export { injectWidget } from './lib/panel-overlay/widget-handle';
+export type { WidgetHandle } from './lib/panel-overlay/widget-handle';
 export {
   NddToolbarButton,
   NddToolbarToggle,
@@ -182,6 +184,7 @@ export type {
   MessageDescriptor,
   MessageFormatter,
   PanelInfo,
+  PanelOwner,
   PanelState,
   SerializedLayout,
   SplitDirection,

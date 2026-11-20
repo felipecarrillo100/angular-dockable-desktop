@@ -20,10 +20,12 @@ import {
   inject,
   input,
   model,
+  output,
   signal,
   untracked,
   viewChild,
 } from '@angular/core';
+import type { WritableSignal } from '@angular/core';
 import type { NddIcon } from '../core/icon';
 import type { FloatAnchor, Label } from '../core/types';
 import { computeResizedRect, startPointerDrag } from '../core/drag-resize';
@@ -47,12 +49,20 @@ import type { PanelFloatPlacement, Stretch } from '../core/stretch';
 import { NddIconView } from '../common/icon';
 import { Workspace } from '../workspace/workspace';
 import { PANEL_OVERLAY } from './overlay-store';
+import type { ManagedPlacement } from './overlay-store';
+import { NddWidgetContentSlot } from './widget-content-slot';
+
+/** A placement field read like a signal and written with `set`, wherever it is kept. */
+interface Field<T> {
+  (): T;
+  set(value: T): void;
+}
 
 const NO_INSETS = { top: 0, bottom: 0, inlineStart: 0, inlineEnd: 0 };
 
 @Component({
   selector: 'ndd-floating-widget',
-  imports: [NddIconView],
+  imports: [NddIconView, NddWidgetContentSlot],
   host: { style: 'display: contents' },
   template: `
     @if (open()) {
@@ -70,7 +80,32 @@ const NO_INSETS = { top: 0, bottom: 0, inlineStart: 0, inlineEnd: 0 };
         (pointercancel)="onPointerCancel()"
       >
         <div class="ndd-panel-float__header" data-ndd-widget-header (pointerdown)="onHeaderDown($event)">
-          @if (icon(); as i) {
+          @if (hasTitleMenu()) {
+            <!--
+              With a titleMenu the icon is a button (7.11). Both handlers stop the event:
+              pointerdown, or the header starts a drag (its pointer capture eats the click); click,
+              or the context menu, which dismisses on a window click, closes again in the click
+              that opened it.
+            -->
+            <button
+              type="button"
+              class="ndd-panel-float__icon ndd-panel-float__menu"
+              [attr.title]="workspace.format(workspace.messages.moreActions)"
+              [attr.aria-label]="workspace.format(workspace.messages.moreActions)"
+              aria-haspopup="menu"
+              data-ndd-widget-menu
+              (pointerdown)="$event.stopPropagation()"
+              (click)="$event.stopPropagation(); titleMenuOpen.emit($event)"
+            >
+              @if (icon(); as i) {
+                <ndd-icon [icon]="i" />
+              } @else {
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+                  <circle cx="12" cy="5" r="2" /><circle cx="12" cy="12" r="2" /><circle cx="12" cy="19" r="2" />
+                </svg>
+              }
+            </button>
+          } @else if (icon(); as i) {
             <span class="ndd-panel-float__icon"><ndd-icon [icon]="i" /></span>
           }
           <span class="ndd-panel-float__title">{{ workspace.format(title()) }}</span>
@@ -89,7 +124,12 @@ const NO_INSETS = { top: 0, bottom: 0, inlineStart: 0, inlineEnd: 0 };
             </svg>
           </button>
         </div>
-        <div class="ndd-panel-float__body"><ng-content /></div>
+        @if (contentEl(); as content) {
+          <!-- A managed widget (7.11): the body shows the widget's own content element. -->
+          <div class="ndd-panel-float__body" [nddWidgetContent]="content" (contentPress)="store?.focus(widgetId())"></div>
+        } @else {
+          <div class="ndd-panel-float__body"><ng-content /></div>
+        }
         @for (dir of dirs(); track dir) {
           <div class="ndd-resize-handle" [class]="'ndd-resize-' + dir" [attr.data-ndd-widget-resize]="dir" (pointerdown)="onResizeDown(dir, $event)"></div>
         }
@@ -118,24 +158,65 @@ export class NddFloatingWidget {
    * and the widget keeps its own.
    */
   readonly placement = model<PanelFloatPlacement>({ anchor: 'top-right', stretch: null });
+  /**
+   * A managed widget's content element (7.11), set by `<ndd-panel-overlay>` for the widgets it
+   * opens: the body shows it instead of projected content, and the whole placement is read from
+   * and written to the overlay's record, so it outlives this frame. `placement` is then unused.
+   * @internal
+   */
+  readonly contentEl = input<HTMLElement | null>(null);
+  /**
+   * A managed widget with a `titleMenu` (7.11): the title icon is a button that emits
+   * `titleMenuOpen`, and the overlay opens the menu. Set by `<ndd-panel-overlay>`.
+   * @internal
+   */
+  readonly hasTitleMenu = input(false);
+  /** @internal The title-menu button was clicked (see `hasTitleMenu`). */
+  readonly titleMenuOpen = output<MouseEvent>();
 
   protected readonly workspace = inject(Workspace) as Workspace<never>;
   protected readonly store = inject(PANEL_OVERLAY, { optional: true });
   private readonly el = viewChild<ElementRef<HTMLElement>>('el');
 
   private readonly isRtl = this.workspace.isRtl;
-  private readonly anchor = computed(() => this.placement().anchor);
-  private readonly stretch = computed(() => this.placement().stretch);
+
+  /**
+   * A managed widget's record in the overlay, or `null` for a widget placed in a template. Read
+   * from the store itself, not through a bound input, so each write of a multi-field gesture (a
+   * drag off a stretched corner writes stretch, then mode, then position) sees the last.
+   */
+  private readonly managed = computed<ManagedPlacement | null>(() =>
+    this.contentEl() && this.store ? (this.store.managedPlacements()[this.widgetId()] ?? null) : null,
+  );
+  private readonly anchor = computed(() => (this.managed() ?? this.placement()).anchor);
+  private readonly stretch = computed(() => (this.managed() ?? this.placement()).stretch);
+
+  /**
+   * One of the fields only a managed widget's record carries, or this frame's own signal
+   * otherwise. Read and written alike either way, so the gesture code does not know the difference.
+   */
+  private field<K extends 'mode' | 'freePos' | 'size', T extends ManagedPlacement[K] | null>(key: K, own: WritableSignal<T>): Field<T> {
+    const read = computed(() => {
+      const managed = this.managed();
+      return managed ? (managed[key] as T) : own();
+    });
+    return Object.assign(() => read(), {
+      set: (value: T) => {
+        if (untracked(this.managed)) this.store!.setManagedPlacement(untracked(this.widgetId), { [key]: value } as Partial<ManagedPlacement>);
+        else own.set(value);
+      },
+    });
+  }
 
   /** `docked` tracks a corner; `free` positions from an explicit box. */
-  private readonly mode = signal<'docked' | 'free'>('docked');
-  private readonly freePos = signal<{ x: number; y: number } | null>(null);
+  private readonly mode = this.field('mode', signal<'docked' | 'free'>('docked'));
+  private readonly freePos = this.field('freePos', signal<{ x: number; y: number } | null>(null));
   /**
    * The widget's own size. Left untouched while an axis is stretched — the render simply stops
    * reading it — so releasing the axis restores the previous size with no bookkeeping.
-   * Seeded from the inputs once they are set.
+   * A template widget's is seeded from the inputs once they are set; a managed one's by the store.
    */
-  private readonly size = signal<{ w: number; h: number } | null>(null);
+  private readonly size = this.field('size', signal<{ w: number; h: number } | null>(null));
   private readonly sized = computed(() => this.size() ?? { w: this.width(), h: this.height() });
   /** Which axes would snap to stretched if the drag ended now. Drives the visual cue. */
   protected readonly snapArmed = signal({ inline: false, block: false });
@@ -188,7 +269,8 @@ export class NddFloatingWidget {
 
   /** The single write path for placement, so a listener never sees a half-applied transition. */
   private applyPlacement(anchor: FloatAnchor, stretch: Stretch | null): void {
-    this.placement.set({ anchor, stretch });
+    if (untracked(this.managed)) this.store!.setManagedPlacement(untracked(this.widgetId), { anchor, stretch });
+    else this.placement.set({ anchor, stretch });
   }
 
   // ── geometry ─────────────────────────────────────────────────────────────
