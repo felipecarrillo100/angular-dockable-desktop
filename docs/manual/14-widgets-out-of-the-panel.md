@@ -311,6 +311,11 @@ move: that render runs before the park, and the iframe reloads.
   `.ndd-panel-float__body`, so a selector on the body's direct child (`.ndd-panel-float__body > …`)
   no longer matches it. Out of the panel, its panel's body is `.ndd-hosted-widget`. See
   [Chapter 10](10-theming.md#styling-by-state-and-by-panel-kind).
+- **That element is the component's host:** the component is created on
+  `div.ndd-panel-float__content`, so its own tag (`<app-table>`) is not in the page. A test or
+  stylesheet that finds the content by the component's selector should use the class instead, or
+  one of your own. The component's `host: { class }` classes are on that element, beside the
+  library's (1.11.1).
 
 ## API summary
 

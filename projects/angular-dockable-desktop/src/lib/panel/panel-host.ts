@@ -228,14 +228,16 @@ export class PanelHost {
     const elementInjector = Injector.create({ providers: [{ provide: PANEL_CONTEXT, useValue: context }], parent: this.injector });
 
     const content = this.dom.contentFor(id);
-    // Per kind (1.7.0); applied on every mount, since a reset content element starts bare.
-    const kindClass = optionsFor(this.workspace.registry, this.workspace.panels()[id])?.className;
-    if (kindClass) content.classList.add(...kindClass.split(/\s+/).filter(Boolean));
     const ref = createComponent(type, {
       environmentInjector: this.environmentInjector,
       elementInjector,
       hostElement: content,
     });
+    // After the component exists: Angular writes its static `host: { class }` as the class
+    // attribute, replacing what the element had (1.11.1). The library's class and the kind's
+    // (1.7.0) are added back beside the component's, on every mount, since a reset element starts bare.
+    const kindClass = optionsFor(this.workspace.registry, this.workspace.panels()[id])?.className;
+    content.classList.add('ndd-panel-content', ...(kindClass ?? '').split(/\s+/).filter(Boolean));
     hosted.inputs = new Set((reflectComponentType(type)?.inputs ?? []).map(i => i.templateName));
     hosted.applied = undefined;
     for (const [k, v] of Object.entries(extra ?? {})) if (hosted.inputs.has(k) && k !== 'panelId') ref.setInput(k, v);
