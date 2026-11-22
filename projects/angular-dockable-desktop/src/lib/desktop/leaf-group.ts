@@ -14,11 +14,13 @@ import { Component, DestroyRef, ElementRef, NgZone, afterNextRender, computed, i
 import { Workspace } from '../workspace/workspace';
 import type { LayoutLeafNode } from '../core/types';
 import { optionsFor } from '../core/panel-options';
+import { isElement } from '../core/dom-context';
 import { NddIconView } from '../common/icon';
 import { NddPanelSlot } from '../panel/panel-slot';
 import { DragDock } from './drag-dock';
 import { NddDropZones } from './drop-zones';
 import { openMenu, panelMenu } from './menus';
+import { injectPopOutMenu } from './pop-out-frame';
 import { EmptyWorkspaceSlot } from './empty-workspace';
 import { TabContentSlot } from './tab-content';
 
@@ -165,6 +167,8 @@ export class NddLeafGroup {
   readonly leaf = input.required<LayoutLeafNode>();
 
   protected readonly workspace = inject(Workspace) as Workspace<never>;
+  /** "Open in new window" (1.12.0), when the workspace has pop-out windows. */
+  private readonly popOutMenu = injectPopOutMenu();
   protected readonly activePanelId = this.workspace.activePanelId;
   protected readonly selectedId = computed(() => this.leaf().activePanelId);
   protected readonly selectedList = computed(() => {
@@ -239,7 +243,7 @@ export class NddLeafGroup {
   /** Which half of a tab the pointer is over decides which side the panel is inserted on. */
   private onTabBarMove(event: PointerEvent): void {
     if (!this.drag.dragging() || event.pointerType === 'touch') return;
-    const tab = event.target instanceof Element ? event.target.closest<HTMLElement>('[data-ndd-tab]') : null;
+    const tab = isElement(event.target) ? event.target.closest<HTMLElement>('[data-ndd-tab]') : null;
     if (!tab) return this.drag.hoverTab(null);
     const rect = tab.getBoundingClientRect();
     this.drag.hoverTab({
@@ -252,7 +256,7 @@ export class NddLeafGroup {
 
   /** The standard panel menu plus what the panel contributed; also a touch long press's menu. */
   protected openTabMenu(id: string): (event: MouseEvent | PointerEvent) => void {
-    return event => openMenu(this.workspace, event, panelMenu(this.workspace, id));
+    return event => openMenu(this.workspace, event, panelMenu(this.workspace, id, this.popOutMenu));
   }
 
   protected focusSelected(): void {

@@ -736,6 +736,20 @@ body.ndd-resizing-col-active * {
   box-shadow: 0 6px 16px color-mix(in srgb, var(--ndd-accent-color) 15%, transparent);
 }
 
+/* A panel in its own window (1.12.0, rdd 7.12.0): the same item, with a small marker in its corner.
+   A <button> (the minimised items are divs here), so its own padding and font go, and the marker
+   is placed against it. */
+.ndd-taskbar-item--popout { overflow: visible; position: relative; padding: 0; font: inherit; }
+.ndd-taskbar-item-popout-marker {
+  position: absolute;
+  top: 2px;
+  inset-inline-end: 2px;
+  display: inline-flex;
+  color: var(--ndd-accent-color);
+  pointer-events: none;
+}
+.ndd-taskbar-item-popout-marker svg { width: 10px; height: 10px; }
+
 /* Minimalist Taskbar Icon-Only & Premium Tooltip Rules */
 .ndd-taskbar-item-icon {
   font-size: 22px !important;
@@ -4202,6 +4216,61 @@ html.ndd-no-animations [class*="ndd-"]::after {
 [dir="rtl"] .ndd-toast           { flex-direction: row-reverse; }
 [dir="rtl"] .ndd-toast__progress { transform-origin: right; }
 
+/* ==========================================================================
+   POP-OUT WINDOWS (1.12.0, rdd 7.12.0)
+   A panel in its own browser window: the library's frame fills the child window's <body>, with a
+   header (icon, title, a "Return to desktop" button) over the panel's slot. The frame is also
+   .ndd-workspace, so what is scoped to the workspace applies there. Its minimum layout is inline as
+   well, so content stays usable without this sheet in the window.
+   ========================================================================== */
+.ndd-popout-frame {
+  position: fixed;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+}
+.ndd-popout-frame__header {
+  flex: 0 0 auto;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 8px;
+  font-size: 12px;
+  background-color: var(--ndd-window-header-bg);
+  border-bottom: 1px solid var(--ndd-window-border);
+}
+.ndd-popout-frame__icon { display: inline-flex; }
+/* A managed widget's window: the icon opens the widget's titleMenu. */
+.ndd-popout-frame__icon--menu {
+  padding: 0;
+  border: 0;
+  background: none;
+  color: inherit;
+  cursor: pointer;
+}
+.ndd-popout-frame__title {
+  flex: 1 1 auto;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+/* The way back: a title-bar button in the skin (.ndd-custom-tab-btn), as a floating window's; its
+   label is the tooltip and the accessible name. The styling hook is this class. */
+.ndd-popout-frame__return { flex: 0 0 auto; }
+.ndd-popout-frame__body {
+  flex: 1 1 auto;
+  min-height: 0;
+  position: relative;
+}
+.ndd-popout-frame__body > .ndd-panel-slot { position: absolute; inset: 0; }
+
+
+/* The app's popoutWrapper (1.12.0): the library adds its host (and, in a pop-out, the element it
+   projects into it) around a panel's content, the frame, a menu and a toast container. Neither is
+   a box, so a wrapper whose template is only <ng-content /> changes no layout. */
+.ndd-popout-wrapper,
+.ndd-popout-wrapper__content { display: contents; }
 /* ==========================================================================
    Structure for zero-unmount persistence
    ==========================================================================

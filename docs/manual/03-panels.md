@@ -46,6 +46,7 @@ panels: {
       keepAlive: true,                // false: destroyed while hidden, see below (1.7.0)
       preserveScroll: true,           // restore scroll offsets after a move
       preserveEmbeds: false,          // true: an <iframe> in it doesn't reload when it moves (1.11.0)
+      canPopOut: false,               // true: it may move into its own browser window (1.12.0)
     },
   },
 }
@@ -60,6 +61,12 @@ An icon (`NddIcon`) takes three forms, so no icon library is imposed: a string o
 (Bootstrap Icons, Font Awesome), a component class rendered with no inputs, or a `TemplateRef`
 for an inline `<svg>`. `<ndd-desktop [defaultPanelIcon]="…">` is the fallback for panels that
 register none.
+
+`canPopOut: true` lets a panel of this type move into its own browser window, for a second
+monitor, with "Open in new window" in its menus or `workspace.popOutPanel(id)`. It needs a
+workspace created with `popOut: true`. Inside, `injectPanel().isPoppedOut()` says when it is out,
+and `injectPanelWindow()` gives the window it is in (1.12.0, rdd 7.12.0;
+[Chapter 15](15-popout-windows.md)).
 
 The keys of `panels` are what `openPanel` and saved layouts name, so keep them stable. Keys
 starting with `ndd:` are the library's: `'ndd:widget'` is the kind of a managed widget's own panel
@@ -391,7 +398,8 @@ injectPanelContextMenu(() => [
 ```
 
 Your items are appended, behind a separator, to the standard menu for the panel's tab, floating
-title bar and taskbar icon (Float / Minimize / Close; the items a panel's registration forbids
+title bar and taskbar icon (Float / Minimize / Close, with "Open in new window" after Float in the tab and
+title-bar menus, not the taskbar's, for a type with `canPopOut`, [Chapter 15](15-popout-windows.md); the items a panel's registration forbids
 are absent). The getter is re-read each time the menu opens, so `disabled` and friends track
 state. Call it in an injection context; it is disposed with the component. Menus are rendered by
 `<ndd-context-menu>` ([chapter 1](01-getting-started.md#the-overlay-hosts)).

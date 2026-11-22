@@ -7,7 +7,7 @@
  *   2  the quick start is the code the consumer smoke proves: the panel and the root component of
  *      `m13-consumer.mjs` appear verbatim in README.md and in manual chapter 1
  *   3  the package README is the root README's user-facing half (scripts/sync-package-readme.mjs)
- *   4  the manual: 14 chapters (13 until 1.11.0 added widgets out of the panel) and an index; every relative link resolves; the API reference
+ *   4  the manual: 15 chapters (13 until 1.11.0 added widgets out of the panel, 14 until 1.12.0 added pop-out windows) and an index; every relative link resolves; the API reference
  *      names every export and type in api-surface.json; the theming chapter's token tables match
  *      the stylesheet's :root tokens in both directions
  *   5  PARITY.md and the migration chapter carry every N-series row; every ADR is indexed
@@ -77,7 +77,7 @@ must(read('projects/angular-dockable-desktop/README.md') === packageReadme(readm
 step('manual');
 const MANUAL = join(ROOT, 'docs/manual');
 const chapters = readdirSync(MANUAL).filter(f => /^\d\d-.*\.md$/.test(f)).sort();
-must(chapters.length === 14, `the manual has ${chapters.length} chapters, not 14`);
+must(chapters.length === 15, `the manual has ${chapters.length} chapters, not 15`);
 must(existsSync(join(MANUAL, 'README.md')), 'the manual has no index');
 const index = existsSync(join(MANUAL, 'README.md')) ? read('docs/manual/README.md') : '';
 for (const c of chapters) must(index.includes(`(${c})`), `the manual index does not link ${c}`);

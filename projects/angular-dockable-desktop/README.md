@@ -123,6 +123,11 @@ anywhere, for menus, the unsaved-changes question, drawers and notifications
 - **Widgets out of the panel** — a widget opened from data can dock beside its panel, become a
   tab or float as a window of its own, and come back, without being re-created; its placement
   saves and restores (see [Widgets out of the panel](https://github.com/felipecarrillo100/angular-dockable-desktop/blob/main/docs/manual/14-widgets-out-of-the-panel.md))
+- **Pop-out windows** — a panel, or a managed widget, can move into its own browser window for a
+  second monitor and come back, still without being re-created: its state and a canvas's WebGL
+  context go with it, and the page's styles follow it there. Opt in with
+  `provideDockableDesktop({ popOut: true })` and `canPopOut` per panel type (see
+  [Pop-out windows](https://github.com/felipecarrillo100/angular-dockable-desktop/blob/main/docs/manual/15-popout-windows.md))
 - **Overlays** — a modal stack with `NddModalRef.afterClosed()`, side drawers, a confirm dialog,
   toasts callable from anywhere, and context menus with a typed custom template
 - **Layout serialisation** — the whole workspace as one JSON string, byte-compatible with rdd
@@ -163,7 +168,7 @@ anywhere, for menus, the unsaved-changes question, drawers and notifications
 | | |
 |---|---|
 | [Live demo](https://felipecarrillo100.github.io/angular-dockable-desktop/) | Every capability in one application, published from `projects/demo` by GitHub Pages on each push to `main` |
-| [`docs/manual/`](https://github.com/felipecarrillo100/angular-dockable-desktop/blob/main/docs/manual/) | The users manual — 14 chapters, starting with [Getting started](https://github.com/felipecarrillo100/angular-dockable-desktop/blob/main/docs/manual/01-getting-started.md) |
+| [`docs/manual/`](https://github.com/felipecarrillo100/angular-dockable-desktop/blob/main/docs/manual/) | The users manual — 15 chapters, starting with [Getting started](https://github.com/felipecarrillo100/angular-dockable-desktop/blob/main/docs/manual/01-getting-started.md) |
 | [`docs/manual/12-migrating.md`](https://github.com/felipecarrillo100/angular-dockable-desktop/blob/main/docs/manual/12-migrating.md) | Coming from react-dockable-desktop or vue-dockable-desktop |
 | [`docs/decisions/`](https://github.com/felipecarrillo100/angular-dockable-desktop/blob/main/docs/decisions/) | Architecture decision records |
 | [`docs/PARITY.md`](https://github.com/felipecarrillo100/angular-dockable-desktop/blob/main/docs/PARITY.md) | The API map to vdd, the test map, and every deliberate divergence (D1–D16, N1–N17) |

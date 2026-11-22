@@ -202,7 +202,36 @@ export interface PanelInfo {
    * the owner panel saves its widgets itself.
    */
   owner?: PanelOwner;
+  /**
+   * Set while the panel is shown in its own browser window (`workspace.popOutPanel`, 1.12.0). Such a
+   * panel is `state: 'floating'` and keeps its floating window entry, which the workspace does not
+   * draw. Runtime only: `saveLayout()` writes the panel where it would come back to (docked in its
+   * place, or floating at its rect), without it, and a loaded layout never has it. (rdd 7.12.0)
+   */
+  poppedOut?: true;
 }
+
+/**
+ * What `workspace.popOutPanel(id)` did (1.12.0, rdd 7.12.0): `{ ok: true }` when its window opened
+ * (or was already open; the panel moves in at once, or once `popoutUrl` has loaded), otherwise why
+ * not, checked in this order:
+ * - `'disabled'`: the workspace was created without `popOut: true`;
+ * - `'no-window'`: no `<ndd-desktop>` is mounted to show it (ndd checks this here, before the rest);
+ * - `'not-open'`: no open panel has this id;
+ * - `'not-allowed'`: the panel's type has no `canPopOut` (for a widget's panel, the widget's rules
+ *   decide);
+ * - (a panel already out stops here: its window comes forward, `{ ok: true }`);
+ * - `'no-gesture'`: the call did not come from a user's activation (a click or key press, or soon
+ *   after one), so no window may open;
+ * - `'blocked'`: the browser's pop-up blocker refused the window;
+ * - `'no-window'`: the window closed or could not be used before the panel moved in;
+ * - `'not-allowed'`: a widget that could not leave its panel after all (its window closes again).
+ *
+ * The panel stays where it was on every refusal.
+ */
+export type PopOutResult =
+  | { ok: true }
+  | { ok: false; reason: 'disabled' | 'not-open' | 'not-allowed' | 'no-gesture' | 'blocked' | 'no-window' };
 
 /** Who a hosted panel belongs to: see {@link PanelInfo.owner}. */
 export interface PanelOwner {

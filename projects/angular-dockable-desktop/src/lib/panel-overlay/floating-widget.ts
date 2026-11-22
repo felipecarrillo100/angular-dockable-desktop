@@ -29,6 +29,7 @@ import type { WritableSignal } from '@angular/core';
 import type { NddIcon } from '../core/icon';
 import type { FloatAnchor, Label } from '../core/types';
 import { computeResizedRect, startPointerDrag } from '../core/drag-resize';
+import { docOf } from '../core/dom-context';
 import type { ResizeDir } from '../core/drag-resize';
 import {
   DOCK_INSET,
@@ -177,6 +178,10 @@ export class NddFloatingWidget {
   protected readonly workspace = inject(Workspace) as Workspace<never>;
   protected readonly store = inject(PANEL_OVERLAY, { optional: true });
   private readonly el = viewChild<ElementRef<HTMLElement>>('el');
+  /** The frame's own `<body>` (the page's, or a pop-out window's, 1.12.0): the drag class goes there. */
+  private frameBody(): HTMLElement {
+    return docOf(this.el()?.nativeElement).body;
+  }
 
   private readonly isRtl = this.workspace.isRtl;
 
@@ -392,7 +397,7 @@ export class NddFloatingWidget {
         this.store?.undock(this.widgetId());
         this.mode.set('free');
       }
-      document.body.classList.add('ndd-dragging-active');
+      this.frameBody().classList.add('ndd-dragging-active');
       this.store?.draggingId.set(this.widgetId());
     }
 
@@ -420,7 +425,7 @@ export class NddFloatingWidget {
       this.store.hovered.set(null);
       this.store.draggingId.set(null);
     }
-    document.body.classList.remove('ndd-dragging-active');
+    this.frameBody().classList.remove('ndd-dragging-active');
     this.drag = null;
   }
 
@@ -429,7 +434,7 @@ export class NddFloatingWidget {
       this.store.hovered.set(null);
       this.store.draggingId.set(null);
     }
-    document.body.classList.remove('ndd-dragging-active');
+    this.frameBody().classList.remove('ndd-dragging-active');
     this.drag = null;
   }
 
@@ -494,7 +499,8 @@ export class NddFloatingWidget {
       startClientX: event.clientX,
       startClientY: event.clientY,
       captureStart: () => start,
-      activeClasses: [{ el: document.body, classes: ['ndd-resizing-active'] }],
+      // On the handle's own body (1.12.0): the page's, or a pop-out window's.
+      activeClasses: [{ el: docOf(event.currentTarget as HTMLElement).body, classes: ['ndd-resizing-active'] }],
       onMove: (dx, dy, from) => {
         // Re-measured every move: the container can change size mid-drag.
         const { cw, ch } = this.containerBounds();

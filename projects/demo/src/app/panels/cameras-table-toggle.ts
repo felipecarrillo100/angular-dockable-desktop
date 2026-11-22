@@ -12,7 +12,8 @@ const ID = 'map-cameras';
  * panel's own constructor sits outside its overlay.
  *
  * The table can leave the map: its title menu docks it below the map, opens it as a tab or floats
- * it, and, out of the panel, brings it back.
+ * it, and, out of the panel, brings it back. "Open in new window" (1.12.0) moves it into its own
+ * browser window; closing that window, or its "Back into the panel" button, puts it back.
  */
 @Component({
   selector: 'dd-cameras-table-toggle',
@@ -47,14 +48,19 @@ export class CamerasTableToggle {
       height: 170,
       canDock: true,
       canFloat: true,
-      titleMenu: w =>
-        w.location === 'panel'
+      // Its own browser window too (1.12.0): there is no built-in item for a widget, so the menu offers it.
+      canPopOut: true,
+      titleMenu: w => [
+        ...(w.location === 'panel'
           ? [
               { label: 'Dock below the map', action: () => w.move({ to: 'docked', position: 'bottom', size: 0.3 }) },
               { label: 'Open as a tab', action: () => w.move({ to: 'tabbed' }) },
               { label: 'Float', action: () => w.move({ to: 'floating' }) },
             ]
-          : [{ label: 'Back into the map', action: () => w.move({ to: 'panel' }) }],
+          : [{ label: 'Back into the map', action: () => w.move({ to: 'panel' }) }]),
+        // The item's action runs inside the click, so it counts as the user's gesture.
+        ...(w.canPopOut && !w.isPoppedOut ? [{ label: 'Open in new window', action: () => void w.popOut() }] : []),
+      ],
     };
   }
 }

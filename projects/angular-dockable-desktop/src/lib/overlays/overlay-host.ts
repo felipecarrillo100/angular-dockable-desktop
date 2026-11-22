@@ -20,6 +20,7 @@ import { NddIconView } from '../common/icon';
 import { PANEL_CONTEXT } from '../panel/panel-ref';
 import type { PanelContext } from '../panel/panel-ref';
 import { Workspace } from '../workspace/workspace';
+import { eventDocument, listenOnDocuments } from '../core/document-registry';
 
 /** What `injectModalRef()` returns inside a modal: close it, with a result. */
 export interface NddModalRef<R = unknown> {
@@ -83,6 +84,8 @@ function createOverlayHost(instance: Signal<OverlayInstance>) {
    */
   const onKeydown = (event: KeyboardEvent) => {
     if (event.key !== 'Escape' || event.defaultPrevented || !dismissible()) return;
+    // Overlays show in the main document: only an Escape pressed there counts (1.12.0).
+    if (eventDocument(event) !== doc) return;
     const self = instance();
     if (self.kind === 'modal') {
       if (overlays.topmostModal()?.id !== self.id) return;
@@ -92,8 +95,9 @@ function createOverlayHost(instance: Signal<OverlayInstance>) {
     event.preventDefault();
     void close();
   };
-  doc.addEventListener('keydown', onKeydown);
-  inject(DestroyRef).onDestroy(() => doc.removeEventListener('keydown', onKeydown));
+  // Through the document registry (1.12.0), like every document-wide Escape listener.
+  const offKeydown = listenOnDocuments('keydown', onKeydown);
+  inject(DestroyRef).onDestroy(offKeydown);
 
   // The content gets the same `injectPanel()` contract a docked panel gets, so one component can
   // be opened as a tab, a floating window, a drawer or a modal without knowing which. Everything

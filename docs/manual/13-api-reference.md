@@ -1,7 +1,7 @@
 # 13. API reference
 
 Every public export of `angular-dockable-desktop`, with the chapter that explains it. The
-package has **61 runtime exports** and **107 exported types**. `api-surface.json` at the
+package has **62 runtime exports** and **110 exported types**. `api-surface.json` at the
 repository root is the machine-readable list, and a standing gate fails if it and
 `public-api.ts` disagree; this chapter was checked against it.
 
@@ -20,13 +20,13 @@ Every component and directive is standalone: import the class into your componen
 | `createWorkspace(config?)` | Creates a `Workspace` outside dependency injection — at module scope, in a test, before `bootstrapApplication`. Live immediately: `openPanel()` works with nothing rendered. [Ch. 1](01-getting-started.md), [ch. 2](02-concepts.md) |
 | `definePanels(panels)` | Marks a panel map so the workspace created from it has a typed `openPanel`: registered names only, `inputs` checked (1.9.0). [Ch. 3](03-panels.md#a-typed-registry-definepanels) |
 | `provideDockableDesktop(configOrWorkspace?)` | Providers for a workspace. Given a `WorkspaceConfig`, creates one for that injector and disposes it with the injector; given a `Workspace`, provides it as-is. Plain providers, so it also works in a component's `providers`. [Ch. 1](01-getting-started.md) |
-| `Workspace` | The workspace class, and its own DI token (`inject(Workspace)`). Signal state (`state()`, `gridRoot()`, `floating()`, `minimized()`, `panels()`, `activePanelId()`, `draggedPanelId()`, `dir()`, `isRtl()`, `contextMenu()`, `activeContribution()`), every action (`openPanel`, `closePanel`, `requestClosePanel`, `focusPanel` (`{ restore: true }` restores a minimised panel first; 1.11.0, [Ch. 4](04-layout.md#programmatic-equivalents)), `floatPanel`, `dockPanel`, `dockPanelToGroup`, `dockPanelToWorkspaceEdge`, `movePanelOrder`, `minimizePanel`, `restorePanel`, `maximizePanel`, `closeLeafGroup`, `updatePanelTitle`, `updatePanelProps` (replace or derive an open panel's inputs; 1.11.0, [Ch. 3](03-panels.md#per-instance-data)), `setPanelDirty`, `setPanelIcon` (a panel's runtime icon, `null` for the registered one; 1.10.0, [Ch. 3](03-panels.md#changing-the-icon)), `setDirection`, `saveLayout`, `loadLayout`, `showContextMenu`, `closeContextMenu`, …), the event bus (`subscribe`, `publish`), and the `registry`, `toolbar`, `contributions` and `overlays` stores. [Ch. 2](02-concepts.md) |
+| `Workspace` | The workspace class, and its own DI token (`inject(Workspace)`). Signal state (`state()`, `gridRoot()`, `floating()`, `minimized()`, `panels()`, `activePanelId()`, `draggedPanelId()`, `dir()`, `isRtl()`, `contextMenu()`, `activeContribution()`), every action (`openPanel`, `closePanel`, `requestClosePanel`, `focusPanel` (`{ restore: true }` restores a minimised panel first; 1.11.0, [Ch. 4](04-layout.md#programmatic-equivalents)), `floatPanel`, `dockPanel`, `dockPanelToGroup`, `dockPanelToWorkspaceEdge`, `movePanelOrder`, `minimizePanel`, `restorePanel`, `maximizePanel`, `closeLeafGroup`, `updatePanelTitle`, `updatePanelProps` (replace or derive an open panel's inputs; 1.11.0, [Ch. 3](03-panels.md#per-instance-data)), `setPanelDirty`, `setPanelIcon` (a panel's runtime icon, `null` for the registered one; 1.10.0, [Ch. 3](03-panels.md#changing-the-icon)), `setDirection`, `saveLayout`, `loadLayout`, `showContextMenu`, `closeContextMenu`, and (1.12.0, [Ch. 15](15-popout-windows.md)) `popOutPanel(id)` → `PopOutResult` inside a user's click, `returnPanel(id)` and `focusPanelWindow(id)` → `{ ok: boolean }`, …), the event bus (`subscribe`, `publish`), and the `registry`, `toolbar`, `contributions` and `overlays` stores. [Ch. 2](02-concepts.md) |
 | `injectWorkspace()` | `inject(Workspace)` with a directed error, instead of `NullInjectorError`, when no workspace is provided. [Ch. 2](02-concepts.md) |
 | `VERSION` | The package version, as a string. |
 
 | Type | |
 |---|---|
-| `WorkspaceConfig` | `panels`, `initialState`, `dir`, `formatMessage`, `messages`, `defaultSplitRatio`, `defaultEdgeSplitRatio` (clamped 0.1–0.9), `zIndexBase` (default 1000), `classes`, `canDrop` (veto where users can move panels, 1.8.0; [Ch. 4](04-layout.md#controlling-where-users-can-move-panels)). [Ch. 1](01-getting-started.md) |
+| `WorkspaceConfig` | `panels`, `initialState`, `dir`, `formatMessage`, `messages`, `defaultSplitRatio`, `defaultEdgeSplitRatio` (clamped 0.1–0.9), `zIndexBase` (default 1000), `classes`, `canDrop` (veto where users can move panels, 1.8.0; [Ch. 4](04-layout.md#controlling-where-users-can-move-panels)), `popOut` (`true` lets panels move into their own browser window, 1.12.0; set once, not kept on `workspace.config`; [Ch. 15](15-popout-windows.md)). [Ch. 1](01-getting-started.md) |
 | `WorkspaceState` | The live state: `gridRoot`, `floating`, `minimized`, `panels`, `activePanelId`, `draggedPanelId`, `dir`, `isRtl`, `splitRatio`, `edgeSplitRatio`. Frozen in development. [Ch. 2](02-concepts.md) |
 | `TypedWorkspace` | What `createWorkspace({ panels: definePanels(…) })` returns: a `Workspace` whose `openPanel` is typed from the map (1.9.0). [Ch. 3](03-panels.md#a-typed-registry-definepanels) |
 | `PanelMap` | A panel map marked by `definePanels` (1.9.0). |
@@ -34,23 +34,26 @@ Every component and directive is standalone: import the class into your componen
 | `PanelDefinition` | One catalogue entry: `{ component }` or `{ loadComponent }`, with optional `defaultOptions`. [Ch. 3](03-panels.md) |
 | `OpenPanelOptions` | `openPanel()` options: `title`, `initialTarget`, `anchor`, `focus`, `inputs`, `dedupeKey`. `inputs` is saved in the layout under `props`. [Ch. 3](03-panels.md) |
 | `HostClasses` | Your own classes for library chrome: `window`, `windowBody`, `modal`, `modalBody`, `sidePanel`, `sidePanelBody`. [Ch. 10](10-theming.md) |
-| `BuiltInEvents` | Events the library publishes: `panel:opened`, `panel:closed`, `panel:minimized`, `panel:restored`, `panel:activated`, `layout:changed`, `layout:panels-excluded`. Merged with your own event map. [Ch. 2](02-concepts.md), [ch. 5](05-persistence.md) |
+| `BuiltInEvents` | Events the library publishes: `panel:opened`, `panel:closed`, `panel:minimized`, `panel:restored`, `panel:activated`, `layout:changed`, `layout:panels-excluded`, and (1.12.0) `panel:popping-out`, `panel:popped-out` (`{ id, window }`), `panel:returning`, `panel:returned` ([Ch. 15](15-popout-windows.md#events)). Merged with your own event map. [Ch. 2](02-concepts.md), [ch. 5](05-persistence.md) |
 
 ## Panels
 
 | Export | |
 |---|---|
 | `injectPanel()` | The panel's view of itself, as a `PanelRef`. Outside a container it reports a `'standalone'` panel and its actions warn in development instead of throwing. [Ch. 3](03-panels.md) |
+| `injectPanelWindow()` | The `window` and `document` the panel is shown in, as a `Signal<PanelWindow>`: a pop-out's while it is in its own window, else the main ones; the main ones outside a workspace panel too (1.12.0). [Ch. 15](15-popout-windows.md#code-in-a-pop-out-window) |
 | `PanelRegistry` | The panel catalogue class (`register`, `registerLazy`, `get`, `has`, `keys`, `resolve`). Every workspace has one as `ws.registry`; constructing your own is rarely needed. [Ch. 3](03-panels.md) |
 | `isSerializable(value)` | Whether a value round-trips through JSON — the check `saveLayout()` applies to each panel's `props`. [Ch. 5](05-persistence.md) |
 
 | Type | |
 |---|---|
-| `PanelRef` | What `injectPanel()` returns: `id`; signals `title`, `isActive`, `isMinimized`, `isFloating`, `containerType`, `size`, `dirty`; `setTitle`, `setIcon`, `setDirty`, `close`, `minimize`, `onBeforeClose`, `onSaveState`, `trackDirty`. [Ch. 3](03-panels.md) |
+| `PanelRef` | What `injectPanel()` returns: `id`; signals `title`, `isActive`, `isMinimized`, `isFloating`, `containerType`, `size`, `dirty`; `setTitle`, `setIcon`, `setDirty`, `close`, `minimize`, `onBeforeClose`, `onSaveState`, `trackDirty`; and `isPoppedOut`, a signal (1.12.0). [Ch. 3](03-panels.md) |
+| `PanelWindow` | `{ window, document }`: what `injectPanelWindow()` gives (1.12.0). [Ch. 15](15-popout-windows.md#code-in-a-pop-out-window) |
+| `PopOutResult` | `{ ok: true }` or `{ ok: false, reason }`, `reason` one of `'disabled'`, `'not-open'`, `'not-allowed'`, `'no-gesture'`, `'blocked'`, `'no-window'`: what `popOutPanel` and `injectFloatingWidgets().popOut` did (1.12.0). [Ch. 15](15-popout-windows.md#from-code-popoutpanel-and-returnpanel) |
 | `PanelRegistryEntry` | A registered panel kind: `component` or `loadComponent`, plus `defaultOptions`. [Ch. 3](03-panels.md) |
-| `PanelDefaultOptions` | Per-kind defaults: `title`, `icon`, `initialTarget`, `favoritePosition`, `defaultAnchor`, `canClose`, `canMinimize`, `canDrag`, `disableLivePreview`, `preserveScroll`, `preserveEmbeds` (an iframe in it doesn't reload when it moves; 1.11.0). [Ch. 3](03-panels.md#keeping-an-iframe-alive-preserveembeds) |
+| `PanelDefaultOptions` | Per-kind defaults: `title`, `icon`, `initialTarget`, `favoritePosition`, `defaultAnchor`, `canClose`, `canMinimize`, `canDrag`, `disableLivePreview`, `preserveScroll`, `preserveEmbeds` (an iframe in it doesn't reload when it moves; 1.11.0), `canPopOut` (it may move into its own browser window; 1.12.0, [Ch. 15](15-popout-windows.md)). [Ch. 3](03-panels.md#keeping-an-iframe-alive-preserveembeds) |
 | `PanelLoader` | A lazy panel loader, `() => Promise<Type \| { default: Type }>` — the router's `loadComponent` shape. [Ch. 3](03-panels.md) |
-| `PanelInfo` | Everything the workspace knows about one open panel: `id`, `title`, `component`, `state`, `props`, `serializable`, `dirty`, restore targets, `dedupeKey`, `icon` (the runtime icon from `setPanelIcon`, never saved; 1.10.0), `owner` (set on a managed widget's own panel; 1.11.0). [Ch. 2](02-concepts.md) |
+| `PanelInfo` | Everything the workspace knows about one open panel: `id`, `title`, `component`, `state`, `props`, `serializable`, `dirty`, restore targets, `dedupeKey`, `icon` (the runtime icon from `setPanelIcon`, never saved; 1.10.0), `owner` (set on a managed widget's own panel; 1.11.0), `poppedOut` (`true` while it is in its own browser window, runtime only; 1.12.0). [Ch. 2](02-concepts.md) |
 | `PanelOwner` | `{ panelId, widgetId }`: whose a managed widget's own panel is, as `PanelInfo.owner`; its `component` is the reserved `'ndd:widget'` (1.11.0). [Ch. 14](14-widgets-out-of-the-panel.md#things-to-know) |
 | `PanelState` | `'docked' \| 'floating' \| 'minimized'`. |
 | `ContainerType` | Where a panel is rendered: `'dockable-panel'`, `'floating-window'`, `'modal'`, `'left-panel'`, `'right-panel'`, `'standalone'`. [Ch. 3](03-panels.md) |
@@ -87,6 +90,8 @@ The workspace itself: grid, floating windows, taskbar, drag-and-dock. Mount one 
 | `animations` | input, default `true` | The library's own transitions. [Ch. 10](10-theming.md) |
 | `taskbar` | input, `TaskbarVisibility`, default `'always'` | When the minimised-panel taskbar shows. |
 | `defaultPanelIcon` | input, `NddIcon` | Fallback icon for panels that register none. |
+| `popoutUrl` | input, `string` | The page a pop-out window opens: a same-origin page of the app, resolved against `document.baseURI`; blank without it (1.12.0). [Ch. 15](15-popout-windows.md#the-page-the-window-opens-popouturl) |
+| `popoutWrapper` | input, `Type<PopoutWrapper>` | A component around every panel's content (and, in a pop-out, its frame, menu and toasts), given the `window` and `document` it is in; its `providers` reach the content. Read when each panel is created (1.12.0). [Ch. 15](15-popout-windows.md#css-in-js-needs-popoutwrapper) |
 | `taskbarContextMenu` | output, `{ panelId, event }` | A right-click or long press on a taskbar icon, emitted after the library has opened its own menu. |
 | `NddEmptyWorkspaceTemplate` | content, `<ng-template nddEmptyWorkspace>` | Your view while no panel is docked, in place of the built-in message (1.7.0). [Ch. 10](10-theming.md#your-own-empty-workspace-view) |
 | `NddTabContentTemplate` | content, `<ng-template nddTabContent let-tab>` | Your own content for each grid tab, given a `TabContentProps` (1.9.0). [Ch. 10](10-theming.md#your-own-tab-content) |
@@ -95,6 +100,7 @@ The workspace itself: grid, floating windows, taskbar, drag-and-dock. Mount one 
 |---|---|
 | `TabContentProps` | What `let-tab` is: `panelId`, `component`, `title` (formatted), `icon` (the runtime one, else the registration's, or `undefined`; 1.10.0), `dirty`, `selected`, `focused` (1.9.0). [Ch. 10](10-theming.md#your-own-tab-content) |
 | `TabContentContext` | The template context: `{ $implicit: TabContentProps }` (1.9.0). |
+| `PopoutWrapper` | What the `popoutWrapper` component implements: the inputs `window` and `document`, as signals (1.12.0). [Ch. 15](15-popout-windows.md#css-in-js-needs-popoutwrapper) |
 | `TaskbarVisibility` | `'always'` (a permanent strip), `'compact'` (only while something is minimised), `'autohide'` (an overlay collapsed to a peek strip). |
 
 ## Sidebar and toolbar
@@ -325,19 +331,19 @@ The root for one panel's own toolbars and widgets; also renders the widgets open
 
 | Export | |
 |---|---|
-| `injectFloatingWidgets()` | Open and close widgets by id from data (one per selected feature, say): `openIds`, `open(id, ManagedWidget)`, `close`, `closeAll`, `isOpen`; and (1.11.0) `move(id, WidgetTarget)` → `MoveResult`, `location(id)` (reactive) and `placement(id)`, which take one out of its panel and back and save where it is. Needs the overlay's injector. [Ch. 7](07-panel-overlay.md#widgets-from-data), [Ch. 14](14-widgets-out-of-the-panel.md) |
+| `injectFloatingWidgets()` | Open and close widgets by id from data (one per selected feature, say): `openIds`, `open(id, ManagedWidget)`, `close`, `closeAll`, `isOpen`; and (1.11.0) `move(id, WidgetTarget)` → `MoveResult`, `location(id)` (reactive) and `placement(id)`, which take one out of its panel and back and save where it is; and (1.12.0) `popOut(id)` → `PopOutResult`, into its own browser window ([Ch. 15](15-popout-windows.md#widgets-in-their-own-window)). Needs the overlay's injector. [Ch. 7](07-panel-overlay.md#widgets-from-data), [Ch. 14](14-widgets-out-of-the-panel.md) |
 | `injectWidget()` | Inside a managed widget's content: a `WidgetHandle`, or `null` elsewhere (1.11.0). [Ch. 14](14-widgets-out-of-the-panel.md#the-widgets-own-side-injectwidget) |
 
 | Type | |
 |---|---|
 | `FloatingWidgetsApi` | What `injectFloatingWidgets()` returns. |
-| `ManagedWidget` | A widget opened from data: `title`, `icon`, `component`, `inputs`, and first-open seeds `anchor`, `width`, `height`, `stretch`; and (1.11.0) `canDock`, `canFloat`, `titleMenu`, `placement`, `preserveEmbeds`. |
+| `ManagedWidget` | A widget opened from data: `title`, `icon`, `component`, `inputs`, and first-open seeds `anchor`, `width`, `height`, `stretch`; and (1.11.0) `canDock`, `canFloat`, `titleMenu`, `placement`, `preserveEmbeds`; and (1.12.0) `canPopOut`. |
 | `WidgetTarget` | Where `move()` takes a widget: `{ to: 'docked', position, size? }`, `{ to: 'tabbed' }`, `{ to: 'floating', rect? }`, `{ to: 'panel' }` (1.11.0). [Ch. 14](14-widgets-out-of-the-panel.md#moving-it-move-and-location) |
 | `WidgetLocation` | `'panel' \| 'docked' \| 'tabbed' \| 'floating' \| 'minimized'` (1.11.0). |
 | `MoveResult` | `{ ok: true }` or `{ ok: false, reason: 'not-open' \| 'owner-not-docked' \| 'owner-not-kept-alive' \| 'no-workspace' }` (1.11.0). |
-| `WidgetMenuContext` | What a `titleMenu` receives: `id`, `location`, `canDock`, `canFloat`, `move`, `close` (1.11.0). |
+| `WidgetMenuContext` | What a `titleMenu` receives: `id`, `location`, `canDock`, `canFloat`, `move`, `close` (1.11.0); `canPopOut`, `isPoppedOut`, `popOut()` (1.12.0). |
 | `WidgetPlacement` | A widget's saved placement, opaque versioned JSON shared with rdd and vdd: `{ v: 1 } & Record<string, unknown>` (1.11.0). [Ch. 14](14-widgets-out-of-the-panel.md#saving-and-restoring-placement) |
-| `WidgetHandle` | What `injectWidget()` returns: `id`, `ownerPanelId`; signals `panelId`, `location`; `onWillMove`, `onMoved` (1.11.0). |
+| `WidgetHandle` | What `injectWidget()` returns: `id`, `ownerPanelId`; signals `panelId`, `location`; `onWillMove`, `onMoved` (1.11.0); the signal `isPoppedOut` (1.12.0). |
 | `PanelFloatPlacement` | `{ anchor: FloatAnchor, stretch: Stretch \| null }`. |
 | `Stretch` | `'width' \| 'height' \| 'both'` — the axes a widget spans. |
 | `ToolbarVariant` | `'transparent' \| 'frosted' \| 'solid'`. |
@@ -380,7 +386,7 @@ What the active panel publishes into the application's own toolbar and sidebar.
 | `Label` | `string \| MessageDescriptor` — accepted wherever the library shows text. |
 | `MessageDescriptor` | `{ id, defaultMessage?, values? }`. |
 | `MessageFormatter` | `(descriptor) => string` — `WorkspaceConfig.formatMessage`, the whole i18n surface. |
-| `MessageKey` | A key of `defaultMessages`. |
+| `MessageKey` | A key of `defaultMessages`. 1.12.0 added `popOutWindow`, `returnToDesktop`, `backIntoPanel`, `popOutBlocked` and `inOwnWindow` ([Ch. 12](12-migrating.md#new-message-keys-in-1120)). |
 
 ## Theming and icons
 

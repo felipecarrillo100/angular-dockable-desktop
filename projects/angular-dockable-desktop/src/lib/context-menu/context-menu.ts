@@ -46,6 +46,9 @@ import type {
 } from '../core/context-menu';
 import { NddIconView } from '../common/icon';
 import { NddPortal } from '../common/portal';
+import { NddPopoutWrap } from '../common/popout-wrap';
+import { docOf, isNode, winOf } from '../core/dom-context';
+import { eventDocument, listenOnDocuments } from '../core/document-registry';
 
 /** What a custom menu template receives. */
 export interface NddContextMenuContext {
@@ -78,7 +81,7 @@ const SUBMENU_CLOSE_MS = 200;
 
 @Component({
   selector: 'ndd-context-menu',
-  imports: [NgTemplateOutlet, NddIconView, NddPortal],
+  imports: [NgTemplateOutlet, NddIconView, NddPortal, NddPopoutWrap],
   template: `
     @if (request(); as req) {
       @if (custom(); as custom) {
@@ -93,8 +96,12 @@ const SUBMENU_CLOSE_MS = 200;
           }"
         />
       } @else {
+        <!-- The app's popoutWrapper (1.12.0) around a menu shown in a pop-out, with that window:
+             its items' icons get what the wrapper provides there. Not in the main window. Found by
+             the menu's document: this host is mounted beside the desktop, not inside it. -->
+        <ng-container *nddPopoutWrap="req.container">
         <div
-          nddPortal
+          [nddPortal]="req.container"
           #root
           class="ndd-context-menu"
           [class]="'ndd-context-menu--' + theme()"
@@ -194,7 +201,7 @@ const SUBMENU_CLOSE_MS = 200;
 
         @if (openSubmenu() !== null && submenuItems().length) {
           <div
-            nddPortal
+            [nddPortal]="req.container"
             #submenuRoot
             class="ndd-context-menu ndd-context-menu--submenu"
             [class]="'ndd-context-menu--' + theme()"
@@ -240,6 +247,7 @@ const SUBMENU_CLOSE_MS = 200;
             }
           </div>
         }
+        </ng-container>
       }
     }
   `,
@@ -266,6 +274,8 @@ export class NddContextMenu {
   private closeTimer: ReturnType<typeof setTimeout> | undefined;
   /** Where focus was before the menu opened, to return it on Escape. */
   private returnFocus: HTMLElement | null = null;
+  /** The document the open menu shows in: the main one, or a pop-out window's (1.12.0). */
+  private menuDoc: Document = this.doc;
 
   protected readonly isSeparator = isSeparator;
   protected readonly isSubMenu = isSubMenu;
@@ -283,48 +293,59 @@ export class NddContextMenu {
   constructor() {
     const onOutside = (event: Event) => this.onOutside(event);
     const onKey = (event: KeyboardEvent) => {
-      // Escape anywhere closes; everything else is handled on the menu element itself.
-      if (event.key === 'Escape' && !this.root()?.nativeElement.contains(event.target as Node)) {
+      // Escape anywhere in the menu's own document closes (1.12.0: an Escape in another window
+      // leaves it open); everything else is handled on the menu element itself.
+      if (event.key !== 'Escape' || eventDocument(event) !== this.menuDoc) return;
+      if (!this.root()?.nativeElement.contains(event.target as Node)) {
         event.stopPropagation();
         this.close(true);
       }
     };
-    let listening = false;
+    let stopListening: (() => void) | null = null;
+    const stop = () => {
+      stopListening?.();
+      stopListening = null;
+    };
     effect(() => {
       const req = this.request();
       untracked(() => {
         if (req) {
-          this.returnFocus = (this.doc.activeElement as HTMLElement | null) ?? null;
+          // The document the menu shows in, chosen per open (1.12.0): its opening event's.
+          this.menuDoc = this.custom() ? docOf(this.host.nativeElement) : req.container ? docOf(req.container) : this.doc;
+          this.returnFocus = (this.menuDoc.activeElement as HTMLElement | null) ?? null;
           this.position.set({ x: req.x, y: req.y });
           this.openSubmenu.set(null);
           // Pull the menu back inside the viewport once it has a size, then move focus in.
           afterNextRender(() => this.settle(req.x, req.y, req.initialFocus), { injector: this.injector });
-          if (!listening) {
-            // Two dismissal listeners, because one is not enough: `pointerdown` in the capture
-            // phase runs before any canvas or map gesture handler can swallow it, and a bubbled
-            // `click` on window survives a `stopPropagation` on pointerdown, which WebGL
-            // canvases commonly do. rdd learned this against real mapping libraries.
-            this.doc.addEventListener('pointerdown', onOutside, { capture: true });
-            this.doc.defaultView?.addEventListener('click', onOutside);
-            this.doc.addEventListener('keydown', onKey);
-            listening = true;
+          // Two dismissal listeners, because one is not enough: `pointerdown` in the capture
+          // phase runs before any canvas or map gesture handler can swallow it, and a bubbled
+          // `click` on window survives a `stopPropagation` on pointerdown, which WebGL
+          // canvases commonly do. rdd learned this against real mapping libraries. Both on the
+          // main document and on the menu's own, when that is another window's (1.12.0).
+          stop();
+          const docs = this.menuDoc === this.doc ? [this.doc] : [this.doc, this.menuDoc];
+          for (const d of docs) {
+            d.addEventListener('pointerdown', onOutside, { capture: true });
+            d.defaultView?.addEventListener('click', onOutside);
           }
+          // Escape through the document registry, answered only in the menu's document.
+          const offKey = listenOnDocuments('keydown', onKey);
+          stopListening = () => {
+            for (const d of docs) {
+              d.removeEventListener('pointerdown', onOutside, { capture: true });
+              d.defaultView?.removeEventListener('click', onOutside);
+            }
+            offKey();
+          };
         } else {
           this.openSubmenu.set(null);
-          if (listening) {
-            this.doc.removeEventListener('pointerdown', onOutside, { capture: true });
-            this.doc.defaultView?.removeEventListener('click', onOutside);
-            this.doc.removeEventListener('keydown', onKey);
-            listening = false;
-          }
+          stop();
         }
       });
     });
     inject(DestroyRef).onDestroy(() => {
       this.clearTimers();
-      this.doc.removeEventListener('pointerdown', onOutside, { capture: true });
-      this.doc.defaultView?.removeEventListener('click', onOutside);
-      this.doc.removeEventListener('keydown', onKey);
+      stop();
     });
   }
 
@@ -332,7 +353,8 @@ export class NddContextMenu {
     const el = this.root()?.nativeElement;
     if (!el) return;
     const box = el.getBoundingClientRect();
-    const view = this.doc.defaultView;
+    // Fitted to the window the menu is shown in (1.12.0).
+    const view = winOf(el);
     this.position.set(
       clampToViewport(
         { x, y },
@@ -365,7 +387,7 @@ export class NddContextMenu {
     const target = event.target;
     // `contains()` throws for a non-Node, and an event target need not be one (a click
     // dispatched on window). If we cannot tell it was inside, it was not the menu: close.
-    if (!(target instanceof Node)) return this.close();
+    if (!isNode(target)) return this.close();
     if (
       this.root()?.nativeElement.contains(target) ||
       this.submenuRoot()?.nativeElement.contains(target) ||
@@ -428,7 +450,7 @@ export class NddContextMenu {
   /** Open a submenu beside its parent item — rightwards under LTR, leftwards under RTL. */
   private openSubmenuAt(index: number, el: HTMLElement, focusFirst = false): void {
     const box = el.getBoundingClientRect();
-    const width = this.doc.defaultView?.innerWidth ?? 1024;
+    const width = winOf(el)?.innerWidth ?? 1024;
     this.submenuPosition.set(
       this.workspace.isRtl()
         ? { x: width - box.left + 2, y: box.top }
@@ -456,7 +478,7 @@ export class NddContextMenu {
   protected onMenuKey(event: KeyboardEvent, inSubmenu: boolean): void {
     const menu = event.currentTarget as HTMLElement;
     const items = this.items(menu);
-    const current = items.indexOf(this.doc.activeElement as HTMLElement);
+    const current = items.indexOf(docOf(menu).activeElement as HTMLElement);
     const focus = (i: number) =>
       items[(i + items.length) % items.length]?.focus({ preventScroll: true });
     const rtl = this.workspace.isRtl();

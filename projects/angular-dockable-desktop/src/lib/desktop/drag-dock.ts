@@ -25,6 +25,7 @@ import { Workspace } from '../workspace/workspace';
 import { flipZoneHorizontal } from '../core/anchor-geometry';
 import { isDropAllowed } from '../core/dock-rules';
 import { findLeaf } from '../core/layout-tree';
+import { isHTMLElement } from '../core/dom-context';
 import type { DropPosition, FloatAnchor, PanelDropTarget, SplitDirection } from '../core/types';
 
 /** How far a mouse must move before a press becomes a drag. */
@@ -132,7 +133,7 @@ export class DragDock {
     let foundEdge = false;
     let foundTab = false;
     for (const el of elements) {
-      if (!(el instanceof HTMLElement)) continue;
+      if (!isHTMLElement(el)) continue;
       const d = el.dataset;
       if (!foundZone && d['nddDropZone'] && d['nddLeaf']) {
         this.zoneTarget.set({ leafId: d['nddLeaf'], position: d['nddDropZone'] as DropPosition });

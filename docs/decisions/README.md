@@ -20,3 +20,4 @@
 | [0016](0016-brand-surfaces-and-corners.md) | Brand surfaces and corner scale: derived, guarded, never declared by the library |
 | [0017](0017-frost-on-a-pseudo-element.md) | Frost on a pseudo-element; the sidebar and toasts follow the workspace into RTL |
 | [0018](0018-opt-in-unmount-while-hidden.md) | Opt-in destroy while hidden (`keepAlive: false`); amends 0002 for kinds that opt in |
+| [0019](0019-popout-windows.md) | Pop-out windows: zone.js patched per window, the desktop owns them, the wrapper is a component type with its context by injection (1.12.0) |

@@ -20,11 +20,16 @@ import type { Workspace } from '../workspace/workspace';
 import type { ContextMenuItem } from '../core/context-menu';
 import type { WidgetHandle } from './widget-handle';
 import type { PanelDomCache } from '../panel/panel-dom';
-import type { HostedPanelPlacement, Label, LayoutNode, PanelInfo } from '../core/types';
+import type { HostedPanelPlacement, Label, LayoutNode, PanelInfo, PopOutResult } from '../core/types';
+import type { Signal } from '@angular/core';
+import type { PopOutWindows } from '../core/pop-out-windows';
+import { mainWindow } from '../panel/panel-window';
+import type { PanelWindow } from '../panel/panel-window';
 import { optionsFor } from '../core/panel-options';
 import { findLeafForPanel } from '../core/layout-tree';
 import type { ManagedWidget, MoveResult, WidgetLocation, WidgetTarget } from './overlay-store';
 import type { OutTarget } from '../core/widget-placement';
+import { rafOf, resizeObserverFor } from '../core/dom-context';
 
 /** A widget's own capabilities, as its hosted panel's options (7.11, M4). Both `false` unless set. */
 const capabilities = (widget: ManagedWidget): { canFloat: boolean; canDock: boolean } => ({
@@ -47,7 +52,8 @@ export function containerKey(
 ): string {
   const panel = hostedId ? state.panels[hostedId] : undefined;
   if (!hostedId || !panel) return 'panel';
-  if (panel.state === 'floating') return 'floating';
+  // In its own browser window (1.12.0): still 'floating' (its panel is), but another container.
+  if (panel.state === 'floating') return panel.poppedOut ? 'floating|out' : 'floating';
   if (panel.state === 'minimized') return 'minimized';
   const leaf = findLeafForPanel(state.gridRoot, hostedId);
   return `${leaf === findLeafForPanel(state.gridRoot, ownerId) ? 'tabbed' : 'docked'}|${leaf ?? ''}`;
@@ -75,6 +81,10 @@ interface Hosted {
   key: string;
   /** Where the last `move()` took it (M6): what `placement()` reports for a docked one. */
   target: WidgetTarget;
+  /** Its window is closing to bring it back into its panel (1.12.0): its panel's steps until then are not moves. */
+  returning?: boolean;
+  /** Stops waiting for its window (`settledInWindow`). */
+  awaiting?: () => void;
 }
 
 type Kind = 'will' | 'moved';
@@ -97,12 +107,16 @@ export class WidgetHosting {
    * outside any panel. Read when needed: the owner can't change for the overlay's life.
    */
   private readonly ownerId: string | null;
+  /** Widgets already warned about `canPopOut` on a workspace without `popOut` (1.12.0). */
+  private readonly warned = new Set<string>();
 
   constructor(
     private readonly store: HostingStore,
     private readonly ws: Workspace<never> | null,
     private readonly dom: PanelDomCache | null,
     contextId: string | null,
+    /** The desktop's pop-out windows (1.12.0); null outside an `<ndd-desktop>`. */
+    private readonly popOuts: PopOutWindows | null = null,
   ) {
     this.ownerId = contextId;
     this.ownerPanelId = ws && contextId && untracked(ws.state).panels[contextId] ? contextId : null;
@@ -150,12 +164,17 @@ export class WidgetHosting {
       const key = containerKey(state, entry.panelId, ownerId);
       if (key === entry.key || key.endsWith('|')) continue;
       entry.key = key;
+      // On its way back into its panel from its window: `returning` fired onWillMove already.
+      if (entry.returning) continue;
       if (this.moving.has(id)) continue;
       this.moving.add(id);
       this.fire(id, 'will');
+      // Into its own window (1.12.0): settled once its element is there (`panel:popped-out`).
+      const intoWindow = key === 'floating|out';
+      if (intoWindow) this.settledInWindow(id, entry.panelId);
       queueMicrotask(() => {
         this.moving.delete(id);
-        if (this.hosted.has(id)) this.settled(id);
+        if (!intoWindow && this.hosted.has(id)) this.settled(id);
       });
     }
   }
@@ -179,8 +198,91 @@ export class WidgetHosting {
       id,
       location: this.location(id) ?? 'panel',
       ...capabilities(widget),
+      canPopOut: widget.canPopOut === true && !!this.ws?.popOutEnabled,
+      isPoppedOut: this.isPoppedOut(id),
+      popOut: () => this.popOut(id),
       move: to => this.move(id, to),
       close: () => this.store.closeManaged(id),
+    });
+  }
+
+  /** Whether a widget is in its own browser window now (1.12.0). Reactive. */
+  isPoppedOut(id: string): boolean {
+    const panelId = this.hostedIds()[id];
+    return !!panelId && this.ws?.panels()[panelId]?.poppedOut === true;
+  }
+
+  /**
+   * Into its own browser window (1.12.0, rdd 7.12.0): from the panel it leaves it first (into its
+   * own floating panel), as one step; from docked, tabbed, floating or minimised its panel pops
+   * out. The checks come first, so a refusal changes nothing; then the window opens, still inside
+   * the user's click (nothing here waits), and only then does the widget move.
+   */
+  popOut(id: string): PopOutResult {
+    const { ws, dom, ownerId, popOuts } = this;
+    if (!ws) return { ok: false, reason: 'disabled' };
+    if (!ws.popOutEnabled) return ws.popOutPanel(id); // 'disabled', with its development warning
+    const widget = untracked(this.store.managed).get(id);
+    const el = this.store.contentOf(id);
+    if (!widget || !el) return { ok: false, reason: 'not-open' };
+    const owner = ownerId ? untracked(ws.state).panels[ownerId] : undefined;
+    // Its own opt-in; and a workspace panel to take it out of, whose content stays mounted.
+    if (!widget.canPopOut || !dom || !ownerId || !owner || owner.owner || optionsFor(ws.registry, owner)?.keepAlive === false) {
+      return { ok: false, reason: 'not-allowed' };
+    }
+    // No desktop to show a window's content.
+    if (!popOuts) return { ok: false, reason: 'no-window' };
+    const current = this.hosted.get(id);
+    if (current) return popOuts.popOut(current.panelId, { prepare: () => true });
+    // Still in the panel: the window opens over where the widget is, on its owner's window's screen.
+    const root = this.store.container();
+    const frame = root
+      ? [...root.querySelectorAll<HTMLElement>('[data-ndd-widget]')].find(f => f.getAttribute('data-ndd-widget') === id)
+      : undefined;
+    const r = frame?.getBoundingClientRect();
+    return popOuts.popOut(`${ownerId}/${id}`, {
+      rect: r && r.width > 0 ? { left: r.left, top: r.top, width: r.width, height: r.height } : null,
+      // Measured in its owner's window, which may be a pop-out of its own (rdd 7.12.1).
+      view: frame?.ownerDocument.defaultView ?? undefined,
+      prepare: () => {
+        if (!this.move(id, { to: 'floating' }, false).ok) return false;
+        // Out of the panel and into the window are one move: one onWillMove (fired), one onMoved,
+        // once its element is in the window.
+        const entry = this.hosted.get(id);
+        if (entry) {
+          entry.key = 'floating|out';
+          this.settledInWindow(id, entry.panelId);
+        }
+        return true;
+      },
+    });
+  }
+
+  /** A widget opened (or re-opened) with this config: `canPopOut` on a workspace without `popOut` is said once per widget, in development. */
+  opened(id: string, widget: ManagedWidget): void {
+    if (!widget.canPopOut || !this.ws || this.ws.popOutEnabled || this.warned.has(id)) return;
+    this.warned.add(id);
+    if (typeof ngDevMode === 'undefined' || ngDevMode) {
+      console.warn(
+        `[angular-dockable-desktop] Widget "${id}" sets canPopOut, but this workspace was created without ` +
+          "popOut, so it can't open in its own window. Pass provideDockableDesktop({ popOut: true }) to enable it.",
+      );
+    }
+  }
+
+  /**
+   * The window a widget's content is in (1.12.0), for its `injectPanelWindow()` and the app's
+   * wrapper: its own panel's while it is out of its owner panel (the page's, or its pop-out's once
+   * that window's page is ready), else its owner's (`owner`, the main window when absent). From the
+   * registry's entries, the store the pop-out's frame renders from.
+   */
+  windowOf(id: string, owner: Signal<PanelWindow> | undefined): Signal<PanelWindow> {
+    return computed(() => {
+      const own = this.hostedIds()[id];
+      if (!own) return owner ? owner() : mainWindow();
+      const popOuts = this.popOuts;
+      const doc = popOuts?.enabled ? (popOuts.entries().find(e => e.id === own)?.doc ?? null) : null;
+      return doc?.defaultView ? { window: doc.defaultView, document: doc } : mainWindow();
     });
   }
 
@@ -192,12 +294,14 @@ export class WidgetHosting {
       // A widget in its panel has no entry, so no location check is needed.
       panelId: computed(() => this.hostedIds()[id] ?? null),
       location: computed(() => this.location(id) ?? 'panel'),
+      isPoppedOut: computed(() => this.isPoppedOut(id)),
       onWillMove: cb => this.listen(id, 'will', cb),
       onMoved: cb => this.listen(id, 'moved', cb),
     };
   }
 
-  move(id: string, to: WidgetTarget): MoveResult {
+  /** `settle` false: the caller settles the move itself (a pop-out, once the element is in its window). */
+  move(id: string, to: WidgetTarget, settle = true): MoveResult {
     const widget = untracked(this.store.managed).get(id);
     const el = this.store.contentOf(id);
     if (!widget || !el) return { ok: false, reason: 'not-open' };
@@ -262,9 +366,27 @@ export class WidgetHosting {
     // The app's titleMenu items lead the hosted panel's own menus (M4). The getter reads the
     // widget's config each time, so a re-open with a new titleMenu applies at once.
     const unregisterMenu = ws.registerPanelMenu(panelId, () => this.menuItems(id));
+    // Its own window (1.12.0): popOutPanel / returnPanel on this panel id go through the widget, and
+    // closing that window sends it back into its panel, with one onWillMove / onMoved pair.
+    const unregisterPopOut =
+      this.popOuts?.registerHosted(panelId, {
+        popOut: () => this.popOut(id),
+        returning: () => {
+          this.fire(id, 'will');
+          // Its panel floats (or goes back where it was) for a moment: not a move of its own.
+          const entry = this.hosted.get(id);
+          if (entry) entry.returning = true;
+        },
+        returned: () => {
+          if (!this.hosted.has(id)) return;
+          this.home(id, true);
+          this.settled(id);
+        },
+      }) ?? (() => undefined);
     const unregister = () => {
       unregisterClose();
       unregisterMenu();
+      unregisterPopOut();
     };
     // Its hosted panel's element moves the content wherever the user takes it: it keeps embeds too.
     if (widget.preserveEmbeds) dom.preserveEmbeds(panelId);
@@ -274,7 +396,7 @@ export class WidgetHosting {
     this.store.setFrameHidden(id, true);
     // Every move settles here, including a replace that lands in the same container (floating to
     // floating, a tab to a tab in the same group), whose key doesn't change (rdd 7.11.0).
-    this.settled(id);
+    if (settle) this.settled(id);
     return { ok: true };
   }
 
@@ -375,15 +497,41 @@ export class WidgetHosting {
       // Still the same widget: a close in between calls nothing.
       if (this.store.contentOf(id) === el) this.fire(id, 'moved');
     };
-    const observer =
-      typeof ResizeObserver === 'undefined'
-        ? null
-        : new ResizeObserver(entries => {
-            if (entries.some(e => e.contentRect.width > 0 && e.contentRect.height > 0)) finish();
-          });
+    // The element's own window's observer and frames (1.12.0): it may be shown in a pop-out.
+    const observer = resizeObserverFor(el, entries => {
+      if (entries.some(e => e.contentRect.width > 0 && e.contentRect.height > 0)) finish();
+    });
     observer?.observe(el);
-    const frame = typeof requestAnimationFrame === 'undefined' ? (cb: () => void) => setTimeout(cb, 16) : requestAnimationFrame;
+    const raf = rafOf(el);
+    const frame = raf === null ? (cb: () => void) => setTimeout(cb, 16) : (cb: () => void) => raf(cb);
     frame(() => frame(finish));
+  }
+
+  /**
+   * `onMoved` for a move into the widget's own window (1.12.0): once its element is laid out there
+   * (`panel:popped-out` for its panel), so the size it reports is the window's. A window that fails
+   * first sends it home, which settles that move instead.
+   */
+  private settledInWindow(id: string, panelId: string): void {
+    const ws = this.ws;
+    if (!ws) return;
+    const offs: (() => void)[] = [];
+    const done = () => offs.splice(0).forEach(off => off());
+    offs.push(
+      ws.subscribe('panel:popped-out', (e: { id: string }) => {
+        if (e.id !== panelId) return;
+        done();
+        if (this.hosted.get(id)?.panelId === panelId) this.settled(id);
+      }),
+      ws.subscribe('panel:returned', (e: { id: string }) => {
+        if (e.id === panelId) done();
+      }),
+    );
+    const entry = this.hosted.get(id);
+    if (entry) {
+      entry.awaiting?.();
+      entry.awaiting = done;
+    }
   }
 
   /** Back into the panel, where it was: its frame is shown again. */
@@ -403,6 +551,7 @@ export class WidgetHosting {
     if (!entry) return;
     this.hosted.delete(id);
     this.hostedIds.update(({ [id]: _gone, ...rest }) => rest);
+    entry.awaiting?.();
     entry.unregister();
     this.park(id);
     if (remove) this.ws?.removeHostedPanel(entry.panelId);

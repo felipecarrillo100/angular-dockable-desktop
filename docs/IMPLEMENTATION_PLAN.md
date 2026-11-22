@@ -239,7 +239,7 @@ without repeating itself:
 | Command | When | What |
 |---|---|---|
 | `npm run verify` | while working | types, lint, the unit suite, and the stub sweep for only the modules changed since `HEAD` — about a minute. Not a gate. |
-| `npm run gate:release` | before a release | `npm run gate -- M13 M14 M15 M16 M17 M18`: one pass, every rule of every one of those gates |
+| `npm run gate:release` | before a release | `npm run gate -- M13 M14 M15 M16 M17 M18 M19`: one pass, every rule of every one of those gates |
 | `npm run gate -- M<n>` | one milestone | exactly as before |
 
 Several milestones in one `npm run gate` call share one standing gate, and a sub-gate that
@@ -447,7 +447,23 @@ copy); **browser:** a fixed child of every frosted container lands on the viewpo
 visible changes; reduced motion stops the library's motion only; the sidebar and toasts follow
 `setDirection`. M16 and M17 still pass.
 
-**Totals:** 16 milestones for 1.0.0 (M16 added for 1.1.0, M17 for 1.2.0, M18 for 1.3.0), ≥ 765 ported test equivalents, and three gates that could force an
+### M19 — Pop-out windows (1.12.0) · L
+react-dockable-desktop 7.12.1's pop-out windows, ported by way of vue-dockable-desktop 1.14.0
+([ADR 0019](decisions/0019-popout-windows.md)): a panel, or a managed widget out of its panel,
+moves into its own browser window and back without being re-created. `popOut` and `canPopOut`,
+`popOutPanel` / `returnPanel` / `focusPanelWindow`, `<ndd-desktop [popoutUrl] [popoutWrapper]>`,
+`injectPanelWindow()`, `isPoppedOut`, the widget API, the four events and five messages; the page's
+styles copied into the window; zone.js's `EventTarget` patch per window. Built in stages P1–P7
+(`docs/plans/popout-port-report.md`).
+**Gate:** the standing gate; M19 rules (the 1.12.0 entry and the package CHANGELOG, ADR 0019 and
+its zone decision, manual chapter 15 and its key rules, the migration keys, the API reference,
+PARITY's API map, trace with what is not ported and divergences, the pieces, the nine spec files
+with count floors, the demo's `popOut`, `canPopOut` and relative `popoutUrl`), with self-test seeds
+(`scripts/gates/selftest-m19.mjs`); **browser:** 16 cases in real Chrome with real child windows,
+zoneless and with `?zone` (`scripts/gates/browser/m19.mjs`). M19 joins `gate:release`; M15 counts
+15 chapters.
+
+**Totals:** 16 milestones for 1.0.0 (M16 added for 1.1.0, M17 for 1.2.0, M18 for 1.3.0, M19 for 1.12.0), ≥ 765 ported test equivalents, and three gates that could force an
 architectural fallback (M0, M3, M13), each with its fallback named in B4.
 
 ---

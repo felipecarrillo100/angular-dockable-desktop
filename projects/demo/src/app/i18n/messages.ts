@@ -55,6 +55,11 @@ const en: Table = {
   scrollTabsRight: 'Scroll tabs right',
   moreActions: 'More actions',
   search: 'Search',
+  popOutWindow: 'Open in new window',
+  returnToDesktop: 'Return to desktop',
+  inOwnWindow: 'in its own window',
+  backIntoPanel: 'Back into the panel',
+  popOutBlocked: 'The browser blocked the new window. Allow pop-ups for this site and try again.',
 }
 
 const es: Table = {
@@ -85,6 +90,11 @@ const es: Table = {
   scrollTabsRight: 'Desplazar pestañas a la derecha',
   moreActions: 'Más acciones',
   search: 'Buscar',
+  popOutWindow: 'Abrir en una ventana nueva',
+  returnToDesktop: 'Volver al escritorio',
+  inOwnWindow: 'en su propia ventana',
+  backIntoPanel: 'Volver al panel',
+  popOutBlocked: 'El navegador bloqueó la ventana nueva. Permita las ventanas emergentes para este sitio e inténtelo de nuevo.',
 }
 
 const nl: Table = {
@@ -115,6 +125,11 @@ const nl: Table = {
   scrollTabsRight: 'Tabbladen naar rechts schuiven',
   moreActions: 'Meer acties',
   search: 'Zoeken',
+  popOutWindow: 'Openen in nieuw venster',
+  returnToDesktop: 'Terug naar het bureaublad',
+  inOwnWindow: 'in een eigen venster',
+  backIntoPanel: 'Terug in het paneel',
+  popOutBlocked: 'De browser heeft het nieuwe venster geblokkeerd. Sta pop-ups toe voor deze site en probeer het opnieuw.',
 }
 
 const fr: Table = {
@@ -145,6 +160,11 @@ const fr: Table = {
   scrollTabsRight: 'Défiler les onglets vers la droite',
   moreActions: 'Plus d\'actions',
   search: 'Rechercher',
+  popOutWindow: 'Ouvrir dans une nouvelle fenêtre',
+  returnToDesktop: 'Revenir au bureau',
+  inOwnWindow: 'dans sa propre fenêtre',
+  backIntoPanel: 'Revenir dans le panneau',
+  popOutBlocked: 'Le navigateur a bloqué la nouvelle fenêtre. Autorisez les fenêtres pop-up pour ce site et réessayez.',
 }
 
 const zh: Table = {
@@ -175,6 +195,11 @@ const zh: Table = {
   scrollTabsRight: '向右滚动标签页',
   moreActions: '更多操作',
   search: '搜索',
+  popOutWindow: '在新窗口中打开',
+  returnToDesktop: '返回桌面',
+  inOwnWindow: '在独立窗口中',
+  backIntoPanel: '返回面板',
+  popOutBlocked: '浏览器阻止了新窗口。请允许此网站的弹出窗口，然后重试。',
 }
 
 const ar: Table = {
@@ -205,6 +230,11 @@ const ar: Table = {
   scrollTabsRight: 'تمرير التبويبات لليمين',
   moreActions: 'مزيد من الإجراءات',
   search: 'بحث',
+  popOutWindow: 'فتح في نافذة جديدة',
+  returnToDesktop: 'العودة إلى سطح المكتب',
+  inOwnWindow: 'في نافذة مستقلة',
+  backIntoPanel: 'العودة إلى اللوحة',
+  popOutBlocked: 'حظر المتصفح النافذة الجديدة. اسمح بالنوافذ المنبثقة لهذا الموقع وحاول مرة أخرى.',
 }
 
 const TABLES: Record<Locale, Table> = { en, es, nl, fr, zh, ar }

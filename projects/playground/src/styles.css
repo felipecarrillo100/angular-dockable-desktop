@@ -13,3 +13,5 @@ pg-root { display: block; height: 100vh; }
 .pg-editor { display: flex; gap: 8px; padding: 8px; align-items: center; }
 .pg-chip { font: 10px system-ui; color: #9ab; padding: 0 6px; }
 .pg-overlay-body { width: 100%; height: 100%; display: grid; place-items: center; font: 12px system-ui; color: #789; }
+/* ?po=1 (M19): the pop-out buttons, out of the layout. */
+.pg-po-bar { position: fixed; top: 50%; right: 0; z-index: 99999; display: flex; flex-direction: column; gap: 4px; }

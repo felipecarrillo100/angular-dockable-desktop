@@ -39,6 +39,14 @@ export const defaultMessages = {
   scrollTabsRight: { id: 'ndd.scrollTabsRight', defaultMessage: 'Scroll tabs right' },
   moreActions: { id: 'ndd.moreActions', defaultMessage: 'More actions' },
   search: { id: 'ndd.search', defaultMessage: 'Search' },
+  // Pop-out windows (1.12.0).
+  popOutWindow: { id: 'ndd.popOutWindow', defaultMessage: 'Open in new window' },
+  returnToDesktop: { id: 'ndd.returnToDesktop', defaultMessage: 'Return to desktop' },
+  // The taskbar's marker on a panel in its own window (1.12.0).
+  inOwnWindow: { id: 'ndd.inOwnWindow', defaultMessage: 'in its own window' },
+  // A managed widget in its own window (1.12.0): its frame's button back into its panel.
+  backIntoPanel: { id: 'ndd.backIntoPanel', defaultMessage: 'Back into the panel' },
+  popOutBlocked: { id: 'ndd.popOutBlocked', defaultMessage: 'The browser blocked the new window. Allow pop-ups for this site and try again.' },
 } as const satisfies Record<string, MessageDescriptor>;
 
 /**

@@ -32,6 +32,11 @@ export interface WidgetHandle {
   /** Where it is shown now. */
   readonly location: Signal<WidgetLocation>;
   /**
+   * It is in its own browser window (`injectFloatingWidgets().popOut`, 1.12.0); `location` is then
+   * `'floating'`. Its content's `injectPanelWindow()` gives that window.
+   */
+  readonly isPoppedOut: Signal<boolean>;
+  /**
    * Called just before the widget's content element moves to another container: into or out of
    * its panel, between docked, tabbed and floating, minimised or restored, by your code, the
    * user, or a layout load. Save what a move would disturb here, such as a map's view.
@@ -83,6 +88,7 @@ export function injectWidget(): WidgetHandle | null {
     ownerPanelId: handle.ownerPanelId,
     panelId: handle.panelId,
     location: handle.location,
+    isPoppedOut: handle.isPoppedOut,
     onWillMove: cb => scoped(handle.onWillMove(cb)),
     onMoved: cb => scoped(handle.onMoved(cb)),
   };

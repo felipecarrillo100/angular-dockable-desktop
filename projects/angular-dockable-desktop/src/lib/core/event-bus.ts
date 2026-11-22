@@ -33,6 +33,14 @@ export interface BuiltInEvents {
    * be looking at the moment something silently drops out of a snapshot.
    */
   'layout:panels-excluded': { panels: { id: string; component: string }[] };
+  /** A panel is about to move into its own browser window (1.12.0): still in its old place, at its size. */
+  'panel:popping-out': { id: string };
+  /** A panel is laid out in its own browser window (1.12.0); `window` is that window. */
+  'panel:popped-out': { id: string; window: Window };
+  /** A panel is about to leave its own browser window (1.12.0): still laid out there. */
+  'panel:returning': { id: string };
+  /** A panel is back from its own browser window and laid out in its place (1.12.0). */
+  'panel:returned': { id: string };
 }
 
 type Listener = (data: unknown) => void;

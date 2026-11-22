@@ -80,7 +80,7 @@ type ToolbarSide = 'left' | 'right' | 'top' | 'bottom';
         >
           <ndd-secondary-sidebar [tabs]="secondaryTabs">
             <div class="dd-workspace">
-              <ndd-desktop [skin]="skin()" [animations]="animations()" [taskbar]="taskbar()" [defaultPanelIcon]="icons.panel" />
+              <ndd-desktop [skin]="skin()" [animations]="animations()" [taskbar]="taskbar()" [defaultPanelIcon]="icons.panel" popoutUrl="popout.html" />
             </div>
           </ndd-secondary-sidebar>
         </ndd-sidebar>

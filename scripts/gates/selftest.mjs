@@ -165,6 +165,13 @@ expect('docs-api.mjs', 'uses an unknown element', false, docsEnv('```html\n<ndd-
   for (const [label, ok] of cases) results.push({ rule: 'subgate.mjs', label, ok, got: ok ? 'pass' : 'fail', wanted: 'pass', out: `failing ${runs('failing')}, passing ${runs('passing')}, alone ${runs('alone')}` });
 }
 
+// ── M19 rules (1.12.0): each seeded violation in a copy of the files they read ──────
+// The seeds live in selftest-m19.mjs, which also runs alone: node scripts/gates/selftest-m19.mjs
+{
+  const { m19Seeds } = await import('./selftest-m19.mjs');
+  results.push(...m19Seeds());
+}
+
 // ── report ────────────────────────────────────────────────────────────────
 const bad = results.filter(r => !r.ok);
 for (const r of results) console.log(`  ${r.ok ? "ok  " : "FAIL"}  ${r.rule.padEnd(16)} ${r.label}${r.ok ? (process.argv.includes("-v") && r.wanted === "fail" ? `  → ${r.out}` : "") : `  (wanted ${r.wanted}, got ${r.got}: ${r.out})`}`);

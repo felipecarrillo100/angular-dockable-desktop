@@ -1,5 +1,6 @@
 /**
- * The taskbar: one icon per minimised panel, with a live hover preview.
+ * The taskbar: one icon per minimised panel, with a live hover preview, then one per panel in its
+ * own window (1.12.0), with a marker.
  *
  * Three visibility modes:
  *   - `always`   — a permanent strip;
@@ -93,6 +94,35 @@ interface Hovered {
               </span>
             </div>
           }
+          @for (item of poppedOut(); track item.id) {
+            <!-- A panel in its own window (1.12.0, rdd 7.12.0): a click brings that window forward. -->
+            <button
+              type="button"
+              class="ndd-taskbar-glassmorphic-item ndd-taskbar-item--popout"
+              [attr.data-ndd-taskbar-popout]="item.id"
+              [attr.title]="item.label"
+              [attr.aria-label]="item.label"
+              (click)="workspace.focusPanelWindow(item.id)"
+            >
+              <span class="ndd-taskbar-item-icon" aria-hidden="true">
+                @if (item.icon ?? defaultIcon(); as icon) {
+                  <ndd-icon [icon]="icon" />
+                } @else {
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <rect x="3" y="3" width="7" height="9" rx="1" />
+                    <rect x="14" y="3" width="7" height="5" rx="1" />
+                    <rect x="14" y="12" width="7" height="9" rx="1" />
+                    <rect x="3" y="16" width="7" height="5" rx="1" />
+                  </svg>
+                }
+              </span>
+              <span class="ndd-taskbar-item-popout-marker" aria-hidden="true">
+                <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
+                  <path d="M14 3h7v7M21 3l-9 9" />
+                </svg>
+              </span>
+            </button>
+          }
         </div>
         @if (scrollable()) {
           <button
@@ -144,8 +174,23 @@ export class NddTaskbar {
       icon: this.workspace.panels()[entry.id]?.icon ?? optionsFor(this.workspace.registry, this.workspace.panels()[entry.id], entry.component)?.icon,
     })),
   );
-  protected readonly visible = computed(() => this.visibility() === 'always' || this.items().length > 0);
-  protected readonly scrollable = computed(() => this.items().length > SCROLL_AFTER);
+  /**
+   * Panels in their own window (1.12.0, rdd 7.12.0), listed after the minimised ones with a marker.
+   * Only a workspace with `popOut` on can flag a panel (`setPoppedOut`), so no check of its own.
+   */
+  protected readonly poppedOut = computed(() =>
+    Object.values(this.workspace.panels())
+      .filter(p => p.poppedOut)
+      .map(p => ({
+        id: p.id,
+        icon: p.icon ?? optionsFor(this.workspace.registry, p)?.icon,
+        label: `${this.workspace.format(p.title)}: ${this.workspace.format(this.workspace.messages.inOwnWindow)}`,
+      })),
+  );
+  protected readonly visible = computed(
+    () => this.visibility() === 'always' || this.items().length > 0 || this.poppedOut().length > 0,
+  );
+  protected readonly scrollable = computed(() => this.items().length + this.poppedOut().length > SCROLL_AFTER);
 
   constructor() {
     // autohide: flash open when something is minimised.

@@ -28,6 +28,18 @@ interface MenuHost {
   config: Workspace<never>['config'];
 }
 
+/** Pop-out windows (1.12.0): whether a panel gets "Open in new window", and what the item does. */
+export interface PopOutMenu {
+  canPopOut: (id: string) => boolean;
+  popOut: (id: string) => void;
+}
+
+/** The "Open in new window" item for a panel, or none (1.12.0). */
+export function popOutMenuItems(host: MenuHost, popOut: PopOutMenu | undefined, id: string): ContextMenuItem[] {
+  if (!popOut?.canPopOut(id)) return [];
+  return [{ label: host.messages['popOutWindow']!, action: () => popOut.popOut(id) }];
+}
+
 export interface PanelMenuActions {
   float: () => void;
   minimize: () => void;
@@ -47,6 +59,7 @@ export function buildPanelMenu(
   panelId: string,
   options: PanelDefaultOptions,
   actions: PanelMenuActions,
+  popOut?: PopOutMenu,
 ): ContextMenuItem[] {
   const items: ContextMenuItem[] = [];
   // A hosted panel (a widget out of its panel, 7.11) has no built-in Float: the widget's own
@@ -54,6 +67,8 @@ export function buildPanelMenu(
   const hosted = !!host.panels()[panelId]?.owner;
   if (!hosted && options.canDrag !== false && isDropAllowed(host, panelId, { kind: 'float', anchor: null }))
     items.push({ label: host.messages['floatWindow']!, action: actions.float });
+  // "Open in new window" (1.12.0), after Float: never for a hosted panel (`canPopOut` excludes it).
+  items.push(...popOutMenuItems(host, popOut, panelId));
   if (options.canMinimize !== false)
     items.push({
       label: host.messages['minimizePanel']!,
@@ -72,18 +87,22 @@ export function buildPanelMenu(
 /**
  * A floating window's ⋮ menu: what the panel contributed. For a hosted panel (7.11) that is its
  * widget's titleMenu items, then the built-in Close (no Minimize: the title bar has its own).
- * Empty when the panel contributed nothing, so the button is not shown.
+ * "Open in new window" (1.12.0) leads it, before the panel's own items. Empty when there is
+ * nothing to offer, so the button is not shown.
  */
 export function buildMoreActionsMenu(
   host: MenuHost,
   panelId: string,
   options: PanelDefaultOptions,
   close: () => void,
+  popOut?: PopOutMenu,
 ): ContextMenuItem[] {
+  const builtIn = popOutMenuItems(host, popOut, panelId);
   const contributed = host.panelMenuItems(panelId);
-  if (contributed.length === 0) return [];
-  if (!host.panels()[panelId]?.owner || options.canClose === false) return contributed;
-  return [...contributed, { separator: true }, { label: host.messages['closePanel']!, action: close }];
+  const lead: ContextMenuItem[] = builtIn.length > 0 && contributed.length > 0 ? [...builtIn, { separator: true }] : builtIn;
+  if (contributed.length === 0) return builtIn;
+  if (!host.panels()[panelId]?.owner || options.canClose === false) return [...lead, ...contributed];
+  return [...lead, ...contributed, { separator: true }, { label: host.messages['closePanel']!, action: close }];
 }
 
 /**

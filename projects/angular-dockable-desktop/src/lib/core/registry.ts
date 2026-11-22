@@ -69,6 +69,13 @@ export interface PanelDefaultOptions {
    * @default false
    */
   preserveEmbeds?: boolean;
+  /**
+   * `true`: a panel of this type can move into its own browser window (1.12.0, rdd 7.12.0), from
+   * its "Open in new window" menu item or `workspace.popOutPanel(id)`. Needs a workspace created
+   * with `popOut: true`. It gates the menu item and new calls only: a window already open stays
+   * open when this changes. @default false
+   */
+  canPopOut?: boolean;
 }
 
 /** A lazily loaded panel component — the same shape as the router's `loadComponent`. */

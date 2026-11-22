@@ -12,7 +12,7 @@
  * and a missing stylesheet are both diagnosed in the console.
  */
 import { DOCUMENT, isPlatformBrowser } from '@angular/common';
-import { Component, DestroyRef, ElementRef, PLATFORM_ID, ViewEncapsulation, afterNextRender, contentChild, effect, inject, input, output, signal, untracked } from '@angular/core';
+import { Component, DestroyRef, ElementRef, PLATFORM_ID, ViewEncapsulation, afterNextRender, computed, contentChild, effect, inject, input, output, signal, untracked } from '@angular/core';
 import { Workspace } from '../workspace/workspace';
 import { EmptyWorkspaceSlot, NddEmptyWorkspaceTemplate } from './empty-workspace';
 import { NddTabContentTemplate, TabContentSlot } from './tab-content';
@@ -27,15 +27,29 @@ import { NddDragGhost } from './drag-ghost';
 import { NddTaskbar } from './taskbar';
 import type { TaskbarVisibility } from './taskbar';
 import type { NddIcon } from '../core/icon';
+import type { Type } from '@angular/core';
+import type { PopoutWrapper } from '../panel/panel-window';
+import { setPopoutWrapper } from '../panel/panel-window';
 import { openMenu, taskbarMenu } from './menus';
 import { clampFloatingRect } from '../core/anchor-geometry';
+import { isElement } from '../core/dom-context';
+import { eventDocument, listenOnDocuments } from '../core/document-registry';
+import { createPopOutWindows } from '../core/pop-out-windows';
+import { NddPopOutFrame, POP_OUT_WINDOWS } from './pop-out-frame';
 
 
 @Component({
   selector: 'ndd-desktop',
-  imports: [NddWorkspaceGrid, NddFloatingWindow, NddEdgeZones, NddDragGhost, NddTaskbar],
+  imports: [NddWorkspaceGrid, NddFloatingWindow, NddEdgeZones, NddDragGhost, NddTaskbar, NddPopOutFrame],
   encapsulation: ViewEncapsulation.None,
-  providers: [{ provide: PanelHost, useFactory: () => new PanelHost(inject(DOCUMENT)) }, DragDock, EmptyWorkspaceSlot, TabContentSlot],
+  providers: [
+    { provide: PanelHost, useFactory: () => new PanelHost(inject(DOCUMENT)) },
+    DragDock,
+    EmptyWorkspaceSlot,
+    TabContentSlot,
+    // This desktop's pop-out windows (1.12.0): created here, bound to the workspace once rendered.
+    { provide: POP_OUT_WINDOWS, useFactory: () => createPopOutWindows(inject(Workspace) as Workspace<never>) },
+  ],
   host: {
     class: 'ndd-workspace',
     '[class.ndd-no-animations]': '!animations()',
@@ -49,12 +63,16 @@ import { clampFloatingRect } from '../core/anchor-geometry';
         <ndd-edge-zones />
       }
       <ndd-workspace-grid [node]="workspace.gridRoot()" [path]="[]" />
-      @for (w of workspace.floating(); track w.id) {
+      @for (w of shownWindows(); track w.id) {
         <ndd-floating-window [window]="w" />
       }
     </div>
     <ndd-taskbar [visibility]="taskbar()" [defaultIcon]="defaultPanelIcon()" (contextMenu)="onTaskbarMenu($event)" />
     <ndd-drag-ghost />
+    <!-- Each pop-out window's frame (1.12.0), portalled into its window once its page is ready. -->
+    @for (e of popOutFrames(); track e.key) {
+      <ndd-popout-frame [id]="e.id" [doc]="e.doc!" [scope]="scopeEl" [defaultIcon]="defaultPanelIcon()" [wrapper]="wrapperType()" />
+    }
   `,
 })
 export class NddDesktop {
@@ -70,6 +88,24 @@ export class NddDesktop {
   /** Fallback icon for panels that register none. */
   readonly defaultPanelIcon = input<NddIcon | undefined>(undefined);
   /**
+   * The page a pop-out window opens (1.12.0), for `provideDockableDesktop({ popOut: true })`: a
+   * page of this origin, resolved against the main page's URL (`document.baseURI`, so a relative
+   * path respects `--base-href`). Without it a pop-out is a blank window. A page that can't be
+   * read, or doesn't load within 10 s, sends the panel back.
+   */
+  readonly popoutUrl = input<string | undefined>(undefined);
+  /**
+   * The app's component around what the library renders for a panel's window (1.12.0, with
+   * `popOut: true`): around every panel's content for its whole life, and, in a pop-out only,
+   * around the frame, a context menu shown there and that window's toasts. It declares the inputs
+   * `window` and `document` ({@link PopoutWrapper}), the main ones, then the pop-out's while the
+   * panel is in its own window, and an `<ng-content />`. What it provides reaches the components
+   * rendered inside it (the panel, an icon, a menu item's icon), so a CSS-in-JS cache it provides
+   * can follow the panel into that window's document: keep one cache per document, not per
+   * wrapper. Read when each panel is created: give it from the start, and don't change it.
+   */
+  readonly popoutWrapper = input<Type<PopoutWrapper> | undefined>(undefined);
+  /**
    * A right-click or long press on a taskbar icon, emitted *after* the library has opened its
    * own menu — so an application can observe it without rebuilding the standard items.
    */
@@ -84,8 +120,19 @@ export class NddDesktop {
   protected readonly colorScheme = injectColorScheme();
   /** The workspace's own measured size (not the window's — it is usually part of a page). */
   readonly viewport = signal({ width: 1024, height: 768 });
+  /** The floating windows drawn here: a panel in its own browser window (1.12.0) keeps its entry, undrawn. */
+  protected readonly shownWindows = computed(() => {
+    const panels = this.workspace.panels();
+    return this.workspace.floating().filter(w => !panels[w.id]?.poppedOut);
+  });
 
   private readonly host = inject(PanelHost);
+  /** This desktop's pop-out windows (1.12.0). */
+  private readonly popOuts = inject(POP_OUT_WINDOWS);
+  /** The open windows whose page is ready: one frame each. */
+  protected readonly popOutFrames = computed(() => this.popOuts.entries().filter(e => e.doc !== null));
+  /** The app's wrapper while the workspace has pop-outs (1.12.0); null otherwise. */
+  protected readonly wrapperType = computed<Type<unknown> | null>(() => (this.popOuts.enabled ? (this.popoutWrapper() ?? null) : null));
   /** The app's `<ng-template nddEmptyWorkspace>`, if any (1.7.0). */
   private readonly emptyWorkspace = contentChild(NddEmptyWorkspaceTemplate);
   /** The app's `<ng-template nddTabContent let-tab>`, if any (1.9.0). */
@@ -93,6 +140,8 @@ export class NddDesktop {
   protected readonly drag = inject(DragDock);
   private readonly doc = inject(DOCUMENT);
   private readonly el = inject<ElementRef<HTMLElement>>(ElementRef).nativeElement;
+  /** The workspace element whose scope (scheme, skin, no-animations) a pop-out's frame repeats (1.12.0). */
+  protected readonly scopeEl: HTMLElement = this.el;
   private readonly browser = isPlatformBrowser(inject(PLATFORM_ID));
   private readonly destroyRef = inject(DestroyRef);
 
@@ -125,6 +174,8 @@ export class NddDesktop {
       const windows = this.workspace.floating();
       untracked(() => {
         for (const w of windows) {
+          // A panel in its own window (1.12.0) isn't on this page: nothing to keep on screen.
+          if (this.workspace.panels()[w.id]?.poppedOut) continue;
           const num = (v: number | string) => (typeof v === 'number' ? v : Number.parseFloat(String(v)));
           const current = { x: num(w.x), y: num(w.y), width: num(w.width), height: num(w.height) };
           const next = clampFloatingRect(current, view, w.anchor != null);
@@ -133,14 +184,103 @@ export class NddDesktop {
       });
     });
 
+    // The pop-out page (1.12.0).
+    effect(() => this.popOuts.setUrl(this.popoutUrl()));
+    // The app's popoutWrapper (1.12.0): around each panel's content, from its creation...
+    this.host.popOut = { enabled: this.popOuts.enabled, entries: this.popOuts.entries, wrapper: () => this.wrapperType() };
+    // ...and, by document, around a menu and toasts shown in an open pop-out: they are mounted
+    // beside the desktop, so they find it by the document they show in.
+    effect(onCleanup => {
+      const wrapper = this.wrapperType();
+      const docs = this.popOutFrames().map(e => e.doc!);
+      if (!wrapper) return;
+      const undo = untracked(() => docs.map(doc => setPopoutWrapper(doc, wrapper)));
+      onCleanup(() => undo.forEach(f => f()));
+    });
+
     afterNextRender(() => {
+      this.bindPopOuts();
       this.diagnoseStylesheet();
       this.observeViewport();
+      this.destroyRef.onDestroy(listenOnDocuments('pointerdown', this.onPointerDownElsewhere));
+      this.destroyRef.onDestroy(listenOnDocuments('focusin', this.onFocusInElsewhere));
     });
 
     this.destroyRef.onDestroy(() => {
       if (!this.browser) return;
       releaseDocumentMirror(this, this.doc);
+    });
+  }
+
+  /**
+   * Click-to-activate in the other documents that hold panel content (1.12.0): a pop-out window's,
+   * once it registers. Through the document registry, `pointerdown` on each document.
+   *
+   * In the main document the elements answer for themselves — the group's `(pointerdown)` and the
+   * floating window's `(pointerdown.capture)` — exactly as before, so this listener leaves that
+   * document alone. Elsewhere the press makes the panel it lands in the active one: a floating
+   * window's, or the selected tab of the group it is in; inside a pop-out window's frame, its
+   * panel (its window is already in front, so it isn't focused again).
+   */
+  private readonly onPointerDownElsewhere = (event: PointerEvent): void => {
+    if (event.button !== 0) return;
+    if (eventDocument(event) === this.doc) return;
+    const target = event.target;
+    if (!isElement(target)) return;
+    const popOutId = this.popOutPanelOf(target);
+    if (popOutId) {
+      this.activate(popOutId);
+      return;
+    }
+    const id =
+      target.closest('[data-ndd-window]')?.getAttribute('data-ndd-window') ||
+      target.closest('.ndd-workspace-panel')?.getAttribute('data-active-panel-id');
+    if (id && untracked(this.workspace.panels)[id]) this.workspace.focusPanel(id);
+  };
+
+  /**
+   * Focus moving into a pop-out (a Tab, a click on a field, the window coming forward on its
+   * element) activates its panel too (1.12.0, rdd 7.12.0). Only there: in the page, focus alone
+   * never activates.
+   */
+  private readonly onFocusInElsewhere = (event: FocusEvent): void => {
+    const id = this.popOutPanelOf(event.target);
+    if (id) this.activate(id);
+  };
+
+  /** The panel whose pop-out frame holds `target`, or null (1.12.0). */
+  private popOutPanelOf(target: EventTarget | null): string | null {
+    return isElement(target) ? (target.closest('[data-ndd-popout]')?.getAttribute('data-ndd-popout') ?? null) : null;
+  }
+
+  private activate(id: string): void {
+    if (untracked(this.workspace.panels)[id]) this.workspace.activatePanel(id);
+  }
+
+  /**
+   * Binds this desktop's pop-out windows (1.12.0): the workspace's `popOutPanel` / `returnPanel` /
+   * `focusPanelWindow` reach them, and they are lent the panel cache. Destroying the desktop brings
+   * every panel back first, while the cache can still take its element.
+   */
+  private bindPopOuts(): void {
+    const dom = this.host.dom;
+    const unbind = this.popOuts.bind();
+    const unbindHost = this.popOuts.bindHost({
+      // Synchronous, so a child's `pagehide` handler has the element back before its document goes.
+      park: id => {
+        if (dom.has(id)) dom.moveTo(id, null);
+      },
+      rectOf: id => {
+        if (!dom.has(id)) return null;
+        const r = dom.elementFor(id).getBoundingClientRect();
+        return r.width > 0 && r.height > 0 ? r : null;
+      },
+      element: id => (dom.has(id) ? dom.elementFor(id) : null),
+      isParked: id => dom.isParked(id),
+    });
+    this.destroyRef.onDestroy(() => {
+      unbindHost();
+      unbind();
     });
   }
 

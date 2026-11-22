@@ -10,6 +10,10 @@ and a test or a gate rule pins the difference.
 (§1, *Branding*, and §3, *rdd 7.2.0 branding, traced*), with the same variables under the
 `ndd-` prefix and the same tests ([ADR 0014](decisions/0014-brand-variables.md)).
 
+**1.12.0** adds rdd **7.12.0** and **7.12.1**'s pop-out windows, as vdd 1.14.0 did (§1, *Pop-out
+windows*; §3, *rdd 7.12.0 and 7.12.1 pop-out windows, traced*; §4.5;
+[ADR 0019](decisions/0019-popout-windows.md)).
+
 ## 1. API map
 
 The concepts are the same; the surface is Angular's.
@@ -80,6 +84,39 @@ Every template's context is typed through `ngTemplateContextGuard`.
 `injectModals()` / `injectSidePanels()` / `injectFloatingWidgets()` / `injectSidebar()` /
 `injectSidebarTab()` / `injectToolbar()` / `injectContextMenu()` / `injectMerged*()`; lazy panels
 through `registerLazy`; server-side rendering and hydration (§4.2 N12).
+
+### Pop-out windows (1.12.0, from rdd 7.12.0 and 7.12.1 / vdd 1.14.0)
+
+Same names as rdd and vdd; the shapes differ only where an Angular rule applies (the desktop owns
+the windows, the wrapper is a component type whose context is injection, state is a signal). Traced
+in §3, *rdd 7.12.0 and 7.12.1 pop-out windows, traced*; divergences in §4.5; the reasons in
+[ADR 0019](decisions/0019-popout-windows.md). Guide: [chapter 15](manual/15-popout-windows.md).
+
+| rdd 7.12.1 | vdd 1.14.0 | ndd 1.12.0 | Note |
+|---|---|---|---|
+| `createWorkspace({ popOut: true })` | the same | `provideDockableDesktop({ popOut: true })`, `createWorkspace({ popOut: true })` | `WorkspaceConfig.popOut`; not kept on `workspace.config` |
+| `defaultOptions.canPopOut` | the same | the same | `core/registry.ts` `PanelDefaultOptions` |
+| `workspace.popOutPanel(id)` → `PopOutResult` | the same | the same | `workspace/workspace.ts` checks `disabled`, then hands off to the registry (`core/pop-out-windows.ts`) |
+| `workspace.returnPanel(id)`, `workspace.focusPanelWindow(id)` → `{ ok }` | the same | the same | |
+| `focusPanel(id)` on a popped-out panel brings its window forward | the same | the same | the internal `activatePanel` is `focusPanel` without the window focus |
+| `PanelInfo.poppedOut` | the same | the same | runtime only; stripped on load (`core/serialize.ts`) |
+| `PopOutResult` | the same union | the same union | `core/types.ts` |
+| `<DockableDesktopProvider popoutUrl>` | `<VddDesktop popout-url>` | `<ndd-desktop [popoutUrl]>` | resolved against `document.baseURI`, so a relative URL follows `--base-href` |
+| `<DockableDesktopProvider popoutWrapper>` (`ComponentType<PopoutWrapperProps>`) | `<VddDesktop :popout-wrapper>` (a component, default slot) | `<ndd-desktop [popoutWrapper]>` (a `Type<PopoutWrapper>`: inputs `window`, `document`, an `<ng-content />`) | its context is what its `providers` provide (`common/popout-wrap.ts`, internal) |
+| `PopoutWrapperProps` | the same | `PopoutWrapper` | the interface the wrapper component implements: `window` and `document` as signals |
+| `usePanelWindow()` → `PanelWindow` | the same, live getters | `injectPanelWindow()` → `Signal<PanelWindow>` | `panel/panel-window.ts` |
+| `usePanel().isPoppedOut` | a `ComputedRef<boolean>` | `injectPanel().isPoppedOut`, a `Signal<boolean>` | `PanelRef` |
+| `useFloatingWidgets().popOut(id)`, `ManagedWidget.canPopOut` | the same | `injectFloatingWidgets().popOut(id)`, the same | `panel-overlay/widget-hosting.ts` |
+| `useWidget().isPoppedOut` | a `ComputedRef<boolean>` | `injectWidget().isPoppedOut`, a `Signal<boolean>` | `WidgetHandle` |
+| `WidgetMenuContext.canPopOut`, `.isPoppedOut`, `.popOut()` | the same | the same | |
+| events `panel:popping-out`, `panel:popped-out` (`{ id, window }`), `panel:returning`, `panel:returned` | the same | the same | in `BuiltInEvents` |
+| messages `popOutWindow`, `returnToDesktop`, `backIntoPanel`, `popOutBlocked`, `inOwnWindow` | the same keys | the same keys | ids `ndd.popOutWindow`, … |
+| `.rdd-popout-frame` and `__header`, `__icon`, `__icon--menu`, `__title`, `__return`, `__body` | `.vdd-…` | `.ndd-popout-frame` and the same parts | `src/styles/parts/26a-popout.css`; the frame is also `.ndd-workspace`; plus `.ndd-popout-wrapper`, `.ndd-popout-wrapper__content` |
+| `data-rdd-popout`, `data-rdd-popout-kind`, `data-rdd-focused` on the frame | `data-vdd-…` | `data-ndd-popout`, `data-ndd-popout-kind`, `data-ndd-focused` | |
+| `.rdd-taskbar-item--popout`, `data-rdd-taskbar-popout`, `.rdd-taskbar-item-popout-marker` | `.vdd-…` | `.ndd-taskbar-item--popout`, `data-ndd-taskbar-popout`, `.ndd-taskbar-item-popout-marker` | `src/styles/parts/06-taskbar.css` |
+| `utils/domContext.ts`, `utils/documentRegistry.ts` (internal) | `core/domContext.ts`, `core/documentRegistry.ts` | `core/dom-context.ts`, `core/document-registry.ts` (internal) | plus `eventDocument(event)` and `isRtlElement` |
+| `core/popOutWindows.ts`, `core/popOutStyles.ts` (internal) | the same | `core/pop-out-windows.ts`, `core/pop-out-styles.ts` (internal) | ported line for line, prefixes changed; plus the zone.js patch |
+| `PopOutWindows.tsx`, the frame | `VddPopOutWindows.vue`, `VddPopOutFrame.vue` | `desktop/pop-out-frame.ts` `NddPopOutFrame` (internal, not exported) | portalled into the child's `<body>`, holding the panel's ordinary slot |
 
 ### Widgets out of the panel (1.11.0, from rdd 7.11.0 / vdd 1.13.0)
 
@@ -315,6 +352,40 @@ vdd accounted for rdd's 26 suites; each lands in ndd through the vdd suite it be
 | `branding.browser.ts` brand-surface cases (7.3.0) — leftovers, layers, contrast, one input | `scripts/gates/browser/m17.mjs` (surfaces) |
 | `StylesheetContract.test.ts` — "corner contract" (2), "surface contract" (3) | `stylesheet.spec.ts` — the same, names kept |
 
+### rdd 7.12.0 and 7.12.1 pop-out windows, traced
+
+rdd 7.12.0 is pop-out windows (stages S1–S7 and next.1, with 7.12.0's event timing); 7.12.1 lets a
+click inside a pop-out open another one. vdd 1.14.0 and ndd 1.12.0 port the final 7.12.1 behaviour
+at once, not the history. Every ported test keeps rdd's number behind an `X`, because `PO` was
+already an ndd id; ndd's own additions are `…N` ids (`XPON1`, `XWGN1`, …).
+
+| rdd 7.12.1 | vdd 1.14.0 | ndd 1.12.0 |
+|---|---|---|
+| `DocumentAware.test.tsx` (DA1–DA18) | `documentAware.test.ts` XDA1–XDA20 (36) | `test/components/document-aware.spec.ts` XDA1–XDA20 (45): vdd's 36, plus `eventDocument`, window-click and main-document dismissal, RTL submenu width, realm-neutral inside checks for the menu and the flyout, live focus and scroll tracking, a cancelled widget drag, the strip's direction from its window, the button filter, floating-window activation, the page leaving the press to its elements, the search's focusout |
+| `PopOut.test.tsx`, the store cases | `popOutStore.test.ts` (113) | `test/store/pop-out-store.spec.ts` (122): vdd's 113 in full (XPO37, the 1,332-case matrix, its count asserted; XPO44 ×8), plus XPON1–XPON9 |
+| `PopOut.test.tsx`, the window cases | `popOutWindows.test.ts` (45) | `test/components/pop-out-windows.spec.ts` (53): vdd's 45 (XPO1–XPO32, XPOE1/2, XPOM1, XPOR1), plus XPON1–XPON7 and XPON5b |
+| `PopOutStyles.test.tsx` (PS1–PS9) | `popOutStyles.test.ts` (14) | `test/components/pop-out-styles.spec.ts` (17): XPS1–XPS9, plus XPSN1 (`lang` / `dir` through the mirror), XPSN2 (the desktop's `skin` and `animations`), XPSN3 (a link's `href` alone) |
+| `PopoutWrapper.test.tsx` (PW1–PW6) | `popoutWrapper.test.ts` (17) | `test/components/popout-wrapper.spec.ts` (19): XPW1–XPW6 (XPW6 ×10), plus XPWN1 (a lazy panel inside the wrapper) and XPWN2 (a closed panel takes its wrapper) |
+| `PopOutChrome.test.tsx` (PC1–PC5) | `popOutChrome.test.ts` (18) | `test/components/pop-out-chrome.spec.ts` (20): XPC1–XPC5, plus XPCN1 (the page's container always, a toast dismissed in its window) and XPCN2 (the adapter) |
+| `PopOutWidgets.test.tsx` (WG1–WG14, WG2b, WG9b) | `popOutWidgets.test.ts` (36) | `test/components/pop-out-widgets.spec.ts` (42): vdd's 36, plus XWGN1–XWGN6 (`onMoved` after `panel:popped-out`, no built-in item, a plain icon without `titleMenu`, the owner out and the widget in its panel, the wrapper destroyed on close, a widget already out) |
+| `PopOutFocus.test.tsx` (PF1–PF5, PF4b) | `popOutFocus.test.ts` (19) | `test/components/pop-out-focus.spec.ts` (20): XPF1–XPF6, XPF4b; XPF2 adds focus after an activation |
+| `PopOutFromPopOut.test.tsx` (its PF1–PF7) | `popOutFromPopOut.test.ts` (8) | `test/components/pop-out-from-pop-out.spec.ts` (8): XFP1–XFP7, XFP6b |
+| `tests/browser/popout.browser.ts` | `scripts/gates/browser/m18.mjs` (15 cases) | `scripts/gates/browser/m19.mjs` (16 cases, each zoneless and with `?zone`): vdd's 15, plus `zone` (a listener on the pop-out's own document renders under zone.js only with the patch) |
+| `tests/browser/harness/main.tsx` | the playground's `?po=1`, … | the playground's `?po=1`, `po2=1`, `pourl=1`, `rc=1`, `wo=1`, `opo=1` (`projects/playground/src/app/pop-panel.ts`, `pop-widget.ts`, `runtime-css.ts`, `public/popout.html`) |
+
+**rdd cases not ported, each with its reason:**
+
+| rdd case | Why |
+|---|---|
+| DA6, the keyboard open at its target, with the target's `dir` | ndd's context menu opens where its request says, with the workspace's `dir` (as vdd); the library's own icon buttons pass an event below the icon (`menuEventBelow`), covered by XPF6 and XWG10 |
+| DA13, "focus goes back to the button" | ndd's toolbar flyout never moves focus into itself, so there is nothing to hand back (as vdd) |
+| DA14, `isElementRtl`'s document fallback | ndd's `isRtlElement` reads the element's own window; there is no fallback to port (XDA14 tests it in both realms) |
+| PO10's StrictMode case | React's StrictMode double effect has no Angular equivalent; PO10's other cases are XPO10 |
+| browser "alone in its group (an edge dock): the grid comes back exactly" | covered by the store matrix XPO37 (1,332 return cases, an edge dock among them) and by the browser's `neighbours` case |
+| browser "an Emotion-styled element looks the same in the pop-out" | the playground has no Emotion: the `wrapper` case uses a runtime-inserting stand-in (`runtime-css.ts`, rules added with `insertRule` per document), which shows the same production failure |
+| browser "a widget's frame icon is styled and clickable in the window; its titleMenu's icons too" | the wrapper around a widget's content is unit-tested (XWG12, XWGN4, XWGN5, XPC1); the `widget menu` case clicks the frame's icon and its item in the window; the playground's widget has no runtime-styled icon |
+| browser "the frame's icon and a menu item's icon look as in the page; a toast raised in the window shows there" | inside the `wrapper` case, not a case of its own |
+
 ### rdd 7.11.0 widgets out of the panel, traced (ndd 1.11.0)
 
 rdd 7.11.0 is 7.11.0-next.0 (the feature), 7.11.0-next.1 (feedback fixes) and two fixes; vdd 1.13.0
@@ -481,6 +552,45 @@ Where ndd 1.11.0 differs from rdd 7.11.0 and vdd 1.13.0. None changes what an ap
 | — | — | an ordinary (unmarked) panel's element is still detached when a drag between groups destroys its slot: unchanged (ADR 0002 finding 1): briefly detached, its scroll and focus carried by the live record. `preserveEmbeds` avoids it for marked elements |
 | — | — | `closePanel` on a panel whose `canClose` refuses publishes nothing, as before; a hosted panel can always close |
 | an overlay outside a `DockableDesktopProvider`: `move()` refuses with `no-workspace` | a modal, a side panel or outside any panel | a modal, a side panel, or outside any `<ndd-desktop>` |
+
+### 4.5 Pop-out windows (1.12.0)
+
+Where ndd 1.12.0 differs from rdd 7.12.1 and vdd 1.14.0. None changes what an app can do; the
+reasons are in [ADR 0019](decisions/0019-popout-windows.md).
+
+| rdd 7.12.1 | vdd 1.14.0 | ndd 1.12.0 |
+|---|---|---|
+| — (no zone.js) | — | each child window gets zone.js's own `EventTarget` patch at open and at attach (idempotent; nothing without zone.js), and `whenPlaced`'s child frames are wrapped in the current zone, so a listener on a pop-out's window or document runs in the Angular zone; the closed poll runs in `Zone.root` and the style copy outside the Angular zone |
+| the windows registry belongs to the workspace client | it belongs to `<VddDesktop>` | it belongs to `<ndd-desktop>` (internal token `POP_OUT_WINDOWS`), bound after its first render; so `popOutPanel` with no desktop returns `'no-window'` right after `'disabled'`, and a widget's `popOut()` without one returns `'no-window'` |
+| `<DockableDesktopProvider popoutUrl popoutWrapper>` | `<VddDesktop>` props | inputs on `ndd-desktop`, beside `skin` and `taskbar` |
+| the frame is a React portal into the child's body | a `<Teleport>` | `[nddPortal]` into the child's body, holding `[nddPanelSlot]`, so the host element of [0002](decisions/0002-zero-unmount-via-host-element.md) moves in; the frame's `class` is static, so Angular never overwrites `ndd-no-animations` |
+| `popoutWrapper` gets `{ window, document, children }`; its context providers reach the panel | a component with props and a default slot | a component type with the inputs `window` and `document` and an `<ng-content />`; its context is its `providers` (the panel's element injector's parent is the wrapper's); its host is `.ndd-popout-wrapper` (`display: contents`) |
+| a new wrapper type re-renders (and remounts) the content | the same | read when each panel is created: give it from the start |
+| the wrapper is committed before the panel's element moves | the same flush | the wrapper's inputs follow from an effect that runs with the desktop's view, before the wrapper's and the panel's views are checked (XPW2 checks the render through both effects) |
+| `<RddContextMenu>` and the toasts sit inside the provider | found by document | found by document, as vdd; a custom `nddContextMenuTemplate` renders in the page and is not wrapped |
+| a widget's content is inside the wrapper | the same | by injection only: the content element is the component's own host and moves, so the widget wrapper's host is placed nowhere; in a window the content's DOM is inside the hosted panel's wrapper |
+| `usePanelWindow()` re-renders its component | live getters | `injectPanelWindow()`, a `Signal<PanelWindow>` |
+| `usePanel().isPoppedOut`, `useWidget().isPoppedOut` are booleans | `ComputedRef`s | `Signal<boolean>`s |
+| React creates a popped-out panel's new nodes in the pop-out's document | Vue uses the main `document` | Angular's renderer uses the main `DOCUMENT`; the pop-out adopts them on insertion |
+| one Escape stack, scoped per document; one document listener for click-to-activate | claims per document; element handlers in the page | as vdd: Escape listeners go through the document registry and act on their own document; in the page the elements' own handlers activate, the registry's `pointerdown` and `focusin` only in a pop-out |
+| `setActivePanel` | `activatePanel`, `focusPanel`'s old body | `activatePanel(id)` is `focusPanel` with a private flag that skips the window focus: ndd's M3 rule allows `activePanelId` writes only in `focusPanel`, `resolveActive` and `loadLayout`, so the body stays in `focusPanel` |
+| `openPanel` on an open popped-out panel | activates | activates without focusing its window (rdd's core), as vdd |
+| a widget's `onMoved` into the window on the next frames | the same | once its panel's `panel:popped-out` fires: ndd renders the window's content on a later tick, and the page's frames would report the page's size |
+| a widget's return sets its last container key to `'floating'` | marks the entry `returning` | the same as vdd |
+| a widget frame's title icon always has an icon | the same | a menu glyph when the widget has none, as ndd's in-panel widget button already does |
+| a toolbar flyout or search dropdown in a closing pop-out | left open | closed when its document leaves the registry, as the context menu is |
+| the built-in menu items have an icon | none | none: ndd's built-in menu items have none |
+| the taskbar's entries are `<button>`s | the same for a popped-out panel's | the same as vdd; its rule adds `padding: 0; font: inherit; position: relative` |
+| `<html>`'s document mirror for the child | not run for the child | not run for the child: the `<html>` mirror copies what it writes (`lang` and `dir` too), rdd's observable result |
+| the workspace element from `getWorkspaceElement()` | the same | an input of the frame, from the desktop's host |
+| `popOut` is not in the config's declared type | declared | declared on `WorkspaceConfig` (its line can't be rewritten); the value never has it |
+| a lone panel popped out of the root group leaves a new `group-default` | the group keeps its id | the same as vdd; the JSON format is unchanged |
+| the windows follow the store through `subscribeToState` | `onPopOutEnded(id)` | the same as vdd; with no registry bound, `returnPanel` clears the flag itself |
+| the development warnings | outside production builds | in development (`ngDevMode`), as every ndd diagnostic |
+| the Playwright `hasFocus` recipe | stubs the pop-out | the same: `focusedDocument` asks the pop-outs first |
+| `ViewEncapsulation` | — | Emulated and None styles are head tags and are copied; `ShadowDom` is not covered (untested) |
+| — | — | file names are kebab-case (`dom-context.ts`, `pop-out-windows.ts`, …), ndd's convention |
+| — | — | `panel-host`'s park/reclaim fallback frame stays the main window's: it waits for the workspace's own render |
 
 ## 5. Known gaps
 
