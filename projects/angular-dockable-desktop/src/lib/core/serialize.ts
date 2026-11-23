@@ -68,6 +68,25 @@ function migrateFloating(floating: unknown[]): FloatingWindow[] {
 }
 
 /**
+ * The panels without a pop-out flag (1.12.0, rdd 7.12.0). `saveLayout()` never writes one; one in a
+ * layout came from a hand-made JSON, and no window exists for it, so the panel loads as the
+ * floating panel it is.
+ */
+function withoutPopOutFlags(panels: Record<string, PanelInfo>): Record<string, PanelInfo> {
+  if (!Object.values(panels).some(p => p && 'poppedOut' in p)) return panels;
+  const out: Record<string, PanelInfo> = {};
+  for (const [id, p] of Object.entries(panels)) {
+    if (p && 'poppedOut' in p) {
+      const { poppedOut: _flag, ...rest } = p;
+      out[id] = rest;
+    } else {
+      out[id] = p;
+    }
+  }
+  return out;
+}
+
+/**
  * Validate and normalise a parsed JSON payload, or return `null` if it is not a layout.
  *
  * Both entry points — a workspace's `initialState` and `loadLayout()` — go through here, so
@@ -85,7 +104,7 @@ export function parseLayoutPayload(
 
   const geometryRepairs: string[] = [];
   const floating = finiteGeometry(migrateFloating(p['floating']), geometryRepairs);
-  const panels = p['panels'] as Record<string, PanelInfo>;
+  const panels = withoutPopOutFlags(p['panels'] as Record<string, PanelInfo>);
   if (geometryRepairs.length > 0) {
     if (typeof ngDevMode === 'undefined' || ngDevMode) onWarn?.(
       `Repaired the saved layout on load: ${geometryRepairs.join('; ')}. Each is replaced by the ` +

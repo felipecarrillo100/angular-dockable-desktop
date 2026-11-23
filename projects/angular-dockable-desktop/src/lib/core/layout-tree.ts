@@ -8,10 +8,12 @@
  */
 import type {
   FloatingWindow,
+  LayoutGridNode,
   LayoutLeafNode,
   LayoutNode,
   PanelInfo,
   SplitDirection,
+  SplitOrientation,
 } from './types';
 
 /** An empty workspace: one leaf, no panels. */
@@ -349,6 +351,196 @@ export function updateSizesAtPath(node: LayoutNode, path: number[], sizes: numbe
   return walk(node, 0);
 }
 
+// ── Where a popped-out panel goes back (1.12.0, rdd 7.12.0) ─────────────────
+
+/**
+ * One place a docked panel could go back to, beside panels it was next to, for a panel alone in
+ * its group: that group goes when the panel leaves, so its id can't bring it back.
+ */
+export interface PlaceBeside {
+  /** Every panel of one sibling subtree, in one split that held the panel's group. */
+  panels: string[];
+  /** The side the panel was on, relative to them. */
+  position: SplitDirection;
+  /** The share, in that split, of the part that held the panel. Exact, not clamped. */
+  size: number;
+  /** That split's sizes when it had more than two children (it stays when the panel leaves); else null. */
+  sizes: number[] | null;
+  /** The other panels of that split, with `sizes`: the sizes apply only to a split holding exactly these. */
+  splitPanels: string[] | null;
+}
+
+/** Every panel of a subtree. */
+const panelsOf = (node: LayoutNode): string[] =>
+  node.type === 'leaf' ? [...node.panels] : node.children.flatMap(panelsOf);
+
+/**
+ * Every place `panelId`'s group could go back to, best first: for each split on the way from its
+ * group up to the root, innermost first, each sibling of the part holding it, the preceding ones
+ * first (nearest first), then the following ones. So a panel whose neighbours have left too still
+ * finds the next part of its old layout. Empty when its group is the whole grid.
+ */
+export function placesBeside(root: LayoutNode, panelId: string): PlaceBeside[] {
+  // The splits from the root down to the panel's group, with the index taken at each.
+  const trail: { node: LayoutGridNode; i: number }[] = [];
+  const find = (node: LayoutNode): boolean => {
+    if (node.type === 'leaf') return node.panels.includes(panelId);
+    for (let i = 0; i < node.children.length; i++) {
+      trail.push({ node, i });
+      if (find(node.children[i]!)) return true;
+      trail.pop();
+    }
+    return false;
+  };
+  if (!find(root)) return [];
+  const places: PlaceBeside[] = [];
+  for (const { node, i } of [...trail].reverse()) {
+    const sum = node.sizes.reduce((x, y) => x + y, 0) || 1;
+    const sizes = node.sizes.map(x => x / sum);
+    const order = [
+      ...Array.from({ length: i }, (_, k) => i - 1 - k),
+      ...Array.from({ length: node.children.length - i - 1 }, (_, k) => i + 1 + k),
+    ];
+    for (const j of order) {
+      const after = i > j;
+      places.push({
+        panels: panelsOf(node.children[j]!),
+        position: node.orientation === 'horizontal' ? (after ? 'right' : 'left') : (after ? 'bottom' : 'top'),
+        size: sizes[i] ?? 0.5,
+        sizes: node.children.length > 2 ? sizes : null,
+        splitPanels: node.children.length > 2 ? panelsOf(node).filter(p => p !== panelId) : null,
+      });
+    }
+  }
+  return places;
+}
+
+/** `root` with each stand-in panel listed in its group (same shape, so paths stay valid). */
+const withStandIns = (node: LayoutNode, standIn: ReadonlyMap<string, string>): LayoutNode => {
+  if (node.type === 'branch') return { ...node, children: node.children.map(c => withStandIns(c, standIn)) };
+  const extra = [...standIn].filter(([, leaf]) => leaf === node.id).map(([p]) => p);
+  return extra.length ? { ...node, panels: [...node.panels, ...extra] } : node;
+};
+
+/** The node at `path` (child indexes from the root). */
+const nodeAt = (root: LayoutNode, path: number[]): LayoutNode =>
+  path.reduce<LayoutNode>((n, k) => (n.type === 'branch' ? n.children[k]! : n), root);
+
+/** `root` with the node at `path` replaced. */
+const replaceAt = (root: LayoutNode, path: number[], fn: (n: LayoutNode) => LayoutNode): LayoutNode => {
+  if (path.length === 0) return fn(root);
+  if (root.type === 'leaf') return root;
+  const [k, ...rest] = path;
+  return { ...root, children: root.children.map((c, idx) => (idx === k ? replaceAt(c, rest, fn) : c)) };
+};
+
+/** The path of the smallest subtree holding every one of `ids`. */
+const commonAncestor = (root: LayoutNode, ids: Set<string>): number[] => {
+  let found: number[] | null = null;
+  const count = (node: LayoutNode, path: number[]): number => {
+    const n = node.type === 'leaf'
+      ? node.panels.filter(p => ids.has(p)).length
+      : node.children.reduce((sum, c, k) => sum + count(c, [...path, k]), 0);
+    if (found === null && n === ids.size) found = path; // post-order: the deepest such node first
+    return n;
+  };
+  count(root, []);
+  return found ?? [];
+};
+
+/**
+ * Puts `panelId`, in a new group `leafId`, back at one place {@link placesBeside} recorded: beside
+ * the smallest subtree that still holds the panels it was next to, on the same side at the same
+ * share. Back in its old split when that split is still there (its sizes as they were), else
+ * around that subtree (around the whole grid: an edge dock). Null when none of those panels is
+ * docked any more.
+ */
+export function returnBeside(
+  root: LayoutNode,
+  panelId: string,
+  place: PlaceBeside,
+  leafId: string,
+  out: ReadonlySet<string> = new Set(),
+  standIn: ReadonlyMap<string, string> = new Map(),
+): LayoutNode | null {
+  // A panel still out whose kept group waits empty counts as there, in that group (`standIn`).
+  const present = standIn.size === 0 ? root : withStandIns(root, standIn);
+  const docked = new Set(panelsOf(present));
+  const ids = new Set(place.panels.filter(p => docked.has(p)));
+  if (ids.size === 0) return null;
+  const path = commonAncestor(present, ids);
+  const leaf: LayoutLeafNode = { type: 'leaf', id: leafId, panels: [panelId], activePanelId: panelId };
+  const orientation: SplitOrientation = place.position === 'left' || place.position === 'right' ? 'horizontal' : 'vertical';
+  const before = place.position === 'left' || place.position === 'top';
+  if (place.sizes && path.length > 0) {
+    const parentPath = path.slice(0, -1);
+    const parent = nodeAt(root, parentPath);
+    if (parent.type === 'branch' && parent.orientation === orientation) {
+      const k = path[path.length - 1]!;
+      const at = before ? k : k + 1;
+      // Its old sizes only in its old split: one holding exactly the panels it held then.
+      // Panels still out (`out`) are not there yet: they don't make it another split.
+      const here = panelsOf(parent);
+      const expected = place.splitPanels?.filter(p => !out.has(p)) ?? null;
+      const same = !!expected && here.length === expected.length && expected.every(p => here.includes(p));
+      const recorded = same ? place.sizes : [];
+      return replaceAt(root, parentPath, () => {
+        const children = [...parent.children.slice(0, at), leaf, ...parent.children.slice(at)];
+        const scaled = [
+          ...parent.sizes.slice(0, at).map(x => x * (1 - place.size)),
+          place.size,
+          ...parent.sizes.slice(at).map(x => x * (1 - place.size)),
+        ];
+        return { ...parent, children, sizes: recorded.length === children.length ? [...recorded] : scaled };
+      });
+    }
+  }
+  return replaceAt(root, path, node => ({
+    type: 'branch',
+    orientation,
+    children: before ? [leaf, node] : [node, leaf],
+    sizes: before ? [place.size, 1 - place.size] : [1 - place.size, place.size],
+  }));
+}
+
+/** The panels of the group holding `panelId`, in tab order; null when it isn't docked. */
+export function groupOf(node: LayoutNode, panelId: string): { id: string; panels: string[] } | null {
+  if (node.type === 'leaf') return node.panels.includes(panelId) ? { id: node.id, panels: node.panels } : null;
+  for (const child of node.children) {
+    const found = groupOf(child, panelId);
+    if (found) return found;
+  }
+  return null;
+}
+
+/**
+ * `panelId` put back into group `leafId` among `mates` (its group's panels when it left, in tab
+ * order, itself included): after the nearest earlier one there, else before the nearest later
+ * one, else last. Selected when `select`, else the group keeps its selected tab (or selects it,
+ * having none). rdd's `insertPanelInLeaf` (7.12.0); ndd's own `insertPanelInLeaf` takes an index.
+ */
+export function insertPanelAmongMates(
+  node: LayoutNode,
+  leafId: string,
+  panelId: string,
+  mates: string[],
+  select: boolean,
+): LayoutNode {
+  if (node.type === 'leaf') {
+    if (node.id !== leafId) return node;
+    const others = node.panels.filter(p => p !== panelId);
+    const k = mates.indexOf(panelId);
+    let at = others.length;
+    const earlier = k > 0 ? mates.slice(0, k).reverse().find(m => others.includes(m)) : undefined;
+    const later = k >= 0 ? mates.slice(k + 1).find(m => others.includes(m)) : undefined;
+    if (earlier !== undefined) at = others.indexOf(earlier) + 1;
+    else if (later !== undefined) at = others.indexOf(later);
+    const panels = [...others.slice(0, at), panelId, ...others.slice(at)];
+    return { ...node, panels, activePanelId: select || !node.activePanelId ? panelId : node.activePanelId };
+  }
+  return { ...node, children: node.children.map(c => insertPanelAmongMates(c, leafId, panelId, mates, select)) };
+}
+
 // ── Which panel is active ────────────────────────────────────────────────────
 
 /** The subset of a layout needed to reason about visibility. */
@@ -415,4 +607,18 @@ export function deriveActivePanelId(scope: ActiveTargetScope): string | null {
     if (!frontmost || w.z > frontmost.z) frontmost = w;
   }
   return frontmost?.id ?? null;
+}
+
+/**
+ * The active panel of a layout worked out on a copy (1.12.0): `preferId` when it is visible, else
+ * the copy's own while it still is, else derived. What `resolveActive` decides on the live state;
+ * a popped-out panel's return place (and the save that writes it) is computed on a copy.
+ */
+export function resolveActivePanelId(
+  next: ActiveTargetScope & { activePanelId: string | null },
+  preferId: string | null,
+): string | null {
+  if (preferId && isVisibleActiveTarget(preferId, next)) return preferId;
+  if (next.activePanelId && isVisibleActiveTarget(next.activePanelId, next)) return next.activePanelId;
+  return deriveActivePanelId(next);
 }

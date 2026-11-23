@@ -566,7 +566,7 @@ Each attribute is present while its state is true and absent otherwise:
 | Attribute | On | Present while |
 |-----------|----|---------------|
 | `data-ndd-selected` | tab | it is the tab shown in its group |
-| `data-ndd-focused` | tab, floating window | it is the workspace's active panel |
+| `data-ndd-focused` | tab, floating window, pop-out frame | it is the workspace's active panel |
 | `data-ndd-dirty` | tab | the panel has unsaved changes |
 | `data-ndd-maximized` | floating window | it is maximised |
 
@@ -586,6 +586,17 @@ panel type, so `className` and `tabClassName` don't reach it. Target it by id,
 is. Its tab icon, and its title-bar icon when it has a `titleMenu`, open its menu and carry
 `.ndd-workspace-tab-icon--menu` / `.ndd-window-title-icon--menu`; in the panel, the widget's title
 icon is a button, `.ndd-panel-float__menu`.
+
+**A panel in its own browser window** (1.12.0, see [Chapter 15](15-popout-windows.md#styles-in-the-window))
+looks like the page with nothing to set: the page's stylesheets are copied into the window, and
+the window's frame is `.ndd-workspace.ndd-popout-frame`, with the workspace's colour scheme, skin
+and animation switch, so your workspace-scoped rules apply there too. The frame carries
+`data-ndd-popout="<panel id>"` and `data-ndd-popout-kind="panel"` or `"widget"`; its parts are
+`__header`, `__icon` (`__icon--menu` for a widget's menu), `__title`, `__return` (also
+`.ndd-custom-tab-btn`, the skin's title-bar button look) and `__body`. In the taskbar, such a panel
+is `.ndd-taskbar-item--popout` with its marker `.ndd-taskbar-item-popout-marker`. Rules a CSS-in-JS
+library inserts with `insertRule` are not copied: give it a cache per document with
+`<ndd-desktop [popoutWrapper]>`.
 
 ## Using it with Angular Material, PrimeNG, Bootstrap or Tailwind
 

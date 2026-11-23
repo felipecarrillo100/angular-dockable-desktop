@@ -316,6 +316,13 @@ move: that render runs before the park, and the iframe reloads.
   stylesheet that finds the content by the component's selector should use the class instead, or
   one of your own. The component's `host: { class }` classes are on that element, beside the
   library's (1.11.1).
+- **Into its own browser window** (1.12.0, rdd 7.12.0): with `canPopOut: true` and a workspace
+  created with `popOut: true`, `injectFloatingWidgets().popOut(id)` moves the widget into a window of
+  its own, from the panel or from any place out of it, still without re-creating it.
+  `WidgetMenuContext` gains `canPopOut`, `isPoppedOut` and `popOut()` for your own "Open in new
+  window" item (there is no built-in one), and `injectWidget()`'s `isPoppedOut` signal says when it
+  is out; `location` stays `'floating'`. See
+  [Chapter 15](15-popout-windows.md#widgets-in-their-own-window).
 
 ## API summary
 
@@ -330,6 +337,7 @@ move: that render runs before the park, and the iframe reloads.
 | `ManagedWidget.preserveEmbeds` | Keep iframes alive across moves |
 | `injectWidget()` | `WidgetHandle \| null`: `{ id, ownerPanelId, panelId, location, onWillMove, onMoved }` |
 | `PanelInfo.owner` | `PanelOwner`: set on a widget's own panel |
+| `injectFloatingWidgets().popOut(id)`, `ManagedWidget.canPopOut`, `injectWidget().isPoppedOut` | Its own browser window (1.12.0): [Chapter 15](15-popout-windows.md) |
 
 See also: [Chapter 7](07-panel-overlay.md) (the overlay and its widgets), [Chapter 4](04-layout.md)
 (`focusPanel(id, { restore })`, events), [Chapter 3](03-panels.md) (`updatePanelProps`,

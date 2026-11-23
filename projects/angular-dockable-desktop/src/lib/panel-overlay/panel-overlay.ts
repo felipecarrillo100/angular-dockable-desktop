@@ -10,12 +10,15 @@
 import { Component, DestroyRef, ElementRef, afterRenderEffect, computed, effect, inject, input, untracked } from '@angular/core';
 import type { Signal } from '@angular/core';
 import { ANCHORS } from '../core/panel-overlay';
+import { isHTMLElement, resizeObserverFor } from '../core/dom-context';
+import { menuEventBelow } from '../core/context-menu';
 import type { ButtonVariant, ToolbarPosition, ToolbarVariant } from '../core/panel-overlay';
 import { NddFloatingWidget } from './floating-widget';
 import { PANEL_OVERLAY, createPanelOverlayStore } from './overlay-store';
 import { Workspace } from '../workspace/workspace';
 import { openMenu } from '../desktop/menus';
 import type { ManagedWidget, MoveResult, PanelOverlayStore, WidgetLocation, WidgetPlacement, WidgetTarget } from './overlay-store';
+import type { PopOutResult } from '../core/types';
 
 @Component({
   selector: 'ndd-panel-overlay',
@@ -86,10 +89,19 @@ export class NddPanelOverlay {
 
   /**
    * A managed widget's `titleMenu`, from its title icon in the panel (7.11). A click from the
-   * keyboard opens on the first item, as every menu button does.
+   * keyboard opens on the first item, as every menu button does, below the icon: through a
+   * stand-in event at the icon's corner whose target is the icon, so it shows in the icon's
+   * document, a pop-out's when the owner panel is in its own window (1.12.0).
    */
   protected openTitleMenu(id: string, event: MouseEvent): void {
-    if (this.workspace) openMenu(this.workspace, event, this.store.hosting.menuItems(id));
+    if (!this.workspace) return;
+    const items = this.store.hosting.menuItems(id);
+    const button = event.currentTarget;
+    if (items.length > 0 && event.detail === 0 && isHTMLElement(button)) {
+      this.workspace.showContextMenu({ event: menuEventBelow(button), items, initialFocus: 'first-item' });
+    } else {
+      openMenu(this.workspace, event, items);
+    }
   }
 
   constructor() {
@@ -119,8 +131,9 @@ export class NddPanelOverlay {
     effect(onCleanup => {
       if (this.store.pendingCount() === 0) return;
       untracked(() => this.store.applyPending());
-      if (typeof ResizeObserver === 'undefined') return;
-      const ro = new ResizeObserver(() => this.store.applyPending());
+      // From the root's own window (1.12.0): a main-window observer on a pop-out's node is unreliable.
+      const ro = resizeObserverFor(this.root, () => this.store.applyPending());
+      if (!ro) return;
       ro.observe(this.root);
       onCleanup(() => ro.disconnect());
     });
@@ -200,11 +213,9 @@ export class NddPanelToolbar {
       const block = this.isBlockEdge();
       const measure = () => this.store.registerToolbar(position, block ? this.el.offsetHeight : this.el.offsetWidth);
       measure();
-      let observer: ResizeObserver | null = null;
-      if (typeof ResizeObserver !== 'undefined') {
-        observer = new ResizeObserver(measure);
-        observer.observe(this.el);
-      }
+      // From the toolbar's own window (1.12.0): it may be shown in a pop-out.
+      const observer = resizeObserverFor(this.el, measure);
+      observer?.observe(this.el);
       onCleanup(() => {
         observer?.disconnect();
         this.store.unregisterToolbar(position);
@@ -261,6 +272,24 @@ export interface FloatingWidgetsApi {
    * Not reactive: read it when you save.
    */
   placement(id: string): WidgetPlacement | null;
+  /**
+   * Moves a widget into its own browser window (1.12.0, rdd 7.12.0), for a second monitor, without
+   * re-creating its content. Synchronous: call it inside the user's click, in the page or in a
+   * pop-out window (its owner's, say: rdd 7.12.1). From inside its panel it leaves the panel and
+   * goes into the window as one move; from docked, tabbed, floating or minimised, its panel moves.
+   * The same result and reasons as `workspace.popOutPanel` (`'not-allowed'` without
+   * {@link ManagedWidget.canPopOut}, or when its owner panel can't hold it out); a refusal changes
+   * nothing. While out, `location()` is `'floating'` and `injectWidget().isPoppedOut()` is true.
+   *
+   * Back: `move()` to any place returns it first, as one move; closing the window, or its "Back
+   * into the panel" button, puts it back into its panel where it was. `onWillMove` / `onMoved` run
+   * around each, and the `panel:popped-out` / `panel:returned` events are sent for its panel.
+   *
+   * ```html
+   * <button type="button" (click)="widgets.popOut('table')">Open in new window</button>
+   * ```
+   */
+  popOut(id: string): PopOutResult;
 }
 
 /**
@@ -285,5 +314,6 @@ export function injectFloatingWidgets(): FloatingWidgetsApi {
     move: (id, to) => store.hosting.move(id, to),
     location: id => store.hosting.location(id),
     placement: id => store.placementOf(id),
+    popOut: id => store.hosting.popOut(id),
   };
 }

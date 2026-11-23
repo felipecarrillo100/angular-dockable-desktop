@@ -8,6 +8,10 @@ import { OverlayPanel } from './app/overlay-panel';
 import { ContributorPanel } from './app/contributor-panel';
 import { EmbedFrame } from './app/embed-frame';
 import { pgFormatMessage } from './app/locale';
+import { PopPanel } from './app/pop-panel';
+import { rcIcon } from './app/runtime-css';
+import { UnsizedIcon } from './app/unsized-icon';
+import { WoOwner } from './app/pop-widget';
 
 /**
  * The playground: the minimal harness the browser gates drive.
@@ -18,6 +22,15 @@ import { pgFormatMessage } from './app/locale';
  * Set before bootstrap, as an application would (the M16 branding gate):
  * `?cs=light` puts `data-color-scheme="light"` on <html> (dark is the attribute's absence);
  * `?ba=HEX` / `?bon=HEX` set `--ndd-brand-accent` / `--ndd-brand-on-accent` on :root (hex without `#`).
+ *
+ * The M19 gate (1.12.0): `?po=1` gives the workspace pop-out windows, starts from one group (as
+ * rdd's harness does: no kept-empty group in its splits) and opens `pp` (type `popper`,
+ * canPopOut) as a tab beside `p1`; `?po2=1` adds `pq`, another tab there. `?pourl=1` makes the
+ * playground's own `popout.html` the pop-out page (app.ts).
+ *
+ * `?wo=1` (P5): the owner panel `ov` (type `wover`, pop-widget.ts) docked beside p1, with a managed
+ * widget `wo` (canPopOut, a titleMenu) opened in it; `?opo=1`: the owner type can pop out too, and
+ * its #wo-po-in pops the widget out from inside it (rdd 7.12.1's harness `opo=1`).
  */
 const params = new URLSearchParams(location.search);
 const zone = params.has('zone');
@@ -29,6 +42,19 @@ if (params.get('bon')) document.documentElement.style.setProperty('--ndd-brand-o
 if (params.get('bs')) document.documentElement.style.setProperty('--ndd-brand-surface', `#${params.get('bs')}`);
 if (params.get('bt')) document.documentElement.style.setProperty('--ndd-brand-text', `#${params.get('bt')}`);
 if (params.get('rs')) document.documentElement.style.setProperty('--ndd-radius-scale', params.get('rs')!);
+
+const POPOUT = params.get('po') === '1';
+// `?rc=1` (P4): `popper`'s icon is styled only by the runtime CSS-in-JS stand-in (runtime-css.ts), so
+// it shows in a pop-out's frame only through the app's popoutWrapper.
+const RC = params.get('rc') === '1';
+// `?poico=1` (rdd 7.12.2): `popper`'s icon takes its size from its box (unsized-icon.ts).
+const POICO = params.get('poico') === '1';
+const OPO = params.get('opo') === '1';
+const ONE_LEAF = JSON.stringify({
+  version: 2,
+  gridRoot: { type: 'leaf', id: 'L', panels: [], activePanelId: null },
+  floating: [], minimized: [], panels: {},
+});
 
 const TWO_LEAF = JSON.stringify({
   version: 2,
@@ -47,8 +73,11 @@ bootstrapApplication(App, {
     provideBrowserGlobalErrorListeners(),
     ...(zone ? [provideZoneChangeDetection()] : []),
     provideDockableDesktop({
+      popOut: POPOUT,
       panels: {
+        popper: { component: PopPanel, defaultOptions: { title: 'Pop', canPopOut: true, ...(RC ? { icon: rcIcon('frame') } : POICO ? { icon: UnsizedIcon } : {}) } },
         hostile: { component: HostilePanel, defaultOptions: { title: 'Hostile' } },
+        wover: { component: WoOwner, defaultOptions: { title: 'Owner', ...(OPO ? { canPopOut: true } : {}) } },
         editor: { component: EditorPanel, defaultOptions: { title: 'Editor' } },
         overlay: { component: OverlayPanel, defaultOptions: { title: 'Overlay' } },
         contributor: { component: ContributorPanel, defaultOptions: { title: 'Contributor' } },
@@ -56,7 +85,7 @@ bootstrapApplication(App, {
         embedKept: { component: EmbedFrame, defaultOptions: { title: 'Kept', preserveEmbeds: true } },
         embedBare: { component: EmbedFrame, defaultOptions: { title: 'Bare' } },
       },
-      initialState: params.get('layout') === 'two-leaf' ? TWO_LEAF : null,
+      initialState: POPOUT ? ONE_LEAF : params.get('layout') === 'two-leaf' ? TWO_LEAF : null,
       formatMessage: pgFormatMessage,
     }),
   ],

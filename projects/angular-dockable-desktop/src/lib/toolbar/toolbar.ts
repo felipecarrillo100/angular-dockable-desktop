@@ -15,6 +15,8 @@ import type { ToolbarGroupEntry, ToolbarGroupItem, ToolbarGroupSubItem, ToolbarI
 import { flyoutPlacement, isSubItem } from '../core/toolbar-types';
 import { NddIconView } from '../common/icon';
 import { NddPortal } from '../common/portal';
+import { docOf, isNode, isRtlElement, winOf } from '../core/dom-context';
+import { eventDocument, isRegistered, listenOnDocuments, onDocumentsChange } from '../core/document-registry';
 import { injectWorkspace } from '../workspace/provide';
 
 import type { ToolbarPosition } from '../core/panel-overlay';
@@ -36,6 +38,8 @@ export function injectToolbar(): ToolbarState {
 interface OpenFlyout {
   id: string;
   placement: Record<string, number>;
+  /** The body it renders into: the button's own document's (1.12.0), chosen when it opens. */
+  body: HTMLElement;
 }
 
 @Component({
@@ -108,10 +112,10 @@ interface OpenFlyout {
 
         @if (flyout(); as open) {
           @if (open.id === item.id) {
-            <!-- In document.body, so the strip's own overflow: hidden cannot clip it. -->
+            <!-- In the button's own document.body (1.12.0: a pop-out window's too), so the strip's own overflow: hidden cannot clip it. -->
             <div
               #flyoutEl
-              nddPortal
+              [nddPortal]="open.body"
               class="ndd-toolbar-group-flyout"
               [class]="'ndd-' + position()"
               [style]="flyoutStyle(open.placement)"
@@ -170,9 +174,19 @@ export class NddToolbar {
   protected readonly flyout = signal<OpenFlyout | null>(null);
   /** The group button that opened the flyout, for outside-click detection. */
   private flyoutButton: HTMLElement | null = null;
+  /** Removes the open flyout's outside-press and Escape listeners. */
+  private stopListening: (() => void) | null = null;
 
   constructor() {
-    inject(DestroyRef).onDestroy(() => this.closeFlyout());
+    const destroyRef = inject(DestroyRef);
+    destroyRef.onDestroy(() => this.closeFlyout());
+    // A flyout open in a pop-out window whose window closes (1.12.0): its body is gone with it.
+    destroyRef.onDestroy(
+      onDocumentsChange(() => {
+        const open = this.flyout();
+        if (open && !isRegistered(docOf(open.body))) this.closeFlyout();
+      }),
+    );
   }
 
   protected key(item: ToolbarItem, index: number): string {
@@ -242,17 +256,25 @@ export class NddToolbar {
     // The strip's own direction, not the workspace's: a 'left' strip sits on the right only
     // when its container is actually laid out right-to-left. vdd read the workspace, which is
     // right only when the app also mirrors the chrome around the desktop (divergence N5).
-    const rtl = getComputedStyle(this.host).direction === 'rtl';
+    // Both asked of the strip's own window (1.12.0): a pop-out's, for a toolbar shown there.
+    const rtl = isRtlElement(this.host);
+    const win = winOf(button)!;
     const placement = flyoutPlacement(
       button.getBoundingClientRect(),
       this.position(),
-      { width: window.innerWidth, height: window.innerHeight },
+      { width: win.innerWidth, height: win.innerHeight },
       rtl,
     );
-    this.flyout.set({ id: item.id, placement });
+    this.flyout.set({ id: item.id, placement, body: docOf(button).body });
     afterNextRender({ read: () => this.clampIntoView() }, { injector: this.injector });
-    document.addEventListener('pointerdown', this.onOutside, { capture: true });
-    document.addEventListener('keydown', this.onKey);
+    // Outside presses in the button's document; Escape through the registry, answered only there.
+    const doc = docOf(button);
+    doc.addEventListener('pointerdown', this.onOutside, { capture: true });
+    const offKey = listenOnDocuments('keydown', this.onKey);
+    this.stopListening = () => {
+      doc.removeEventListener('pointerdown', this.onOutside, { capture: true });
+      offKey();
+    };
   }
 
   protected select(item: ToolbarGroupItem, sub: ToolbarGroupSubItem): void {
@@ -265,8 +287,8 @@ export class NddToolbar {
   private closeFlyout(): void {
     this.flyout.set(null);
     this.flyoutButton = null;
-    document.removeEventListener('pointerdown', this.onOutside, { capture: true });
-    document.removeEventListener('keydown', this.onKey);
+    this.stopListening?.();
+    this.stopListening = null;
   }
 
   /** Nudge the flyout back on screen: it is placed before it has a size, so this is a second pass. */
@@ -279,16 +301,18 @@ export class NddToolbar {
     if (rect.width === 0 && rect.height === 0) return;
     const pad = 8;
     const next = { ...open.placement };
-    if (rect.right > window.innerWidth - pad) {
-      next['left'] = Math.max(pad, window.innerWidth - rect.width - pad);
+    // Clamped into the window the flyout is shown in (1.12.0).
+    const { innerWidth, innerHeight } = winOf(el)!;
+    if (rect.right > innerWidth - pad) {
+      next['left'] = Math.max(pad, innerWidth - rect.width - pad);
       delete next['right'];
     }
     if (rect.left < pad) {
       next['left'] = pad;
       delete next['right'];
     }
-    if (rect.bottom > window.innerHeight - pad) {
-      next['top'] = Math.max(pad, window.innerHeight - rect.height - pad);
+    if (rect.bottom > innerHeight - pad) {
+      next['top'] = Math.max(pad, innerHeight - rect.height - pad);
       delete next['bottom'];
     }
     if (rect.top < pad) {
@@ -300,12 +324,13 @@ export class NddToolbar {
 
   private readonly onOutside = (event: Event): void => {
     const target = event.target;
-    if (!(target instanceof Node)) return this.closeFlyout();
+    if (!isNode(target)) return this.closeFlyout();
     if (this.flyoutButton?.contains(target) || this.flyoutEl()?.nativeElement.contains(target)) return;
     this.closeFlyout();
   };
 
   private readonly onKey = (event: KeyboardEvent): void => {
-    if (event.key === 'Escape') this.closeFlyout();
+    // Only an Escape in the flyout's own document (1.12.0).
+    if (event.key === 'Escape' && eventDocument(event) === docOf(this.flyoutButton)) this.closeFlyout();
   };
 }

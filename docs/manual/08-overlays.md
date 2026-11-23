@@ -442,6 +442,11 @@ Beyond `maxVisible`, toasts queue and are promoted as the ones on screen leave. 
 toast can still be dismissed by id before it is ever shown. The container is a labelled
 `role="region"` with `aria-live="polite"`, and each card is `role="status"` ([PARITY N14](../PARITY.md)).
 
+**With pop-out windows** (1.12.0), a toast shows in the window the user is in: raised while a
+pop-out has focus, it shows there, otherwise in the page. It stays in that window and goes when the
+window closes; `maxVisible` counts every window's together. Modals and side panels stay in the main
+window. See [Chapter 15](15-popout-windows.md#toasts).
+
 ### Using your own notification UI
 
 Pass an `adapter` to `<ndd-toasts>` to hand `toast.*` calls to another library:

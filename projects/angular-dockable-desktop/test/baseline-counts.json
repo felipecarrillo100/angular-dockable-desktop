@@ -46,5 +46,14 @@
   "widgets-out-menus.spec.ts": 37,
   "widget-placement.spec.ts": 11,
   "focus-props-embeds.spec.ts": 19,
-  "host-classes.spec.ts": 3
+  "host-classes.spec.ts": 3,
+  "document-aware.spec.ts": 45,
+  "pop-out-store.spec.ts": 122,
+  "pop-out-windows.spec.ts": 53,
+  "pop-out-from-pop-out.spec.ts": 8,
+  "pop-out-styles.spec.ts": 17,
+  "popout-wrapper.spec.ts": 19,
+  "pop-out-chrome.spec.ts": 20,
+  "pop-out-widgets.spec.ts": 42,
+  "pop-out-focus.spec.ts": 20
 }

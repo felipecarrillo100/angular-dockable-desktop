@@ -12,6 +12,8 @@ import { Component, DestroyRef, ElementRef, afterNextRender, computed, inject, i
 import type { NddIcon } from '../core/icon';
 import { NddIconView } from '../common/icon';
 import { NddPortal } from '../common/portal';
+import { docOf, isNode, winOf } from '../core/dom-context';
+import { isRegistered, onDocumentsChange } from '../core/document-registry';
 import { Workspace } from '../workspace/workspace';
 
 /** One row in the dropdown. */
@@ -66,7 +68,7 @@ export interface SearchResult {
     @if (dropdown(); as d) {
       <!-- Its z-index comes from the stylesheet, against --ndd-z-base, so zIndexBase moves it too. -->
       <div
-        nddPortal
+        [nddPortal]="d.body"
         class="ndd-panel-toolbar-search__dropdown"
         [style.position]="'fixed'"
         [style.top.px]="d.top"
@@ -117,7 +119,8 @@ export class NddToolbarSearch {
   protected readonly expanded = signal(false);
   protected readonly query = signal('');
   private readonly results = signal<SearchResult[]>([]);
-  protected readonly dropdown = signal<{ top: number; left: number; width: number } | null>(null);
+  /** Where the dropdown sits, and the body it renders into: the field's own document's (1.12.0). */
+  protected readonly dropdown = signal<{ top: number; left: number; width: number; body: HTMLElement } | null>(null);
   private controller: AbortController | null = null;
   private timer: ReturnType<typeof setTimeout> | null = null;
 
@@ -131,7 +134,15 @@ export class NddToolbarSearch {
   });
 
   constructor() {
-    inject(DestroyRef).onDestroy(() => this.reset());
+    const destroyRef = inject(DestroyRef);
+    destroyRef.onDestroy(() => this.reset());
+    // A dropdown open in a pop-out window whose window closes (1.12.0): its body is gone with it.
+    destroyRef.onDestroy(
+      onDocumentsChange(() => {
+        const open = this.dropdown();
+        if (open && !isRegistered(docOf(open.body))) this.collapse();
+      }),
+    );
   }
 
   private reset(): void {
@@ -158,8 +169,9 @@ export class NddToolbarSearch {
     if (this.results().length === 0) return this.dropdown.set(null);
     const r = this.root.getBoundingClientRect();
     const width = Math.max(r.width, 240);
-    const left = Math.min(r.left, window.innerWidth - width - 8);
-    this.dropdown.set({ top: r.bottom + 4, left: Math.max(8, left), width });
+    // Fitted to the field's window (a pop-out's, for a panel shown there).
+    const left = Math.min(r.left, winOf(this.root)!.innerWidth - width - 8);
+    this.dropdown.set({ top: r.bottom + 4, left: Math.max(8, left), width, body: docOf(this.root).body });
   }
 
   protected onInput(event: Event): void {
@@ -195,7 +207,7 @@ export class NddToolbarSearch {
   /** Collapse when focus leaves the field entirely, not when it moves inside it. */
   protected onFocusOut(event: FocusEvent): void {
     const next = event.relatedTarget;
-    if (next instanceof Node && this.root.contains(next)) return;
+    if (isNode(next) && this.root.contains(next)) return;
     this.collapse();
   }
 }

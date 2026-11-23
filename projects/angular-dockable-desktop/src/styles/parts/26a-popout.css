@@ -1,0 +1,75 @@
+/* ==========================================================================
+   POP-OUT WINDOWS (1.12.0, rdd 7.12.0)
+   A panel in its own browser window: the library's frame fills the child window's <body>, with a
+   header (icon, title, a "Return to desktop" button) over the panel's slot. The frame is also
+   .ndd-workspace, so what is scoped to the workspace applies there. Its minimum layout is inline as
+   well, so content stays usable without this sheet in the window.
+   ========================================================================== */
+.ndd-popout-frame {
+  position: fixed;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+}
+.ndd-popout-frame__header {
+  flex: 0 0 auto;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 8px;
+  font-size: 12px;
+  background-color: var(--ndd-window-header-bg);
+  border-bottom: 1px solid var(--ndd-window-border);
+}
+/* Sized as a floating window's title icon (rdd 7.12.2): an icon that takes its size from its box
+   stays 14 x 14 instead of growing the header. */
+.ndd-popout-frame__icon {
+  flex-shrink: 0;
+  width: 14px;
+  height: 14px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+/* An SVG or image is drawn at the box's size, as in a tab's icon slot: one with only a viewBox has no
+   size of its own and would otherwise collapse to nothing. */
+.ndd-popout-frame__icon svg,
+.ndd-popout-frame__icon img {
+  width: 14px;
+  height: 14px;
+  max-width: 14px;
+  max-height: 14px;
+  object-fit: contain;
+  display: block;
+}
+/* A managed widget's window: the icon opens the widget's titleMenu. */
+.ndd-popout-frame__icon--menu {
+  padding: 0;
+  border: 0;
+  background: none;
+  color: inherit;
+  cursor: pointer;
+}
+.ndd-popout-frame__title {
+  flex: 1 1 auto;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+/* The way back: a title-bar button in the skin (.ndd-custom-tab-btn), as a floating window's; its
+   label is the tooltip and the accessible name. The styling hook is this class. */
+.ndd-popout-frame__return { flex: 0 0 auto; }
+.ndd-popout-frame__body {
+  flex: 1 1 auto;
+  min-height: 0;
+  position: relative;
+}
+.ndd-popout-frame__body > .ndd-panel-slot { position: absolute; inset: 0; }
+
+
+/* The app's popoutWrapper (1.12.0): the library adds its host (and, in a pop-out, the element it
+   projects into it) around a panel's content, the frame, a menu and a toast container. Neither is
+   a box, so a wrapper whose template is only <ng-content /> changes no layout. */
+.ndd-popout-wrapper,
+.ndd-popout-wrapper__content { display: contents; }

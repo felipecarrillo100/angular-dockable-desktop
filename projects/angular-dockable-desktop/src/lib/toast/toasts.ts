@@ -23,8 +23,11 @@ import {
 } from '@angular/core';
 import { NddIconView } from '../common/icon';
 import { NddPortal } from '../common/portal';
+import { NddPopoutWrap } from '../common/popout-wrap';
+import { isRegistered, onDocumentsChange } from '../core/document-registry';
+import { rafOf, resizeObserverFor } from '../core/dom-context';
 import { Workspace } from '../workspace/workspace';
-import { removeToast, startExit, toastQueue } from './toast';
+import { removeToast, startExit, toastDocument, toastQueue } from './toast';
 import type { ToastAdapter, ToastPosition, ToastRecord, ToastType } from './toast';
 
 /** How long the exit may take before the record is dropped anyway. */
@@ -186,11 +189,15 @@ export class NddToastItem {
     afterNextRender(() => {
       this.applyHeight();
       // jsdom has no ResizeObserver; the height sync is a browser refinement, not behaviour.
-      if (typeof ResizeObserver !== 'undefined') {
-        this.observer = new ResizeObserver(() => this.applyHeight());
-        this.observer.observe(this.body().nativeElement);
+      // Element-relative (1.12.0): the card's own window's observer and frame.
+      const body = this.body().nativeElement;
+      this.observer = resizeObserverFor(body, () => this.applyHeight());
+      this.observer?.observe(body);
+      if (this.animation() !== 'none') {
+        const raf = rafOf(this.card().nativeElement);
+        if (raf) raf(() => this.entryClass.set('ndd-toast--visible'));
+        else this.entryClass.set('ndd-toast--visible');
       }
-      if (this.animation() !== 'none') requestAnimationFrame(() => this.entryClass.set('ndd-toast--visible'));
     });
 
     inject(DestroyRef).onDestroy(() => {
@@ -247,7 +254,7 @@ export class NddToastItem {
 /** The notification host. */
 @Component({
   selector: 'ndd-toasts',
-  imports: [NddPortal, NddToastItem, NgComponentOutlet],
+  imports: [NddPortal, NddPopoutWrap, NddToastItem, NgComponentOutlet],
   host: { style: 'display: contents' },
   template: `
     @if (adapter(); as a) {
@@ -255,8 +262,12 @@ export class NddToastItem {
         <div nddPortal style="display: contents"><ng-container *ngComponentOutlet="a.component; inputs: { position: position() }" /></div>
       }
     } @else {
+      <!-- One per window with toasts (1.12.0): the page's always, a pop-out's while it shows some,
+           there inside the app's popoutWrapper. -->
+      @for (c of containers(); track c.key) {
+      <ng-container *nddPopoutWrap="c.doc">
       <div
-        nddPortal
+        [nddPortal]="c.doc"
         class="ndd-toast-container"
         [class]="'ndd-toast-container--' + position() + (newestOnTop() ? ' ndd-toast-container--newest-top' : ' ndd-toast-container--newest-bottom')"
         [style.width.px]="width()"
@@ -266,7 +277,7 @@ export class NddToastItem {
         aria-live="polite"
         data-ndd-toasts
       >
-        @for (item of visible(); track item.id) {
+        @for (item of c.items; track item.id) {
           <ndd-toast-item
             [toast]="item"
             [isLeft]="isLeft()"
@@ -279,6 +290,8 @@ export class NddToastItem {
           />
         }
       </div>
+      </ng-container>
+      }
     }
   `,
 })
@@ -325,7 +338,60 @@ export class NddToasts {
     return this.newestOnTop() ? result.reverse() : result;
   });
 
+  // ── Pop-out windows (1.12.0): each toast in the window it was raised in ──────
+  private readonly mainDoc = typeof document === 'undefined' ? null : document;
+  /** A stable key per window's container, so one window's emptying doesn't re-create another's. */
+  private readonly containerKeys = new WeakMap<Document, string>();
+  private containerCount = 0;
+
+  /**
+   * The window a toast shows in: its own while that is open, else the page. Read again whenever the
+   * shown toasts change, which a closing window's own toasts leaving does.
+   */
+  private shownIn(item: ToastRecord): Document | null {
+    const doc = toastDocument(item.id);
+    return doc && doc !== this.mainDoc && isRegistered(doc) ? doc : this.mainDoc;
+  }
+
+  private keyOf(doc: Document | null): string {
+    if (!doc || doc === this.mainDoc) return 'main';
+    let key = this.containerKeys.get(doc);
+    if (!key) {
+      key = `ndd-toasts-${++this.containerCount}`;
+      this.containerKeys.set(doc, key);
+    }
+    return key;
+  }
+
+  /**
+   * One container per window with toasts: the page's always, a pop-out's while it shows some.
+   * `maxVisible` counts every window together (`visible`).
+   */
+  protected readonly containers = computed(() => {
+    const byDoc = new Map<Document | null, ToastRecord[]>([[this.mainDoc, []]]);
+    for (const item of this.visible()) {
+      const doc = this.shownIn(item);
+      if (!byDoc.has(doc)) byDoc.set(doc, []);
+      byDoc.get(doc)!.push(item);
+    }
+    return [...byDoc].map(([doc, items]) => ({ doc, key: this.keyOf(doc), items }));
+  });
+
   constructor() {
+    // A pop-out window closing takes its toasts with it, and runs their `onClose`; one still
+    // waiting for a place (beyond `maxVisible`) shows in the page instead when its turn comes.
+    const stopDocuments = onDocumentsChange(() => {
+      if (untracked(this.adapter)) return;
+      const onScreen = new Set(untracked(this.visible).map(t => t.id));
+      for (const item of untracked(toastQueue.items)) {
+        const doc = toastDocument(item.id);
+        if (!doc || isRegistered(doc) || !onScreen.has(item.id)) continue;
+        removeToast(item.id);
+        if (!item.exiting) item.options.onClose?.();
+      }
+    });
+    inject(DestroyRef).onDestroy(stopDocuments);
+
     // An adapter is registered on the store, so `toast.*` reaches it even from outside any component.
     effect(() => {
       const adapter = this.adapter();

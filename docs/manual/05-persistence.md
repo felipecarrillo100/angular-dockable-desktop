@@ -89,6 +89,12 @@ from their owner panel with `placement()`; see
 [Chapter 14](14-widgets-out-of-the-panel.md#saving-and-restoring-placement). A layout that names
 one, which only a hand-made JSON can, loads without it, as does an `initialState` that names one.
 
+A panel in its own browser window (1.12.0) is saved **at the place it would come back to**: docked
+in its place, or floating at its rect, with no `poppedOut` flag. So the saved layout is the one from
+before it left, in the same format as always. Nothing reopens in a window after a reload, since a
+window may only open from a user's click; the panel is in the page, and "Open in new window" takes
+it out again. See [Chapter 15](15-popout-windows.md#saving-the-layout).
+
 `props` is the family's name for per-panel data. In ndd you supply it as
 `openPanel(id, key, { inputs })`; it is saved under `props`, and on restore each key the
 component declares as an input (by public name or alias) is applied with `setInput`. Keys the

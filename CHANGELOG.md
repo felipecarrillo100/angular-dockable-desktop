@@ -10,6 +10,155 @@ feature-by-feature map is [docs/PARITY.md](docs/PARITY.md).
 
 ## [Unreleased]
 
+## [1.12.0] — 2026-11-22
+
+**Parity: react-dockable-desktop 7.12.2** (vue-dockable-desktop 1.14.0 made the same port). Pop-out
+windows: a panel can move into its own browser window, for a second monitor, and come back, without
+its component being re-created: its state, scroll offsets and a canvas's WebGL context go with it,
+and the page's styles follow it there. A managed widget out of its panel can go into a window too,
+and a click inside a pop-out can open another one. rdd 7.12.0 is the feature, 7.12.1 the
+click-from-a-pop-out fix and 7.12.2 the title icon's size; this release ports the final 7.12.2
+behaviour at once. Same names as rdd
+and vdd, with `ndd` where they say `rdd` / `vdd`, and Angular's idioms (signals, a component type
+for the wrapper, its context by injection). Guide: [Pop-out windows](docs/manual/15-popout-windows.md).
+Off by default: an app that doesn't pass `popOut: true` sees no change.
+
+### Added
+
+- **`provideDockableDesktop({ popOut: true })` and `defaultOptions.canPopOut`: a panel can open in
+  its own browser window.** The workspace allows it once, at creation (`WorkspaceConfig.popOut`, not
+  kept on `workspace.config`), and each panel type opts in. Those panels get **"Open in new
+  window"** in their tab and title-bar menus (after Float) and at the top of the floating window's ⋮
+  menu. The window opens over the panel at its size (at least 320 × 240; 640 × 480 for a panel with
+  no box on screen), unclamped, so a monitor left of or above the main one works. In development,
+  `canPopOut` on a workspace without `popOut` warns.
+- **`workspace.popOutPanel(id)` → `PopOutResult`, `returnPanel(id)` and `focusPanelWindow(id)` →
+  `{ ok }`.** `popOutPanel` is synchronous and must run inside the user's click or key press; a
+  click in any of the app's windows counts, a pop-out's included, and the window clicked is the one
+  that opens the new window (rdd 7.12.1). It never throws and never shows anything on a refusal:
+  `'disabled'`, `'no-window'` (no `<ndd-desktop>` rendered), `'not-open'`, `'not-allowed'`,
+  `'no-gesture'`, `'blocked'`, `'no-window'` (the window closed first), `'not-allowed'` (a widget that
+  couldn't leave its panel after all), `'not-open'` (its panel closed meanwhile), in that order. A panel already out comes forward. The
+  built-in menu item shows a toast on `'blocked'`. `focusPanel(id)` on a popped-out panel brings
+  its window forward too. New type: `PopOutResult`.
+- **Where it comes back to:** a floating panel at its rect; a docked one into its tab-mates' group,
+  else its own kept-empty group, else beside the panels it was next to at the same side and size,
+  else into an empty grid, else floating (or into the first group, for a type that can't float).
+  Several panels out at once come back, in any order, to the layout they left. Closing the window,
+  its **"Return to desktop"** button, `returnPanel`, the main page unloading and `<ndd-desktop>`
+  being destroyed all bring it back; `minimizePanel` and the dock actions bring it back first, then
+  apply. `floatPanel` and `maximizePanel` are ignored while it is out.
+- **`saveLayout()` writes a popped-out panel at the place it would come back to**, without the flag,
+  so the saved layout is the one from before it left, in the same format (rdd and vdd read it).
+  `PanelInfo.poppedOut` is runtime only, and stripped from a loaded layout.
+- **`<ndd-desktop [popoutUrl]>`:** a same-origin page of the app for the window, resolved against
+  the main page's `document.baseURI`, so a relative URL respects `--base-href` (some embeds, a
+  YouTube player for one, refuse to play in a blank window). A page that can't be read or doesn't
+  load within 10 s sends the panel back.
+- **The page's styles in the window:** every `<link rel="stylesheet">` and `<style>` of the head, in
+  order (Angular's component styles among them), `adoptedStyleSheets` as text, and `<html>`'s and
+  `<body>`'s attributes, classes and inline CSS variables, kept in step as they change. The frame is
+  also `.ndd-workspace`, with the workspace's colour scheme, skin and animation switch, and stays
+  hidden until the copied sheets have loaded (3 s at most).
+- **`<ndd-desktop [popoutWrapper]>`:** a component type (`PopoutWrapper`: the inputs `window` and
+  `document`, and an `<ng-content />`) around every panel's content and every managed widget's (and,
+  in a pop-out, around its frame, a built-in context menu and the toasts shown there), given the
+  `window` and `document` it is in. What its `providers` provide reaches the content, so a CSS-in-JS
+  library that inserts its rules with `insertRule` can keep one cache per document. There for the
+  panel's whole life while `popOut` is on, so nothing is re-created; read when each panel is
+  created. New type: `PopoutWrapper`.
+- **`injectPanelWindow()` → `Signal<PanelWindow>`:** the `window` and `document` the panel is shown
+  in, for listeners, `requestAnimationFrame`, `devicePixelRatio` and `matchMedia`.
+  **`injectPanel().isPoppedOut`**, a `Signal<boolean>`. New type: `PanelWindow`.
+- **zone.js:** each pop-out is given zone.js's own `EventTarget` patch as soon as it opens, so a
+  listener added on its window or document runs in the Angular zone, as on the page; the library's
+  closed-window poll and style observers run outside the zone. Zoneless apps need nothing.
+- **Widgets in their own window:** `injectFloatingWidgets().popOut(id)` → `PopOutResult`,
+  `ManagedWidget.canPopOut`, `injectWidget().isPoppedOut` (a `Signal<boolean>`), and
+  `WidgetMenuContext.canPopOut`, `.isPoppedOut` and `.popOut()` for the app's own "Open in new
+  window" item (there is no built-in one). From the panel it leaves and goes into the window as one
+  move (one `onWillMove` / `onMoved` pair, `onMoved` at the window's size). In the window its frame's
+  title icon opens its `titleMenu` (`.ndd-popout-frame__icon--menu`, a menu glyph without an icon),
+  and **"Back into the panel"** or closing the window puts it back. It can pop out from its owner's
+  window when that panel is out itself (rdd 7.12.1). While out, `location` stays `'floating'`.
+- **Focus across windows:** a click or focus inside a pop-out makes its panel the active one (the
+  frame carries `data-ndd-focused`); Escape closes the topmost menu or flyout of the window it was
+  pressed in. The taskbar lists panels in their own window with a marker
+  (`.ndd-taskbar-item--popout`, `data-ndd-taskbar-popout`, `.ndd-taskbar-item-popout-marker`); a
+  click brings the window forward.
+- **The library's context menu, toolbar flyout and toolbar search dropdown open in the window they
+  were opened from,** place and clamp themselves in it, and close when it closes. In the page
+  nothing changes.
+- **Toasts show in the window the user is in,** stay there, and go when it closes; `maxVisible`
+  counts every window's. `<ndd-toasts>` renders one container per window.
+- **Events** `panel:popping-out` and `panel:returning` (`{ id }`), just before each move, and
+  `panel:popped-out` (`{ id, window }`) and `panel:returned` (`{ id }`), once the panel is laid out in
+  its new place. In `BuiltInEvents`. Popping out, and coming back into the grid, also publish
+  `layout:changed`.
+- **Messages** `popOutWindow`, `returnToDesktop`, `backIntoPanel`, `popOutBlocked` and
+  `inOwnWindow` (ids `ndd.popOutWindow`, …). An app that types its table as
+  `Record<MessageKey, string>` must add them.
+- **CSS hooks:** `.ndd-popout-frame` (`data-ndd-popout`, `data-ndd-popout-kind="panel" | "widget"`)
+  with `__header`, `__icon`, `__icon--menu`, `__title`, `__return` (also `.ndd-custom-tab-btn`) and
+  `__body`, and the wrapper's `.ndd-popout-wrapper` / `.ndd-popout-wrapper__content`
+  (`display: contents`), in `src/styles/parts/26a-popout.css`; the taskbar's in
+  `src/styles/parts/06-taskbar.css`.
+- The demo: `popOut: true`, the Leaflet map can open in a new window (it zooms there but doesn't
+  drag-pan, a Leaflet limit), the Cameras table's menu has "Open in new window", and
+  `projects/demo/public/popout.html` is the window's page.
+
+### Fixed
+
+- **A managed widget's in-panel title icon opened its menu at the page's corner from the keyboard.**
+  Enter or Space on the icon now opens the `titleMenu` below the icon, on its first item, in the
+  icon's own window.
+- **An `svg` or `img` in a floating window's title icon is drawn at 14 × 14** (`.ndd-panel-float__icon`),
+  as in a tab's icon slot, so an SVG with only a `viewBox` shows instead of collapsing to nothing. A pop-out frame's title
+  icon (`.ndd-popout-frame__icon`) is the same 14 × 14 box, so an icon that takes its size from its
+  box (a `mat-icon` set to `width/height: auto`, an SVG with only a `viewBox`) can't grow the frame's
+  header (rdd 7.12.2).
+
+### Tests
+
+- Ported from rdd 7.12.1 by way of vdd 1.14.0, every id behind an `X` (`PO` was already an ndd id):
+  `test/components/document-aware.spec.ts` (XDA1–XDA20 and XDA11b, 45 tests), `test/store/pop-out-store.spec.ts`
+  (rdd's store cases, the full 1,332-case return matrix XPO37, XPO44, and XPON1–XPON9; 122),
+  `test/components/pop-out-windows.spec.ts` (rdd's window cases; 53),
+  `test/components/pop-out-styles.spec.ts` (XPS1–XPS9, XPSN1–XPSN3; 17),
+  `test/components/popout-wrapper.spec.ts` (XPW1–XPW6, XPWN1–XPWN2; 19),
+  `test/components/pop-out-chrome.spec.ts` (XPC1–XPC5, XPCN1–XPCN2; 20),
+  `test/components/pop-out-widgets.spec.ts` (XWG1–XWG14, XWG2b, XWG9b, XWGN1–XWGN6; 42),
+  `test/components/pop-out-focus.spec.ts` (XPF1–XPF6 and XPF4b; 20) and
+  `test/components/pop-out-from-pop-out.spec.ts` (XFP1–XFP7, XFP6b; 8). 346 new tests, 1,442 in
+  all. Every new test was mutation-checked against the line it covers.
+- **The M19 browser gate** (`scripts/gates/browser/m19.mjs`), 17 cases in real Chrome with real
+  child windows, each zoneless and with `?zone`: out and back, closed by the user, `popoutUrl`, two
+  neighbours in both orders, blocked, a pop-out from a pop-out (after a 5.5 s wait, its `opener`
+  checked), the four events, the styles under a skin in both schemes, the wrapper with a runtime
+  CSS-in-JS stand-in, the title icon's size (rdd 7.12.2), the return button, zone.js in the child, a widget out and back, its menu, a
+  widget from its owner's window, focus across windows, and `focusPanelWindow` with the `hasFocus`
+  recipe.
+- **M19 rules** (`scripts/gates/m19.mjs`): the release files, ADR 0019, chapter 15 and the API
+  reference, PARITY's 7.12.x trace and the new spec files; with self-test seeds. M19 joins
+  `gate:release`. M15's chapter count is 15.
+
+### Documentation
+
+- A new chapter, **[15. Pop-out windows](docs/manual/15-popout-windows.md)**: turning it on and the
+  warnings; `popOutPanel` / `returnPanel` and every reason in order; the gesture rule; `popoutUrl`,
+  its page and `--base-href`; where a panel comes back to; saving; styles, Angular component styles
+  (`ShadowDom` not covered) and the CSS-in-JS `popoutWrapper` recipe with its context by injection;
+  `injectPanelWindow()`; change detection and zone.js; what reloads and the canvas pattern; widgets;
+  focus and the taskbar; toasts; the events; testing with Playwright (the `hasFocus` stub, the 5 s
+  activation trap); the limits (Leaflet drag-pan, LuciadRIA's keyboard); the message keys; and the
+  differences from rdd and vdd. Updated: panels (3), layout (4), persistence (5), the overlay (7),
+  overlays and toasts (8), theming (10), i18n (11), migration (12: the five message keys), API
+  reference (13) and widgets out of the panel (14); the manual index and the README.
+- `PARITY.md`: the rdd 7.12.x API map, the trace and test map (each rdd case not ported, with its
+  reason), and where ndd differs. [ADR 0019](docs/decisions/0019-popout-windows.md) records the
+  decisions: the zone.js patch, the registry owned by the desktop, the frame portalled into the
+  child's body, the wrapper as a component type with its context by injection, and the rest.
+
 ## [1.11.1] — 2026-11-20
 
 **Parity: react-dockable-desktop 7.11.0** (vue-dockable-desktop 1.13.0). An Angular-only fix; rdd and

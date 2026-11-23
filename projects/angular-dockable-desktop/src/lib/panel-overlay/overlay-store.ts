@@ -9,9 +9,10 @@
  * Ported from vdd `src/core/overlayState.ts`. Records are replaced, never mutated.
  * @internal
  */
-import { ApplicationRef, EnvironmentInjector, InjectionToken, Injector, createComponent, inject, signal, untracked } from '@angular/core';
-import type { ComponentRef, Signal, Type, WritableSignal } from '@angular/core';
+import { ApplicationRef, EnvironmentInjector, InjectionToken, Injector, createComponent, effect, inject, signal, untracked } from '@angular/core';
+import type { ComponentRef, EffectRef, Signal, Type, WritableSignal } from '@angular/core';
 import type { FloatAnchor, Label } from '../core/types';
+import type { PopOutResult } from '../core/types';
 import type { NddIcon } from '../core/icon';
 import type { ContextMenuItem } from '../core/context-menu';
 import type { PanelFloatPlacement, Stretch } from '../core/stretch';
@@ -28,6 +29,9 @@ import { WIDGET_HANDLE } from './widget-handle';
 import { fromPanelForm, parsePlacement, toPanelForm } from '../core/widget-placement';
 import type { OutTarget, PanelBox, PanelForm } from '../core/widget-placement';
 import { setPreserveEmbeds } from '../core/dom-move';
+import { mountPopoutWrapper } from '../common/popout-wrap';
+import type { MountedPopoutWrapper } from '../common/popout-wrap';
+import { POP_OUT_WINDOWS } from '../desktop/pop-out-frame';
 
 /**
  * A managed widget's whole placement (7.11): its corner and stretch, whether it is docked or
@@ -101,6 +105,13 @@ export interface ManagedWidget {
    * for the whole panel; this is for the widget alone. @default false
    */
   preserveEmbeds?: boolean;
+  /**
+   * It may move into its own browser window (1.12.0, rdd 7.12.0): `injectFloatingWidgets().popOut(id)`,
+   * or an item the app offers in its {@link ManagedWidget.titleMenu} (`w.popOut()`). Needs a
+   * workspace created with `popOut: true`. Changeable while open: call `open()` again; a window
+   * already open stays open. @default false
+   */
+  canPopOut?: boolean;
 }
 
 /**
@@ -121,6 +132,12 @@ export interface WidgetMenuContext {
   canDock: boolean;
   /** The widget's `canFloat`, `false` when unset. */
   canFloat: boolean;
+  /** Its config's `canPopOut`, on a workspace with `popOut` (1.12.0). */
+  canPopOut: boolean;
+  /** It is in its own browser window now (`location` is then `'floating'`). (1.12.0) */
+  isPoppedOut: boolean;
+  /** `injectFloatingWidgets().popOut()` for this widget (1.12.0). */
+  popOut(): PopOutResult;
   /** `injectFloatingWidgets().move()` for this widget. */
   move(to: WidgetTarget): MoveResult;
   /** Closes the widget for real, wherever it is. */
@@ -276,16 +293,63 @@ export function createPanelOverlayStore(): PanelOverlayStore {
   const elementInjector = inject(Injector);
   const appRef = inject(ApplicationRef);
   const doc = inject(DOCUMENT);
+  // The owner panel's context: the widget's content gets it with its own window (1.12.0).
+  const ownerContext = inject(PANEL_CONTEXT, { optional: true });
+  const panelHost = inject(PanelHost, { optional: true });
+  /** Each widget's app `popoutWrapper` (1.12.0), around its content for the content's whole life. */
+  const wrappers = new Map<string, { mounted: MountedPopoutWrapper; follow: EffectRef }>();
+  const unwrap = (id: string) => {
+    const w = wrappers.get(id);
+    if (!w) return;
+    wrappers.delete(id);
+    w.follow.destroy();
+    w.mounted.destroy();
+  };
   const content: WidgetContentCache = new WidgetContentCache(
     () => untracked(container)?.ownerDocument ?? doc,
     (id, type, hostElement): ComponentRef<unknown> => {
-      // A child of the overlay's injector per widget, carrying `injectWidget()`'s handle.
+      // The window its content is in (1.12.0): its own panel's while out of its owner panel (in
+      // the page, or in a pop-out window of its own), else its owner's. `injectPanel()` is still
+      // the owner's: only the window differs.
+      const widgetWindow = hosting.windowOf(id, ownerContext?.window);
+      // With pop-outs on, the app's popoutWrapper is around the content too, for its whole life,
+      // so what it provides (a style cache for its document) follows the widget into its window.
+      // A re-created content (another component) gets a new one.
+      const wrapperType = panelHost?.popOut?.enabled ? untracked(() => panelHost.popOut!.wrapper()) : null;
+      let parent: Injector = elementInjector;
+      if (wrapperType) {
+        const at = untracked(widgetWindow);
+        const mounted = mountPopoutWrapper(wrapperType, { content: [], win: at.window, doc: at.document, parent, environment: environmentInjector, appRef });
+        const follow = effect(
+          () => {
+            const now = widgetWindow();
+            untracked(() => mounted.setWindow(now.window, now.document));
+          },
+          { injector: elementInjector },
+        );
+        // Its host is placed nowhere: the content element is the content component's own host
+        // (it moves between containers), so the wrapper is around the content by injection: what
+        // it provides reaches the content's components, with this widget's window and document.
+        wrappers.set(id, { mounted, follow });
+        parent = mounted.injector;
+      }
+      // A child of the overlay's (or the wrapper's) injector per widget, carrying `injectWidget()`'s handle.
       const widgetInjector = Injector.create({
-        providers: [{ provide: WIDGET_HANDLE, useValue: hosting.handle(id) }],
-        parent: elementInjector,
+        providers: [
+          { provide: WIDGET_HANDLE, useValue: hosting.handle(id) },
+          ...(ownerContext ? [{ provide: PANEL_CONTEXT, useValue: { ...ownerContext, window: widgetWindow } }] : []),
+        ],
+        parent,
       });
       const ref = createComponent(type, { environmentInjector, elementInjector: widgetInjector, hostElement });
       appRef.attachView(ref.hostView);
+      // The wrapper goes with the content: a close, a re-created content, the overlay's end.
+      const mine = wrappers.get(id);
+      if (mine) {
+        ref.onDestroy(() => {
+          if (wrappers.get(id) === mine) unwrap(id);
+        });
+      }
       return ref;
     },
   );
@@ -311,8 +375,9 @@ export function createPanelOverlayStore(): PanelOverlayStore {
       closeManaged: id => closeManaged(id),
     },
     workspace,
-    inject(PanelHost, { optional: true })?.dom ?? null,
-    inject(PANEL_CONTEXT, { optional: true })?.id ?? null,
+    panelHost?.dom ?? null,
+    ownerContext?.id ?? null,
+    inject(POP_OUT_WINDOWS, { optional: true }),
   );
   let zCounter = 100;
   /** Saved free positions waiting for the panel to have a size (7.11), by widget id. */
@@ -427,6 +492,8 @@ export function createPanelOverlayStore(): PanelOverlayStore {
       setPreserveEmbeds(content.get(id)!, widget.preserveEmbeds === true);
       if (widget.preserveEmbeds) hosting.preserveOwner();
       managed.update(m => new Map(m).set(id, widget));
+      // `canPopOut` on a workspace without `popOut`: said once per widget, in development (1.12.0).
+      hosting.opened(id, widget);
       // A re-open of a widget out of the panel: its hosted panel follows the new title and icon.
       hosting.refresh(id, widget);
       // Seeded once per open, then owned here: re-opening a live id updates its content and

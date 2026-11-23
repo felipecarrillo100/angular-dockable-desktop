@@ -31,6 +31,9 @@ bootstrapApplication(App, {
     ...(zone ? [provideZoneChangeDetection()] : []),
     provideDockableDesktop({
       formatMessage,
+      // Pop-out windows (1.12.0): the Leaflet map can open in its own browser window, and so can the
+      // main map's Cameras table (cameras-table-toggle.ts). The page they open is public/popout.html.
+      popOut: true,
       panels: {
         control: { component: ControlCenterPanel, defaultOptions: { title: 'Control Center', icon: ICONS.rocket } },
         // The four heavy panels are lazy — `loadComponent`, the router's shape — so Monaco,
@@ -41,7 +44,9 @@ bootstrapApplication(App, {
 
         // The workspace's primary view: not closable, and not worth scaling into a thumbnail.
         mainMap: { loadComponent: () => import('./app/panels/main-map-panel').then(m => m.MainMapPanel), defaultOptions: { title: 'Main Map', icon: ICONS.map, canClose: false, disableLivePreview: true } },
-        leafletMap: { loadComponent: () => import('./app/panels/leaflet-map-panel').then(m => m.LeafletMapPanel), defaultOptions: { title: 'Leaflet Map', icon: ICONS.globe, disableLivePreview: true } },
+        // "Open in new window" in its tab menu (1.12.0). Leaflet 1.9 drag-pans with listeners on the main
+        // document, so in a pop-out the map zooms but doesn't pan by dragging (manual, chapter 15).
+        leafletMap: { loadComponent: () => import('./app/panels/leaflet-map-panel').then(m => m.LeafletMapPanel), defaultOptions: { title: 'Leaflet Map', icon: ICONS.globe, disableLivePreview: true, canPopOut: true } },
 
         layers: { component: LayerTreePanel, defaultOptions: { title: 'Layers', icon: ICONS.layers } },
         tools: { component: ToolPanel, defaultOptions: { title: 'Tools', icon: ICONS.tools } },

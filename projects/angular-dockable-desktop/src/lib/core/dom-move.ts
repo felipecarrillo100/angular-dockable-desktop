@@ -15,6 +15,8 @@
  * @internal
  */
 
+import { rafOf } from './dom-context';
+
 const preserving = new WeakSet<Element>();
 
 /**
@@ -68,13 +70,15 @@ export function moveIntoWhenConnected(slot: Element, el: Element, move: () => vo
   }
   let cancelled = false;
   let frames = 0;
+  // The slot's window's frames (1.12.0): a pop-out's go on while the page is hidden.
+  const raf = rafOf(slot);
   const frame =
-    typeof requestAnimationFrame === 'undefined'
+    raf === null
       ? (cb: () => void) => {
           setTimeout(cb, 16);
         }
       : (cb: () => void) => {
-          requestAnimationFrame(cb);
+          raf(cb);
         };
   const attempt = (): void => {
     if (cancelled) return;

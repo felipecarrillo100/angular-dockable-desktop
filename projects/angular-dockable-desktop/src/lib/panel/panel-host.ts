@@ -27,7 +27,7 @@ import {
   signal,
   untracked,
 } from '@angular/core';
-import type { ComponentRef, Signal, Type, WritableSignal } from '@angular/core';
+import type { ComponentRef, EffectRef, Signal, Type, WritableSignal } from '@angular/core';
 import { Workspace } from '../workspace/workspace';
 import type { WorkspaceState } from '../workspace/workspace';
 import type { ContainerType, LayoutNode } from '../core/types';
@@ -38,6 +38,26 @@ import { NddUnregisteredPanel, NddPanelLoading } from './panel-placeholders';
 import { NddHostedWidget } from './hosted-widget';
 import { findLeaf, findLeafForPanel } from '../core/layout-tree';
 import { optionsFor } from '../core/panel-options';
+import { resizeObserverFor } from '../core/dom-context';
+import { mountPopoutWrapper } from '../common/popout-wrap';
+import type { MountedPopoutWrapper } from '../common/popout-wrap';
+import { mainWindow } from './panel-window';
+import type { PanelWindow } from './panel-window';
+import type { PopOutEntry } from '../core/pop-out-windows';
+
+/**
+ * What `<ndd-desktop>` tells its panel host about pop-out windows (1.12.0): whether the workspace
+ * has them, the open windows, and the app's `popoutWrapper`.
+ */
+export interface PanelHostPopOut {
+  readonly enabled: boolean;
+  readonly entries: Signal<readonly PopOutEntry[]>;
+  /**
+   * The app's wrapper while the workspace has pop-outs (null otherwise), read when a panel is
+   * created: it is around the panel's content for its whole life.
+   */
+  wrapper(): Type<unknown> | null;
+}
 
 interface HostedPanel {
   ref: ComponentRef<unknown> | null;
@@ -51,6 +71,10 @@ interface HostedPanel {
   disposed: boolean;
   /** The resolved component, once known: what a `keepAlive: false` panel is re-created from. */
   type: Type<unknown> | null;
+  /** The window the panel is in (1.12.0): `injectPanelWindow()`'s, and the wrapper's inputs. */
+  window: Signal<PanelWindow>;
+  /** The app's popoutWrapper around the content (1.12.0), for the panel's whole life, and what keeps its inputs. */
+  wrapper: { mounted: MountedPopoutWrapper; follow: EffectRef } | null;
 }
 
 /** @internal — one per `<ndd-desktop>`, provided in its `providers`. */
@@ -67,6 +91,11 @@ export class PanelHost {
   private parkQueued = false;
   /** Preserving panels parked before a render, to put back in their slots after it. */
   private readonly parked = new Set<string>();
+  /**
+   * Pop-out windows (1.12.0), set by `<ndd-desktop>` before its first render; null for a host with
+   * no desktop (no window but the main one, no wrapper).
+   */
+  popOut: PanelHostPopOut | null = null;
 
   constructor(doc: Document) {
     this.dom = new PanelDomCache(doc);
@@ -178,9 +207,15 @@ export class PanelHost {
       applied: undefined,
       disposed: false,
       type: null,
+      window: this.windowOf(id),
+      wrapper: null,
     };
     this.hosted.set(id, hosted);
     this.dom.elementFor(id); // exists from open, so a slot can take it before content loads
+    // The app's popoutWrapper (1.12.0), around the content for the panel's whole life while the
+    // workspace has pop-outs, so nothing is re-created when the panel moves to a window and back.
+    const wrapper = this.popOut ? untracked(() => this.popOut!.wrapper()) : null;
+    if (wrapper) this.wrap(id, hosted, wrapper);
     // Marked from the start, so its first move into a slot already keeps its embeds (7.11).
     if (optionsFor(this.workspace.registry, untracked(this.workspace.panels)[id])?.preserveEmbeds === true) this.dom.preserveEmbeds(id);
     this.observeSize(id, hosted);
@@ -224,8 +259,10 @@ export class PanelHost {
       const effective = panel.state === 'minimized' ? (panel.previousState ?? 'docked') : panel.state;
       return effective === 'floating' ? 'floating-window' : 'dockable-panel';
     });
-    const context: PanelContext = { id, containerType, size: hosted.size.asReadonly() };
-    const elementInjector = Injector.create({ providers: [{ provide: PANEL_CONTEXT, useValue: context }], parent: this.injector });
+    const context: PanelContext = { id, containerType, size: hosted.size.asReadonly(), window: hosted.window };
+    // Inside the wrapper's injector when there is one: what it provides reaches the panel (1.12.0).
+    const parent = hosted.wrapper?.mounted.injector ?? this.injector;
+    const elementInjector = Injector.create({ providers: [{ provide: PANEL_CONTEXT, useValue: context }], parent });
 
     const content = this.dom.contentFor(id);
     const ref = createComponent(type, {
@@ -284,9 +321,64 @@ export class PanelHost {
     hosted.applied = props;
   }
 
+  /**
+   * The window panel `id` is in (1.12.0, rdd's `usePanelWindowOf`): its pop-out's once that
+   * window's page is ready, the main one otherwise. From the same store the pop-out's frame renders
+   * from (the registry's entries), so the render that shows the panel's slot in the pop-out already
+   * gives the pop-out's document.
+   */
+  private windowOf(id: string): Signal<PanelWindow> {
+    return computed(() => {
+      const popOut = this.popOut;
+      const doc = popOut?.enabled ? (popOut.entries().find(e => e.id === id)?.doc ?? null) : null;
+      return doc?.defaultView ? { window: doc.defaultView, document: doc } : mainWindow();
+    });
+  }
+
+  /**
+   * Creates the app's `popoutWrapper` around a panel's content element (1.12.0), in its mount
+   * element, and keeps its `window` and `document` inputs on the panel's window. Set before any
+   * render that shows the panel elsewhere: the effect runs with the desktop's view, which is
+   * checked before the wrapper's, so the wrapper renders with the new document in the same render.
+   */
+  private wrap(id: string, hosted: HostedPanel, type: Type<unknown>): void {
+    const content = this.dom.contentFor(id);
+    const at = untracked(hosted.window);
+    const mounted = mountPopoutWrapper(type, {
+      content: [content],
+      win: at.window,
+      doc: at.document,
+      parent: this.injector,
+      environment: this.environmentInjector,
+      appRef: this.appRef,
+    });
+    this.dom.elementFor(id).appendChild(mounted.host);
+    this.dom.setContentParent(id, content.parentElement ?? mounted.host);
+    const follow = effect(
+      () => {
+        const now = hosted.window();
+        untracked(() => mounted.setWindow(now.window, now.document));
+      },
+      { injector: this.injector },
+    );
+    hosted.wrapper = { mounted, follow };
+  }
+
+  /**
+   * Rebuilds a panel's size observer from the window its element is in now (1.12.0): it moved into
+   * a pop-out window or back, and an observer only works from the element's own window.
+   */
+  reobserve(id: string): void {
+    const hosted = this.hosted.get(id);
+    if (!hosted || hosted.disposed) return;
+    hosted.observer?.disconnect();
+    this.observeSize(id, hosted);
+  }
+
   private observeSize(id: string, hosted: HostedPanel): void {
-    if (typeof ResizeObserver === 'undefined') return;
-    hosted.observer = new ResizeObserver(entries => {
+    // From the element's own window (1.12.0).
+    const el = this.dom.elementFor(id);
+    hosted.observer = resizeObserverFor(el, entries => {
       for (const e of entries) {
         const { width, height } = e.contentRect;
         if (width > 0 && height > 0) {
@@ -296,7 +388,7 @@ export class PanelHost {
         }
       }
     });
-    hosted.observer.observe(this.dom.elementFor(id));
+    hosted.observer?.observe(el);
   }
 
   private unmount(hosted: HostedPanel): void {
@@ -312,6 +404,11 @@ export class PanelHost {
     hosted.disposed = true;
     hosted.observer?.disconnect();
     this.unmount(hosted);
+    if (hosted.wrapper) {
+      hosted.wrapper.follow.destroy();
+      hosted.wrapper.mounted.destroy();
+      hosted.wrapper = null;
+    }
     this.hosted.delete(id);
     this.dom.release(id);
   }

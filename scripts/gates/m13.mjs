@@ -43,7 +43,8 @@ else {
     const n = by[s.ndd]?.length ?? 0;
     must(n >= s.min, `${s.vdd} → ${s.ndd}: ${n} tests, below vdd's ${s.min}`);
   }
-  must(map.suites.length === 33, `the port map lists ${map.suites.length} vdd suites; vdd has 33`);
+  // 33 when M13 was written; 42 since 1.12.0 added vdd 1.14.0's nine pop-out suites (ADR 0019).
+  must(map.suites.length === 42, `the port map lists ${map.suites.length} vdd suites; it should list 42`);
   must(report.numTotalTests >= 765, `the suite has ${report.numTotalTests} tests; vdd's is 765`);
   must(report.numFailedTests === 0, `${report.numFailedTests} tests are failing`);
   const skipped = report.testResults.flatMap(f => f.assertionResults).filter(a => a.status !== 'passed');

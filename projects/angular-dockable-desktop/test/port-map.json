@@ -199,6 +199,60 @@
       "ndd": "style-hookups.spec.ts",
       "min": 14,
       "milestone": 13
+    },
+    {
+      "vdd": "documentAware.test.ts",
+      "ndd": "document-aware.spec.ts",
+      "min": 36,
+      "milestone": 19
+    },
+    {
+      "vdd": "popOutStore.test.ts",
+      "ndd": "pop-out-store.spec.ts",
+      "min": 113,
+      "milestone": 19
+    },
+    {
+      "vdd": "popOutWindows.test.ts",
+      "ndd": "pop-out-windows.spec.ts",
+      "min": 45,
+      "milestone": 19
+    },
+    {
+      "vdd": "popOutFromPopOut.test.ts",
+      "ndd": "pop-out-from-pop-out.spec.ts",
+      "min": 8,
+      "milestone": 19
+    },
+    {
+      "vdd": "popOutStyles.test.ts",
+      "ndd": "pop-out-styles.spec.ts",
+      "min": 14,
+      "milestone": 19
+    },
+    {
+      "vdd": "popoutWrapper.test.ts",
+      "ndd": "popout-wrapper.spec.ts",
+      "min": 17,
+      "milestone": 19
+    },
+    {
+      "vdd": "popOutChrome.test.ts",
+      "ndd": "pop-out-chrome.spec.ts",
+      "min": 18,
+      "milestone": 19
+    },
+    {
+      "vdd": "popOutWidgets.test.ts",
+      "ndd": "pop-out-widgets.spec.ts",
+      "min": 36,
+      "milestone": 19
+    },
+    {
+      "vdd": "popOutFocus.test.ts",
+      "ndd": "pop-out-focus.spec.ts",
+      "min": 19,
+      "milestone": 19
     }
   ],
   "_modules": "Source modules the non-vacuity sweep stubs (scripts/gates/non-vacuity.mjs): each must turn the suite red once its milestone is reached.",
@@ -414,6 +468,34 @@
     {
       "file": "src/lib/core/messages.ts",
       "milestone": 12
+    },
+    {
+      "file": "src/lib/core/dom-context.ts",
+      "milestone": 19
+    },
+    {
+      "file": "src/lib/core/document-registry.ts",
+      "milestone": 19
+    },
+    {
+      "file": "src/lib/core/pop-out-windows.ts",
+      "milestone": 19
+    },
+    {
+      "file": "src/lib/core/pop-out-styles.ts",
+      "milestone": 19
+    },
+    {
+      "file": "src/lib/panel/panel-window.ts",
+      "milestone": 19
+    },
+    {
+      "file": "src/lib/common/popout-wrap.ts",
+      "milestone": 19
+    },
+    {
+      "file": "src/lib/desktop/pop-out-frame.ts",
+      "milestone": 19
     }
   ]
 }

@@ -19,6 +19,7 @@
 import { signal, untracked } from '@angular/core';
 import type { ComponentRef, Signal, Type } from '@angular/core';
 import { moveInto, moveIntoWhenConnected } from '../core/dom-move';
+import { isElement, rafOf } from '../core/dom-context';
 
 /** Creates a widget's component on its element. Supplied by the overlay store, which has the injectors. */
 export type ContentFactory = (id: string, type: Type<unknown>, host: HTMLElement) => ComponentRef<unknown>;
@@ -139,7 +140,8 @@ export class WidgetContentCache {
       });
     apply();
     // Again next frame: a slot the workspace has not laid out yet cannot take an offset at once.
-    if (typeof requestAnimationFrame === 'function') requestAnimationFrame(apply);
+    // On the host's window's frame (1.12.0): a pop-out's, for a widget shown there.
+    rafOf(host)?.(apply);
   }
 
   /**
@@ -195,7 +197,8 @@ export class WidgetContentCache {
       e => {
         const target = e.target;
         // An element being hidden or detached can report its reset to 0 as a scroll: ignored.
-        if (!(target instanceof Element) || target.getClientRects().length === 0) return;
+        // Any window's element (1.12.0).
+        if (!isElement(target) || target.getClientRects().length === 0) return;
         record.set(target, { top: target.scrollTop, left: target.scrollLeft });
       },
       { capture: true, passive: true },

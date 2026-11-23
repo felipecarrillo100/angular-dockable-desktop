@@ -16,6 +16,7 @@
 import { Injectable, signal, untracked } from '@angular/core';
 import type { Type } from '@angular/core';
 import type { NddIcon } from '../core/icon';
+import { focusedDocument } from '../core/document-registry';
 
 export type ToastType = 'info' | 'success' | 'warning' | 'error';
 export type ToastPosition = 'top-left' | 'top-right' | 'bottom-left' | 'bottom-right';
@@ -84,6 +85,19 @@ const items = signal<readonly ToastRecord[]>([]);
 let adapter: ToastAdapter | null = null;
 let counter = 0;
 
+/**
+ * The window each toast shows in (1.12.0): the one the user was in when it was raised (a pop-out's,
+ * else the page's), recorded once, at its first `show`. An update by id keeps it. Not on the
+ * record, which is public: internal, read by `<ndd-toasts>`. Written before the queue, so whatever
+ * renders the new record already finds it.
+ */
+const toastDocs = new Map<string, Document>();
+
+/** @internal The document toast `id` was raised in, or undefined (none recorded, or on the server). */
+export function toastDocument(id: string): Document | undefined {
+  return toastDocs.get(id);
+}
+
 /** The live queue. Exported for `<ndd-toasts>` and for tests; applications use `toast`. */
 export const toastQueue = {
   items: items.asReadonly(),
@@ -113,6 +127,9 @@ function show(message: string, options: ToastOptions = {}): string {
     adapter?.update(id, message, resolved as Partial<ResolvedToastOptions>);
     return id;
   }
+  // Where the user is now (a pop-out window with focus, 1.12.0), else the page.
+  const doc = typeof document === 'undefined' ? null : focusedDocument();
+  if (doc) toastDocs.set(id, doc);
   items.update(list => [...list, { id, message, options: resolved, exiting: false, revision: 0 }]);
   // An adapter owns rendering, so it is told about a new toast too — with the defaults filled in,
   // since there is no container to supply them (N16; vdd queued a new toast and never told the
@@ -132,6 +149,7 @@ export function startExit(id: string): void {
 /** Drop a record outright — once its exit transition has ended. */
 export function removeToast(id: string): void {
   items.update(list => list.filter(t => t.id !== id));
+  toastDocs.delete(id);
 }
 
 /**
@@ -201,6 +219,7 @@ export const toast: ToastFunction = Object.assign((message: string, options?: To
 export function resetToasts(): void {
   items.set([]);
   adapter = null;
+  toastDocs.clear();
 }
 
 /** `toast` as an injectable: `inject(NddToaster).success('Saved')`. */

@@ -32,6 +32,8 @@ export type { TaskbarVisibility } from './lib/desktop/taskbar';
 // ─── The panel's view of itself ──────────────────────────────────────────────
 export { injectPanel } from './lib/panel/panel-ref';
 export type { PanelRef } from './lib/panel/panel-ref';
+export { injectPanelWindow } from './lib/panel/panel-window';
+export type { PanelWindow, PopoutWrapper } from './lib/panel/panel-window';
 export { injectColorScheme } from './lib/core/color-scheme';
 export type { ColorScheme } from './lib/core/color-scheme';
 
@@ -186,6 +188,7 @@ export type {
   PanelInfo,
   PanelOwner,
   PanelState,
+  PopOutResult,
   SerializedLayout,
   SplitDirection,
   SplitOrientation,

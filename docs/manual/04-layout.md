@@ -64,6 +64,13 @@ focused.
 `ws.getOpenPanelIds()` lists every open panel. While a managed widget is out of its panel, its own
 panel is listed too: `'map-1/results'` ([Chapter 14](14-widgets-out-of-the-panel.md)).
 
+**Into its own browser window** (1.12.0, rdd 7.12.0): `ws.popOutPanel('map-1')`, called inside the
+user's click, moves a panel of a type with `canPopOut` into a window of its own, on a workspace
+created with `popOut: true`; `ws.returnPanel('map-1')` brings it back where it was, and
+`ws.focusPanelWindow('map-1')` brings its window forward. While it is out, `floatPanel` and
+`maximizePanel` are ignored, `focusPanel` also brings its window forward, and `minimizePanel` and
+the three dock actions bring it back first, then apply. See [Chapter 15](15-popout-windows.md).
+
 Leaf ids are generated as the user splits the layout; read the current ones from
 `ws.gridRoot()`. `dockPanelToGroup` and `movePanelOrder` ignore, with a development warning, a
 leaf id that is no longer in the layout. `restorePanel` returns a panel to the leaf it was
@@ -233,6 +240,12 @@ for instance, the returned function is yours to call.
 `component: 'ndd:widget'`, and `panel:closed` when it goes back or closes (1.11.0). A `move()`
 from one place out of the panel to another is a `panel:closed` then a `panel:opened` for the same
 id. A `loadLayout()` that sends a widget home publishes no `panel:closed` for its panel.
+
+A panel moving into its own browser window and back (1.12.0) sends `panel:popping-out` and
+`panel:popped-out`, then `panel:returning` and `panel:returned`, each pair around the move and
+the second once the panel is laid out in its new place
+([Chapter 15](15-popout-windows.md#events)). Popping out publishes `layout:changed`, and so does
+coming back into the grid.
 
 `layout:changed` is the coalesced signal for autosave: it covers open, close, minimise, restore,
 dedupe redirects, every placement change (dock, float, reorder, edge-dock, split resize),

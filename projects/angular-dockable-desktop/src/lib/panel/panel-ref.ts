@@ -24,6 +24,7 @@ import type { Signal } from '@angular/core';
 import { Workspace } from '../workspace/workspace';
 import type { NddIcon } from '../core/icon';
 import type { ContainerType, DirtyStateOptions, Label } from '../core/types';
+import type { PanelWindow } from './panel-window';
 
 /** What a panel's container tells it about itself. @internal */
 export interface PanelContext {
@@ -36,6 +37,8 @@ export interface PanelContext {
   setTitle?: (title: Label) => void;
   setIcon?: (icon: NddIcon) => void;
   setDirty?: (dirty: boolean, options?: DirtyStateOptions) => void;
+  /** The window the panel is in (1.12.0), for `injectPanelWindow()`; the main one when absent. */
+  window?: Signal<PanelWindow>;
 }
 
 /** @internal — provided by each container to its content. */
@@ -59,6 +62,11 @@ export interface PanelRef {
   readonly size: Signal<{ width: number; height: number } | null>;
   /** Unsaved changes. */
   readonly dirty: Signal<boolean>;
+  /**
+   * Whether this panel is in its own browser window (`workspace.popOutPanel`, 1.12.0). Its window
+   * and document are `injectPanelWindow()`'s. `isFloating` is true too while it is out.
+   */
+  readonly isPoppedOut: Signal<boolean>;
   setTitle(title: Label): void;
   /** In a workspace panel, sets its tab, window and taskbar icon (1.10.0); in a modal or side panel, its title-bar icon. */
   setIcon(icon: NddIcon): void;
@@ -134,6 +142,7 @@ export function injectPanel(): PanelRef {
     containerType: computed(() => ctx?.containerType() ?? STANDALONE),
     size: ctx?.size ?? fallbackSize,
     dirty: computed(() => info()?.dirty === true),
+    isPoppedOut: computed(() => info()?.poppedOut === true),
 
     setTitle: title => untracked(() => {
       if (ctx?.setTitle) ctx.setTitle(title);

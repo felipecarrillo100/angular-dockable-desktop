@@ -22,6 +22,7 @@ import { NddIconView } from '../common/icon';
 import { NddPanelSlot } from '../panel/panel-slot';
 import { DragDock } from './drag-dock';
 import { moreActionsMenu, openMenu, panelMenu } from './menus';
+import { injectPopOutMenu } from './pop-out-frame';
 
 /** Inset from the workspace edge, and the gap between windows stacked in one corner. */
 const CORNER_INSET = 8;
@@ -108,7 +109,7 @@ const NONE: Placement = { left: null, top: null, bottom: null, inlineStart: null
           <span>{{ title() }}{{ panel.dirty ? ' *' : '' }}</span>
         </span>
         <div class="ndd-titlebar-actions" (pointerdown)="$event.stopPropagation()">
-          @if (contributed().length > 0) {
+          @if (hasMoreActions()) {
             <button
               type="button"
               class="ndd-custom-tab-btn ndd-btn-more-actions"
@@ -193,6 +194,8 @@ export class NddFloatingWindow {
 
   protected readonly workspace = inject(Workspace) as Workspace<never>;
   private readonly drag = inject(DragDock);
+  /** "Open in new window" (1.12.0), when the workspace has pop-out windows. */
+  private readonly popOutMenu = injectPopOutMenu();
   protected readonly handles = HANDLES;
 
   protected readonly panel = computed(() => this.workspace.panels()[this.window().id]);
@@ -210,7 +213,8 @@ export class NddFloatingWindow {
   private readonly stackOffset = computed(() => {
     const w = this.window();
     if (!w.anchor) return 0;
-    const stack = this.workspace.floating().filter(o => o.anchor === w.anchor && !o.maximized);
+    const panels = this.workspace.panels();
+    const stack = this.workspace.floating().filter(o => o.anchor === w.anchor && !o.maximized && !panels[o.id]?.poppedOut);
     const index = stack.findIndex(o => o.id === w.id);
     let offset = CORNER_INSET;
     for (let i = 0; i < index; i++) offset += num(stack[i]!.height) + CORNER_GAP;
@@ -240,9 +244,11 @@ export class NddFloatingWindow {
 
   /** Items the panel contributed to its own menu; reactive to (un)registration. */
   protected readonly contributed = computed(() => this.workspace.panelMenuItems(this.window().id));
+  /** The ⋮ button shows for the panel's own items, or for "Open in new window" (1.12.0). */
+  protected readonly hasMoreActions = computed(() => this.contributed().length > 0 || !!this.popOutMenu?.canPopOut(this.window().id));
 
   protected onTitleMenu(event: MouseEvent): void {
-    openMenu(this.workspace, event, panelMenu(this.workspace, this.window().id));
+    openMenu(this.workspace, event, panelMenu(this.workspace, this.window().id, this.popOutMenu));
   }
 
   /**
@@ -253,7 +259,7 @@ export class NddFloatingWindow {
 
   /** The more-actions button offers what the panel contributed; a hosted panel's ends with Close. */
   protected onMoreActions(event: MouseEvent): void {
-    openMenu(this.workspace, event, moreActionsMenu(this.workspace, this.window().id));
+    openMenu(this.workspace, event, moreActionsMenu(this.workspace, this.window().id, this.popOutMenu));
   }
 
   protected onTitlePointerDown(event: PointerEvent): void {

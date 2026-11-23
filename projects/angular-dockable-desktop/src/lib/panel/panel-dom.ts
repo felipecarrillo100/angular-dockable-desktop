@@ -14,6 +14,7 @@
  */
 import { signal, untracked } from '@angular/core';
 import { moveInto, preservesEmbeds, setPreserveEmbeds } from '../core/dom-move';
+import { docOf, isElement, rafOf } from '../core/dom-context';
 
 /**
  * What a hosted panel shows (7.11, widgets out of the panel): the content element of the managed
@@ -49,6 +50,8 @@ function scrollables(root: Element): Element[] {
 export class PanelDomCache {
   private readonly elements = new Map<string, HTMLDivElement>();
   private readonly contents = new Map<string, HTMLDivElement>();
+  /** The element each content element is in when it isn't the mount: the app's popoutWrapper (1.12.0). */
+  private readonly contentParents = new Map<string, Element>();
   /** Owned per panel and outliving the hidden period (vdd ADR 0014, M0 finding 1). */
   private readonly preserved = new Map<string, Preserved>();
   /** The last laid-out size, which outlives any host — the taskbar preview scales from it. */
@@ -117,9 +120,18 @@ export class PanelDomCache {
     this.contents.get(id)?.remove();
     const content = this.doc.createElement('div');
     content.className = 'ndd-panel-content';
-    el.appendChild(content);
+    // Inside the app's popoutWrapper when there is one (1.12.0), where the first one was.
+    (this.contentParents.get(id) ?? el).appendChild(content);
     this.contents.set(id, content);
     return content;
+  }
+
+  /**
+   * Where a panel's content element goes when it is replaced (1.12.0): inside the app's
+   * `popoutWrapper` around it, rather than straight in its mount element.
+   */
+  setContentParent(id: string, parent: Element): void {
+    this.contentParents.set(id, parent);
   }
 
   /** Every content element, for attributes that follow the workspace (direction). */
@@ -238,6 +250,7 @@ export class PanelDomCache {
     this.elements.get(id)?.remove();
     this.elements.delete(id);
     this.contents.delete(id);
+    this.contentParents.delete(id);
     this.preserved.delete(id);
     this.sizes.delete(id);
   }
@@ -247,6 +260,7 @@ export class PanelDomCache {
     for (const el of this.elements.values()) el.remove();
     this.elements.clear();
     this.contents.clear();
+    this.contentParents.clear();
     this.preserved.clear();
     this.sizes.clear();
     this.hosted.set(new Map());
@@ -272,7 +286,8 @@ export class PanelDomCache {
       'scroll',
       ev => {
         const s = ev.target;
-        if (!(s instanceof Element) || !isLaidOut(el)) return;
+        // Any window's element (1.12.0): a panel shown in a pop-out scrolls there.
+        if (!isElement(s) || !isLaidOut(el)) return;
         const rec = this.record(id);
         const hit = rec.scrolls.find(r => r.el === s);
         if (hit) {
@@ -290,7 +305,8 @@ export class PanelDomCache {
       // ignore our own moves, and judge foreign detaches one microtask later (M0 finding 2).
       if (this.moving) return;
       queueMicrotask(() => {
-        const active = this.doc.activeElement;
+        // The element's own document (1.12.0): a panel shown in a pop-out keeps its focus there.
+        const active = docOf(el).activeElement;
         if (el.isConnected && isLaidOut(el) && !(active && el.contains(active))) this.record(id).focus = null;
       });
     });
@@ -300,7 +316,8 @@ export class PanelDomCache {
     if (!isLaidOut(el)) return; // detached or hidden: the live record stands
     const scrolls = scrollables(el).map(s => ({ el: s, top: s.scrollTop, left: s.scrollLeft }));
     let focus: Preserved['focus'] = null;
-    const active = this.doc.activeElement as HTMLElement | null;
+    // The element's own document (1.12.0).
+    const active = docOf(el).activeElement as HTMLElement | null;
     if (active && el.contains(active)) {
       const field = active as HTMLInputElement;
       const hasSelection = 'selectionStart' in field && field.selectionStart !== null;
@@ -330,6 +347,7 @@ export class PanelDomCache {
     };
     if (isLaidOut(el)) run();
     // Again next frame: on the way out of the store the subtree is not laid out yet.
-    if (typeof requestAnimationFrame === 'function') requestAnimationFrame(() => isLaidOut(el) && run());
+    // On the element's window's frame (1.12.0).
+    rafOf(el)?.(() => isLaidOut(el) && run());
   }
 }
