@@ -12,12 +12,13 @@ feature-by-feature map is [docs/PARITY.md](docs/PARITY.md).
 
 ## [1.12.0] — 2026-11-22
 
-**Parity: react-dockable-desktop 7.12.1** (vue-dockable-desktop 1.14.0 made the same port). Pop-out
+**Parity: react-dockable-desktop 7.12.2** (vue-dockable-desktop 1.14.0 made the same port). Pop-out
 windows: a panel can move into its own browser window, for a second monitor, and come back, without
 its component being re-created: its state, scroll offsets and a canvas's WebGL context go with it,
 and the page's styles follow it there. A managed widget out of its panel can go into a window too,
-and a click inside a pop-out can open another one. rdd 7.12.0 is the feature and 7.12.1 the
-click-from-a-pop-out fix; this release ports the final 7.12.1 behaviour at once. Same names as rdd
+and a click inside a pop-out can open another one. rdd 7.12.0 is the feature, 7.12.1 the
+click-from-a-pop-out fix and 7.12.2 the title icon's size; this release ports the final 7.12.2
+behaviour at once. Same names as rdd
 and vdd, with `ndd` where they say `rdd` / `vdd`, and Angular's idioms (signals, a component type
 for the wrapper, its context by injection). Guide: [Pop-out windows](docs/manual/15-popout-windows.md).
 Off by default: an app that doesn't pass `popOut: true` sees no change.
@@ -111,6 +112,11 @@ Off by default: an app that doesn't pass `popOut: true` sees no change.
 - **A managed widget's in-panel title icon opened its menu at the page's corner from the keyboard.**
   Enter or Space on the icon now opens the `titleMenu` below the icon, on its first item, in the
   icon's own window.
+- **An `svg` or `img` in a floating window's title icon is drawn at 14 × 14** (`.ndd-panel-float__icon`),
+  as in a tab's icon slot, so an SVG with only a `viewBox` shows instead of collapsing to nothing. A pop-out frame's title
+  icon (`.ndd-popout-frame__icon`) is the same 14 × 14 box, so an icon that takes its size from its
+  box (a `mat-icon` set to `width/height: auto`, an SVG with only a `viewBox`) can't grow the frame's
+  header (rdd 7.12.2).
 
 ### Tests
 
@@ -125,11 +131,11 @@ Off by default: an app that doesn't pass `popOut: true` sees no change.
   `test/components/pop-out-focus.spec.ts` (XPF1–XPF6 and XPF4b; 20) and
   `test/components/pop-out-from-pop-out.spec.ts` (XFP1–XFP7, XFP6b; 8). 346 new tests, 1,442 in
   all. Every new test was mutation-checked against the line it covers.
-- **The M19 browser gate** (`scripts/gates/browser/m19.mjs`), 16 cases in real Chrome with real
+- **The M19 browser gate** (`scripts/gates/browser/m19.mjs`), 17 cases in real Chrome with real
   child windows, each zoneless and with `?zone`: out and back, closed by the user, `popoutUrl`, two
   neighbours in both orders, blocked, a pop-out from a pop-out (after a 5.5 s wait, its `opener`
   checked), the four events, the styles under a skin in both schemes, the wrapper with a runtime
-  CSS-in-JS stand-in, the return button, zone.js in the child, a widget out and back, its menu, a
+  CSS-in-JS stand-in, the title icon's size (rdd 7.12.2), the return button, zone.js in the child, a widget out and back, its menu, a
   widget from its owner's window, focus across windows, and `focusPanelWindow` with the `hasFocus`
   recipe.
 - **M19 rules** (`scripts/gates/m19.mjs`): the release files, ADR 0019, chapter 15 and the API

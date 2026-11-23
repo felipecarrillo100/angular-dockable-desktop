@@ -1,6 +1,8 @@
 import { Component, ElementRef, afterNextRender, inject, signal } from '@angular/core';
 import { NddPanelOverlay, injectFloatingWidgets, injectWidget } from 'angular-dockable-desktop';
 import type { ManagedWidget } from 'angular-dockable-desktop';
+import { rcIcon } from './runtime-css';
+import { UnsizedIcon } from './unsized-icon';
 
 type W = Window & { __wo?: Record<string, unknown>; __woPopResult?: unknown };
 const w = window as unknown as W;
@@ -59,6 +61,9 @@ class WoOpener {
       width: 200,
       height: 130,
       canPopOut: true,
+      // rdd 7.12.2: `?rc=1` the stand-in's 16 x 16 icon, bigger than a title-icon box; `?poico=1` an
+      // icon that takes its size from its box.
+      ...(params.get('rc') === '1' ? { icon: rcIcon('wo') } : params.get('poico') === '1' ? { icon: UnsizedIcon } : {}),
       titleMenu: m => [
         {
           label: 'Open in new window',

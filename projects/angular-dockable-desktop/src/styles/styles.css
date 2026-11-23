@@ -3989,6 +3989,16 @@ html.ndd-no-animations [class*="ndd-"]::after {
   opacity: 0.7;
   color: var(--ndd-panel-float-title-color, rgba(255, 255, 255, 0.6));
 }
+/* An SVG or image is drawn at the box's size, as in a tab's icon slot (rdd 7.12.2). */
+.ndd-panel-float__icon svg,
+.ndd-panel-float__icon img {
+  width: 14px;
+  height: 14px;
+  max-width: 14px;
+  max-height: 14px;
+  object-fit: contain;
+  display: block;
+}
 .ndd-panel-float--active .ndd-panel-float__icon {
   opacity: 1;
   color: var(--ndd-panel-float-title-color-active, rgba(255, 255, 255, 0.9));
@@ -4239,7 +4249,27 @@ html.ndd-no-animations [class*="ndd-"]::after {
   background-color: var(--ndd-window-header-bg);
   border-bottom: 1px solid var(--ndd-window-border);
 }
-.ndd-popout-frame__icon { display: inline-flex; }
+/* Sized as a floating window's title icon (rdd 7.12.2): an icon that takes its size from its box
+   stays 14 x 14 instead of growing the header. */
+.ndd-popout-frame__icon {
+  flex-shrink: 0;
+  width: 14px;
+  height: 14px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+/* An SVG or image is drawn at the box's size, as in a tab's icon slot: one with only a viewBox has no
+   size of its own and would otherwise collapse to nothing. */
+.ndd-popout-frame__icon svg,
+.ndd-popout-frame__icon img {
+  width: 14px;
+  height: 14px;
+  max-width: 14px;
+  max-height: 14px;
+  object-fit: contain;
+  display: block;
+}
 /* A managed widget's window: the icon opens the widget's titleMenu. */
 .ndd-popout-frame__icon--menu {
   padding: 0;

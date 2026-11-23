@@ -139,3 +139,16 @@ change detection, and because of ndd's own gate rules.
   `pop-out-styles`, `popout-wrapper`, `pop-out-chrome`, `pop-out-widgets`, `pop-out-focus`,
   `pop-out-from-pop-out`), by the M19 browser gate in real Chrome under both schedulers, and by the
   M19 rules.
+- rdd 7.12.2 (the frame's title icon at 14 × 14, a bigger icon scaled to fit it and a floating
+  window's) landed before 1.12.0 was published, so 1.12.0 names it as its parity release. M19's rule
+  on the parity line changed from 7.12.1 to 7.12.2, still exact, and its selftest seed with it
+  (`7.12.2` → `7.12.1`). PARITY's "rdd 7.12.0 and 7.12.1 pop-out windows, traced" heading, which
+  M19 matches, stays: 7.12.2 is traced inside it.
+- 7.12.2's third rule, a cap that scales a bigger icon down to its box (`> * { max-width: 100%;
+  max-height: 100% }`), isn't ported: in ndd the box's child is `<ndd-icon>`, then the icon
+  component's host, then the app's element, so the cap reaches the wrong element and a percentage
+  can't pass through the hosts. A component icon whose element is fixed at, say, 16 × 16 keeps that
+  size, centred in the 14 × 14 box, without growing the header and without being squeezed (ndd never
+  squeezed it: `<ndd-icon>` took the squeeze). The case MapEvolution reported, an icon that takes its
+  size from its box, is fixed: the box is 14 × 14 and an `svg` or `img` at any depth is drawn at
+  14 × 14. Reaching the app's element would need `display: contents` on hosts the app owns; not done.

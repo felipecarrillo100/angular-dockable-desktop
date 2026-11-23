@@ -520,3 +520,18 @@ the Cameras table out by its menu, its frame icon opens its `titleMenu`, back by
   607.91 kB now. **The demo's 600 kB warning is new:** 588.39 kB on `main`, 629.58 kB now. Budgets unchanged.
 
 **Open:** `gate:release` and the full `gate:selftest` (owner); the independent docs review the plan calls for.
+
+## 7.12.2 follow-up (2026-11-23)
+
+MapEvolution tried the 1.12.0 tgz: everything worked except the pop-out frame's title icon, which had
+no size, so an icon that takes its size from its box (their `mat-icon`, width/height auto) grew the
+header to 309 px. rdd fixed it as 7.12.2, and 1.12.0 takes the same fix before it is published:
+
+- `.ndd-popout-frame__icon` is a 14 × 14 box, as `.ndd-panel-float__icon`; in both boxes an `svg` or
+  `img` is drawn at 14 × 14, as a tab's icon slot does.
+- **Divergence:** rdd and vdd also cap any other child at the box (a 16 × 16 icon shows at 14 × 14).
+  In ndd that cap would reach `<ndd-icon>`, not the app's element, so it isn't ported: a component
+  icon fixed at 16 × 16 keeps its size, centred and unsqueezed, in the box (ADR 0019, PARITY).
+- M19's new `title icon` case. Three CSS mutations, each caught (docs/evidence/M19.md).
+- The parity line names rdd 7.12.2; M19's parity rule and its selftest seed moved with it, recorded
+  in the pop-out ADR. PARITY's 7.12.x heading is unchanged.

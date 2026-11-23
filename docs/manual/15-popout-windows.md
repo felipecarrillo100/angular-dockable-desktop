@@ -655,7 +655,10 @@ Check real focus by hand, with two windows on screen.
   [chapter 11](11-i18n.md) and [chapter 12](12-migrating.md#new-message-keys-in-1120).
 - **CSS:** the frame is `.ndd-popout-frame` (with `data-ndd-popout="<panel id>"`), its parts
   `__header`, `__icon`, `__title`, `__return` and `__body`; a widget's title icon that opens its
-  `titleMenu` is also `.ndd-popout-frame__icon--menu`. The return button is also
+  `titleMenu` is also `.ndd-popout-frame__icon--menu`. The title icon is a 14 × 14 box, as a
+  floating window's: an `svg` or `img` in it is drawn at 14 × 14, as in a tab. A component icon
+  whose own element has a fixed size keeps it, centred in the box (rdd scales it down to fit; ndd's
+  `<ndd-icon>` and the component's host sit in between). The return button is also
   `.ndd-custom-tab-btn`, so it takes the skin's title-bar button look; style it with
   `.ndd-popout-frame__return`. The wrapper's host is `.ndd-popout-wrapper` (and, around the
   library's own elements, `.ndd-popout-wrapper__content`), both `display: contents`. In the taskbar,

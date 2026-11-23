@@ -10,7 +10,7 @@ and a test or a gate rule pins the difference.
 (§1, *Branding*, and §3, *rdd 7.2.0 branding, traced*), with the same variables under the
 `ndd-` prefix and the same tests ([ADR 0014](decisions/0014-brand-variables.md)).
 
-**1.12.0** adds rdd **7.12.0** and **7.12.1**'s pop-out windows, as vdd 1.14.0 did (§1, *Pop-out
+**1.12.0** adds rdd **7.12.0** and **7.12.1**'s pop-out windows, with **7.12.2**'s title-icon fix, as vdd 1.14.0 did (§1, *Pop-out
 windows*; §3, *rdd 7.12.0 and 7.12.1 pop-out windows, traced*; §4.5;
 [ADR 0019](decisions/0019-popout-windows.md)).
 
@@ -355,8 +355,12 @@ vdd accounted for rdd's 26 suites; each lands in ndd through the vdd suite it be
 ### rdd 7.12.0 and 7.12.1 pop-out windows, traced
 
 rdd 7.12.0 is pop-out windows (stages S1–S7 and next.1, with 7.12.0's event timing); 7.12.1 lets a
-click inside a pop-out open another one. vdd 1.14.0 and ndd 1.12.0 port the final 7.12.1 behaviour
-at once, not the history. Every ported test keeps rdd's number behind an `X`, because `PO` was
+click inside a pop-out open another one; 7.12.2 sizes the frame's title icon as a floating window's
+(14 × 14), draws an `svg`/`img` in either title-icon box at 14 × 14, and scales any other bigger icon
+down to fit (M19's `title icon` case). ndd does the first two; a component icon whose own element
+has a fixed size keeps it, centred in the box, because `<ndd-icon>` and the component's host sit
+between the box and that element (divergence, ADR 0019). vdd 1.14.0 and ndd
+1.12.0 port the final 7.12.2 behaviour at once, not the history. Every ported test keeps rdd's number behind an `X`, because `PO` was
 already an ndd id; ndd's own additions are `…N` ids (`XPON1`, `XWGN1`, …).
 
 | rdd 7.12.1 | vdd 1.14.0 | ndd 1.12.0 |

@@ -38,7 +38,7 @@ const FILES = [
  * A seed on CHANGELOG.md keeps the package's copy in step, so only that rule can catch it.
  */
 const SEEDS = [
-  ['the 1.12.0 entry naming the wrong rdd release', 'CHANGELOG.md', s => s.replace('**Parity: react-dockable-desktop 7.12.1**', '**Parity: react-dockable-desktop 7.12.0**'), 'parity line'],
+  ['the 1.12.0 entry naming the wrong rdd release', 'CHANGELOG.md', s => s.replace('**Parity: react-dockable-desktop 7.12.2**', '**Parity: react-dockable-desktop 7.12.1**'), 'parity line'],
   ['the 1.12.0 entry losing a section', 'CHANGELOG.md', s => s.replace(/(## \[1\.12\.0\][\s\S]*?)### Fixed/, '$1### Repaired'), '"### Fixed"'],
   ["the package's CHANGELOG drifting", `${LIB}/CHANGELOG.md`, s => s + '\nstale\n', 'drifted'],
   ['VERSION not following the package', `${LIB}/src/lib/version.ts`, s => s.replace("'1.12.0'", "'1.11.1'"), 'VERSION does not match'],

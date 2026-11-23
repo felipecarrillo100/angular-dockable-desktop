@@ -30,6 +30,12 @@
  *                    in the page) are 16 x 16 and red in the window; the panel's content is styled
  *                    there and after the return; nothing is re-created; each window's rules are in
  *                    its own <style>, through insertRule only
+ *   title icon       (rdd 7.12.2) `?poico=1`: an icon that takes its size from its box stays in the
+ *                    frame's 14 x 14 box, the header is one line and the panel gets the rest of the
+ *                    window, and the icon fills the box (an svg is drawn at 14 x 14, as in a tab);
+ *                    `?wo=1&poico=1` the same in a floating window's title; `?wo=1&rc=1`: a 16 x 16
+ *                    component icon keeps its size, unsqueezed, in the 14 x 14 box of a floating
+ *                    window's title and a widget's frame (ndd's divergence from rdd's scale-to-fit)
  *   return button    (P4) the frame's button looks like a floating window's title-bar button (default
  *                    skin and nord, dark and light); its label is the tooltip and the name; an icon,
  *                    no text; data-ndd-popout-kind="panel" on the frame
@@ -429,6 +435,12 @@ await runBrowserGate('M19', { viewport: { width: 1400, height: 900 }, readyTimeo
       return { w: Math.round(r.width), h: Math.round(r.height), bg: getComputedStyle(el).backgroundColor };
     }, sel);
   const RC_LOOK = { w: 16, h: 16, bg: 'rgb(200, 30, 40)' };
+  /** The 14 x 14 title-icon box (a frame's, a floating window's) of the icon at `sel` in `p`. */
+  const iconBox = (p, sel) =>
+    p.evaluate(s => {
+      const r = document.querySelector(s)?.closest('.ndd-popout-frame__icon, .ndd-panel-float__icon')?.getBoundingClientRect();
+      return r ? { w: Math.round(r.width), h: Math.round(r.height) } : null;
+    }, sel);
   /** The panel content's styled element. */
   const rcContent = p =>
     p.evaluate(() => {
@@ -495,6 +507,70 @@ await runBrowserGate('M19', { viewport: { width: 1400, height: 900 }, readyTimeo
     check(step, (await page.$('.ndd-toast:has-text("from pp")')) === null, "the window's toast came to the page");
     check(step, same(await rcContent(page), RC_CONTENT), `the content after the return: ${JSON.stringify(await rcContent(page))}`);
     check(step, (await page.evaluate(() => window.__poMounts)) === mounts, 'the panel was re-created');
+    noPopupErrors(step);
+  }
+
+  // rdd 7.12.2: the frame's title icon is sized as a floating window's (14 x 14), and an icon bigger
+  // than a title-icon box is scaled to fit it. An icon that takes its size from its box (MapEvolution's
+  // mat-icon, width/height auto) grew to 300 px and pushed the panel out of the window.
+
+  /** The frame's icon box, the icon inside it, the header's height and the slot's, in `p`. */
+  const frameIconLayout = p =>
+    p.evaluate(() => {
+      const box = s => {
+        const r = document.querySelector(s).getBoundingClientRect();
+        return { w: Math.round(r.width), h: Math.round(r.height) };
+      };
+      return {
+        icon: box('.ndd-popout-frame__icon'),
+        inner: box('.ndd-popout-frame__icon [data-po-icon]'),
+        header: box('.ndd-popout-frame__header').h,
+        body: box('.ndd-popout-frame__body').h,
+        window: window.innerHeight,
+      };
+    });
+
+  async function titleIcon() {
+    const step = 'title icon';
+    await openApp('po=1&poico=1');
+    {
+      const popup = await popOutByClick();
+      await frameShown(popup);
+      const l = await frameIconLayout(popup);
+      report[`${step}: unsized`] = l;
+      check(step, same(l.icon, { w: 14, h: 14 }), `the frame's icon box: ${JSON.stringify(l.icon)}`);
+      check(step, l.header < 40, `the header is ${l.header} px tall`);
+      check(step, l.body >= l.window - l.header - 1, `the slot is ${l.body} px of ${l.window} (header ${l.header})`);
+      check(step, same(l.inner, { w: 14, h: 14 }), `the icon is ${JSON.stringify(l.inner)}, not its box's 14 x 14`);
+      await closePopups();
+    }
+    await openApp('po=1&wo=1&poico=1');
+    await page.waitForSelector('[data-ndd-widget="wo"] #wo-fill');
+    await wait(300);
+    const unsizedFloat = await page.evaluate(() => {
+      const r = document.querySelector('.ndd-panel-float__icon [data-po-icon]')?.getBoundingClientRect();
+      return r ? { w: Math.round(r.width), h: Math.round(r.height) } : null;
+    });
+    report[`${step}: unsized, floating`] = unsizedFloat;
+    check(step, same(unsizedFloat, { w: 14, h: 14 }), `the unsized icon in a floating window's title: ${JSON.stringify(unsizedFloat)}`);
+    await openApp('po=1&wo=1&rc=1');
+    await page.waitForSelector('[data-ndd-widget="wo"] #wo-fill');
+    await wait(300);
+    // A component icon whose own element is 16 x 16 keeps that size, centred and not squeezed, in the
+    // 14 x 14 box: ndd's <ndd-icon> and the component's host sit between the box and the element, so
+    // rdd's scale-to-fit cap can't reach it (ADR 0019, PARITY §4.5). An svg is drawn at 14 x 14.
+    const floatSel = '.ndd-panel-float__icon [data-rc-icon="wo"]';
+    const inFloat = { icon: await rcLook(page, floatSel), box: await iconBox(page, floatSel) };
+    report[`${step}: floating`] = inFloat;
+    check(step, same(inFloat, { icon: RC_LOOK, box: { w: 14, h: 14 } }), `the widget's icon in its floating window's title: ${JSON.stringify(inFloat)}`);
+    const [popup] = await Promise.all([page.waitForEvent('popup'), page.click('#wo-po-btn')]);
+    await popup.waitForSelector('#wo-fill');
+    await frameShown(popup);
+    await wait(300);
+    const frameSel = '.ndd-popout-frame__icon--menu [data-rc-icon="wo"]';
+    const inFrame = { icon: await rcLook(popup, frameSel), box: await iconBox(popup, frameSel), header: await popup.evaluate(() => Math.round(document.querySelector('.ndd-popout-frame__header').getBoundingClientRect().height)) };
+    report[`${step}: widget frame`] = inFrame;
+    check(step, same(inFrame.icon, RC_LOOK) && same(inFrame.box, { w: 14, h: 14 }) && inFrame.header < 40, `the widget's icon in its window's frame: ${JSON.stringify(inFrame)}`);
     noPopupErrors(step);
   }
 
@@ -884,7 +960,7 @@ await runBrowserGate('M19', { viewport: { width: 1400, height: 900 }, readyTimeo
     noPopupErrors(step);
   }
 
-  const cases = { outAndBack, closedByUser, withPopoutUrl, neighbours, blocked, fromPopOut, events, styles, wrapper, returnButton, zone, widget, widgetMenu, widgetFromOwner, focusAcross, focusWindow };
+  const cases = { outAndBack, closedByUser, withPopoutUrl, neighbours, blocked, fromPopOut, events, styles, wrapper, titleIcon, returnButton, zone, widget, widgetMenu, widgetFromOwner, focusAcross, focusWindow };
   for (const [name, run] of Object.entries(cases)) {
     if (only && !only.includes(name)) continue;
     try {

@@ -63,6 +63,16 @@
   opacity: 0.7;
   color: var(--ndd-panel-float-title-color, rgba(255, 255, 255, 0.6));
 }
+/* An SVG or image is drawn at the box's size, as in a tab's icon slot (rdd 7.12.2). */
+.ndd-panel-float__icon svg,
+.ndd-panel-float__icon img {
+  width: 14px;
+  height: 14px;
+  max-width: 14px;
+  max-height: 14px;
+  object-fit: contain;
+  display: block;
+}
 .ndd-panel-float--active .ndd-panel-float__icon {
   opacity: 1;
   color: var(--ndd-panel-float-title-color-active, rgba(255, 255, 255, 0.9));

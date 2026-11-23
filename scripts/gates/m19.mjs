@@ -1,10 +1,10 @@
 /**
- * M19 gate — pop-out windows (1.12.0), ported from react-dockable-desktop 7.12.1 by way of
+ * M19 gate — pop-out windows (1.12.0), ported from react-dockable-desktop 7.12.2 by way of
  * vue-dockable-desktop 1.14.0 (ADR 0019).
  *
  *   1  the release files: the package version equals VERSION and has its own CHANGELOG entry
  *      (ADR 0015's rule); the 1.12.0 entry states a parity line naming react-dockable-desktop
- *      7.12.1 and has every section, under a fresh [Unreleased]; the package's CHANGELOG copy is
+ *      7.12.2 and has every section, under a fresh [Unreleased]; the package's CHANGELOG copy is
  *      the root one as scripts/sync-package-readme.mjs writes it; M19 is in `gate:release`
  *   2  the decision is recorded: ADR 0019 exists, is indexed, and records the zone.js decision
  *   3  the manual documents it: chapter 15 exists, is in the manual's index and the README, and
@@ -50,7 +50,7 @@ must(entryOf(pkg.version) !== '', `CHANGELOG.md has no entry for the package ver
 const entry = entryOf('1.12.0');
 must(entry !== '', 'CHANGELOG.md has no 1.12.0 entry');
 must(/^## \[1\.12\.0\] — \d{4}-\d{2}-\d{2}$/m.test(changelog), 'the 1.12.0 entry has no dated heading');
-must(/\*\*Parity:[^*]*react-dockable-desktop[^*]*7\.12\.1/.test(entry), 'the 1.12.0 entry must state its parity line, naming react-dockable-desktop 7.12.1');
+must(/\*\*Parity:[^*]*react-dockable-desktop[^*]*7\.12\.2/.test(entry), 'the 1.12.0 entry must state its parity line, naming react-dockable-desktop 7.12.2');
 for (const section of ['### Added', '### Fixed', '### Tests', '### Documentation']) must(entry.includes(section), `the 1.12.0 entry has no "${section}" section`);
 const unreleased = changelog.indexOf('## [Unreleased]');
 must(unreleased >= 0 && unreleased < changelog.indexOf('## [1.12.0]'), 'CHANGELOG.md has no [Unreleased] section above 1.12.0');

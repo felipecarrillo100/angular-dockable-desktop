@@ -10,6 +10,7 @@ import { EmbedFrame } from './app/embed-frame';
 import { pgFormatMessage } from './app/locale';
 import { PopPanel } from './app/pop-panel';
 import { rcIcon } from './app/runtime-css';
+import { UnsizedIcon } from './app/unsized-icon';
 import { WoOwner } from './app/pop-widget';
 
 /**
@@ -46,6 +47,8 @@ const POPOUT = params.get('po') === '1';
 // `?rc=1` (P4): `popper`'s icon is styled only by the runtime CSS-in-JS stand-in (runtime-css.ts), so
 // it shows in a pop-out's frame only through the app's popoutWrapper.
 const RC = params.get('rc') === '1';
+// `?poico=1` (rdd 7.12.2): `popper`'s icon takes its size from its box (unsized-icon.ts).
+const POICO = params.get('poico') === '1';
 const OPO = params.get('opo') === '1';
 const ONE_LEAF = JSON.stringify({
   version: 2,
@@ -72,7 +75,7 @@ bootstrapApplication(App, {
     provideDockableDesktop({
       popOut: POPOUT,
       panels: {
-        popper: { component: PopPanel, defaultOptions: { title: 'Pop', canPopOut: true, ...(RC ? { icon: rcIcon('frame') } : {}) } },
+        popper: { component: PopPanel, defaultOptions: { title: 'Pop', canPopOut: true, ...(RC ? { icon: rcIcon('frame') } : POICO ? { icon: UnsizedIcon } : {}) } },
         hostile: { component: HostilePanel, defaultOptions: { title: 'Hostile' } },
         wover: { component: WoOwner, defaultOptions: { title: 'Owner', ...(OPO ? { canPopOut: true } : {}) } },
         editor: { component: EditorPanel, defaultOptions: { title: 'Editor' } },
